@@ -22,10 +22,35 @@
 <div class="ads-container" id="ads"></div>
 
 <!-- Admin Upload Section -->
-<div id="admin-ads" style="display:none; margin:20px 0;">
-  <h2>Upload Ads Banner (Admin)</h2>
-  <input type="file" id="ad-photo" accept="image/*" multiple>
-  <button onclick="uploadAds()">Upload Ads</button>
+<div id="admin-section" style="display:none; margin:20px;">
+  <h2>Admin Panel</h2>
+
+  <!-- Upload Ads -->
+  <div>
+    <h3>Upload Ads Banner</h3>
+    <input type="file" id="ad-photo" accept="image/*" multiple>
+    <button onclick="uploadAds()">Upload Ads</button>
+  </div>
+
+  <!-- Add Profile -->
+  <div style="margin-top:20px;">
+    <h3>Add Profile</h3>
+    <input id="name" placeholder="Full Name"><br>
+    <input id="age" type="number" placeholder="Age"><br>
+    <select id="gender">
+      <option value="">Select Gender</option>
+      <option>Male</option>
+      <option>Female</option>
+    </select><br>
+    <input id="city" placeholder="City"><br>
+    <input id="marital" placeholder="Marital Status"><br>
+    <input id="education" placeholder="Education"><br>
+    <input id="profession" placeholder="Profession"><br>
+    <input id="religion" placeholder="Religion/Sect"><br>
+    <input id="phone" placeholder="Phone/WhatsApp"><br>
+    <input type="file" id="profile-photo" accept="image/*"><br>
+    <button onclick="uploadProfile()">Add Profile</button>
+  </div>
 </div>
 
 <!-- Profiles Cards -->
