@@ -6,21 +6,42 @@
 <title>Zara Muslim Nikah</title>
 <link rel="stylesheet" href="style.css">
 <style>
-  body {
+  /* Full screen background */
+  body, html {
     margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
     font-family: Arial, sans-serif;
-    background: linear-gradient(to right, #ffecd2, #fcb69f);
+  }
+
+  body {
+    /* Background image for Muslim Nikah */
+    background: url('https://ik.imagekit.io/j2k3temxm/muslim-nikah-background.jpg') no-repeat center center fixed;
+    background-size: cover; /* Full screen, responsive */
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+  }
+
+  /* Overlay to darken the background for better contrast */
+  body::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4); /* dark overlay */
+    z-index: 0;
   }
 
   .login-container {
-    background: white;
+    position: relative; /* above overlay */
+    z-index: 1;
+    background: rgba(255,255,255,0.95);
     padding: 40px;
     border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
     text-align: center;
     max-width: 400px;
     width: 90%;
@@ -29,13 +50,13 @@
 
   .login-container:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
   }
 
   .login-container h1 {
     margin-bottom: 30px;
     color: #ff5e62;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
   }
 
   .login-btn {
@@ -58,6 +79,17 @@
   .login-btn:active {
     transform: translateY(1px);
     box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  }
+
+  /* Mobile responsive text size */
+  @media (max-width: 480px) {
+    .login-container h1 {
+      font-size: 22px;
+    }
+    .login-btn {
+      font-size: 16px;
+      padding: 12px 25px;
+    }
   }
 </style>
 </head>
