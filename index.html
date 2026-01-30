@@ -5,59 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zara Muslim Nikah</title>
 <style>
-  body{font-family: Arial,sans-serif;background:#f2f2f2;margin:0;padding:0;}
-  header{background:#0b8043;color:#fff;padding:15px;text-align:center;display:flex;align-items:center;justify-content:center;}
-  header img{height:40px;margin-right:10px;border-radius:8px;}
-  h2{text-align:center;margin-top:0;}
-  .card{max-width:500px;margin:20px auto;background:#fff;padding:20px;border-radius:15px;box-shadow:0 10px 25px rgba(0,0,0,0.2);}
-  input, select, button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #ccc;font-size:16px;}
-  button{background:linear-gradient(135deg,#0f9d58,#0b8043);color:#fff;border:none;border-radius:30px;cursor:pointer;box-shadow:0 5px 15px rgba(0,0,0,0.3);}
+  body, html{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;}
+  body{
+    background: url('https://ik.imagekit.io/j2k3temxm/nikah-bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+  }
+  h1{color:#fff;text-shadow: 2px 2px 8px #000;}
+  button{
+    padding:15px 30px;
+    font-size:18px;
+    border:none;
+    border-radius:30px;
+    cursor:pointer;
+    background:linear-gradient(135deg,#0f9d58,#0b8043);
+    color:#fff;
+    box-shadow:0 5px 15px rgba(0,0,0,0.3);
+  }
   button:active{transform:scale(.97);}
-  #profiles{max-width:900px;margin:20px auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;}
-  .profile-card{background:#fff;padding:10px;border-radius:12px;text-align:center;box-shadow:0 5px 15px rgba(0,0,0,0.1);}
-  .profile-card img{width:100%;border-radius:12px;}
 </style>
 </head>
 <body>
+<h1>Welcome to Zara Muslim Nikah</h1>
+<button onclick="googleLogin()">Login with Google</button>
 
-<header>
-  <img src="https://ik.imagekit.io/j2k3temxm/nikah-logo.png" alt="Nikah Logo">
-  <h1>Zara Muslim Nikah</h1>
-</header>
-
-<div class="card" id="login-card">
-  <h2>Login with Google</h2>
-  <button onclick="googleLogin()">Login</button>
-</div>
-
-<div class="card" id="profile-card" style="display:none;">
-  <h2>Add Nikah Profile</h2>
-  <input id="name" placeholder="Full Name">
-  <input id="age" type="number" placeholder="Age">
-  <select id="gender">
-    <option value="">Select Gender</option>
-    <option>Male</option>
-    <option>Female</option>
-  </select>
-  <input id="city" placeholder="City">
-  <input id="marital" placeholder="Marital Status">
-  <input id="education" placeholder="Education">
-  <input id="profession" placeholder="Profession">
-  <input id="religion" placeholder="Religion/Sect">
-  <input id="phone" placeholder="Phone/WhatsApp">
-  <input type="file" id="photo" accept="image/*" multiple>
-  <button onclick="uploadImages()">Upload & Save Profile</button>
-</div>
-
-<div id="profiles"></div>
-
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-// 🔹 Firebase Config
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -67,96 +46,19 @@ const firebaseConfig = {
   messagingSenderId: "690336186269",
   appId: "1:690336186269:web:8215c1d313c4273c1f7974"
 };
-
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 const auth = firebase.auth();
 
-let currentUser = null;
-
-// 🔹 Google Login
+// Google Login
 function googleLogin(){
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider).then(result=>{
-    currentUser = result.user;
-    alert("Login Successful ✅ " + currentUser.displayName);
-    document.getElementById("login-card").style.display="none";
-    document.getElementById("profile-card").style.display="block";
-  }).catch(err=>{alert(err.message)});
-}
-
-// 🔹 Upload Images + Save Profile
-function uploadImages(){
-  if(!currentUser) return alert("Login first!");
-  const files = document.getElementById("photo").files;
-  if(files.length==0) return alert("Select images!");
-
-  let uploadedURLs = [];
-  let count=0;
-
-  for(let i=0;i<files.length;i++){
-    const file = files[i];
-    if(!file.type.startsWith("image/")) continue;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("fileName","nikah_" + Date.now());
-    formData.append("publicKey","public_QUheEXPI+PMEgWzN/9uEKG5v1BQ=");
-    formData.append("folder","nikah_profiles");
-
-    fetch("https://upload.imagekit.io/api/v1/files/upload",{method:"POST",body:formData})
-    .then(res=>res.json())
-    .then(data=>{
-      uploadedURLs.push(data.url);
-      count++;
-      if(count===files.length){
-        saveProfile(uploadedURLs);
-      }
-    }).catch(err=>console.error(err));
-  }
-}
-
-// 🔹 Save Profile to Firebase
-function saveProfile(images){
-  const profileData = {
-    userId: currentUser.uid,
-    name: document.getElementById("name").value,
-    age: document.getElementById("age").value,
-    gender: document.getElementById("gender").value,
-    city: document.getElementById("city").value,
-    marital: document.getElementById("marital").value,
-    education: document.getElementById("education").value,
-    profession: document.getElementById("profession").value,
-    religion: document.getElementById("religion").value,
-    phone: document.getElementById("phone").value,
-    images: images
-  };
-
-  db.ref("profiles").push(profileData);
-  alert("Profile Saved ✅");
-
-  // Reset form
-  document.getElementById("profile-card").reset;
-  document.getElementById("photo").value="";
-}
-
-// 🔹 Display Profiles
-db.ref("profiles").on("value",snap=>{
-  const list=document.getElementById("profiles");
-  list.innerHTML="";
-  snap.forEach(s=>{
-    const p=s.val();
-    const imgHTML = p.images.map(url=>`<img src="${url}">`).join("");
-    list.innerHTML+=`<div class="profile-card">
-      ${imgHTML}
-      <h3>${p.name}, ${p.age}</h3>
-      <p>${p.city} | ${p.gender}</p>
-      <p>${p.marital} | ${p.education} | ${p.profession} | ${p.religion}</p>
-      <p>${p.phone}</p>
-    </div>`;
+    // Redirect to dashboard after login
+    window.location.href="dashboard.html";
+  }).catch(err=>{
+    alert(err.message);
   });
-});
+}
 </script>
-
 </body>
 </html>
