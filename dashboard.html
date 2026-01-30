@@ -3,46 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard - Zara Muslim Nikah</title>
+<title>Zara Muslim Nikah Dashboard</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <header>
-<h1>Zara Muslim Nikah Dashboard</h1>
-<a href="https://wa.me/919112170192" target="_blank">WhatsApp</a>
-<span id="admin-link" style="display:none;">
-  <a href="add-profile.html">Add Profile</a>
-</span>
+  <h1>Zara Muslim Nikah</h1>
+  <a href="https://wa.me/919112170192" target="_blank">WhatsApp</a>
 </header>
 
+<!-- Slider Section -->
+<div class="slider-container">
+  <div id="slider" class="slider"></div>
+</div>
+
+<!-- Advertising Banners -->
+<div class="ads-container" id="ads"></div>
+
+<!-- Admin Upload Section -->
+<div id="admin-ads" style="display:none; margin:20px 0;">
+  <h2>Upload Ads Banner (Admin)</h2>
+  <input type="file" id="ad-photo" accept="image/*" multiple>
+  <button onclick="uploadAds()">Upload Ads</button>
+</div>
+
+<!-- Profiles Cards -->
 <div class="card-container" id="profiles"></div>
 
+<!-- Firebase Scripts -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="script.js"></script>
-<script>
-initFirebase();
 
-// Show "Add Profile" link only for admin
-auth.onAuthStateChanged(user=>{
-  if(!user) window.location.href="index.html";
-  else if(user.email==="ngogrant454@gmail.com"){
-    document.getElementById("admin-link").style.display="inline-block";
-  }
-});
-
-// Display profiles
-db.ref("profiles").on("value",snap=>{
-  const list=document.getElementById("profiles");
-  if(!list) return;
-  list.innerHTML="";
-  snap.forEach(s=>{
-    const p=s.val();
-    const imgHTML=p.images.map(url=>`<img src="${url}">`).join("");
-    list.innerHTML+=`<div class="profile-card">${imgHTML}<h3>${p.name}, ${p.age}</h3><p>${p.city} | ${p.gender}</p><p>${p.marital} | ${p.education} | ${p.profession} | ${p.religion}</p><p>${p.phone}</p></div>`;
-  });
-});
-</script>
 </body>
 </html>
