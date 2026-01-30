@@ -4,61 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zara Muslim Nikah</title>
-<style>
-  body, html{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;}
-  body{
-    background: url('https://ik.imagekit.io/j2k3temxm/nikah-bg.jpg') no-repeat center center fixed;
-    background-size: cover;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    flex-direction:column;
-  }
-  h1{color:#fff;text-shadow: 2px 2px 8px #000;}
-  button{
-    padding:15px 30px;
-    font-size:18px;
-    border:none;
-    border-radius:30px;
-    cursor:pointer;
-    background:linear-gradient(135deg,#0f9d58,#0b8043);
-    color:#fff;
-    box-shadow:0 5px 15px rgba(0,0,0,0.3);
-  }
-  button:active{transform:scale(.97);}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Welcome to Zara Muslim Nikah</h1>
-<button onclick="googleLogin()">Login with Google</button>
+<div class="login-container">
+  <h1>Welcome to Zara Muslim Nikah</h1>
+  <button onclick="googleLogin()">Login with Google</button>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
+<script src="script.js"></script>
 <script>
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah",
-  storageBucket: "zara-muslim-nikah.appspot.com",
-  messagingSenderId: "690336186269",
-  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
-// Google Login
-function googleLogin(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).then(result=>{
-    // Redirect to dashboard after login
-    window.location.href="dashboard.html";
-  }).catch(err=>{
-    alert(err.message);
-  });
-}
+  initFirebase();
+  function googleLogin(){ loginWithGoogle(); }
 </script>
 </body>
 </html>
