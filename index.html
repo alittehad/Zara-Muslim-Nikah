@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firebase Image Upload</title>
+</head>
+<body>
+
+<h2>Firebase FREE Image Upload</h2>
+
+<input type="file" id="image">
+<button onclick="uploadImage()">Upload</button>
+
+<p id="link"></p>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+ {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah",
+  storageBucket: "zara-muslim-nikah.appspot.com", // ✅ FIXED
+  messagingSenderId: "690336186269",
+  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
+};
+   
+
+  const app = initializeApp(firebaseConfig);
+  const storage = getStorage(app);
+
+  window.uploadImage = async function () {
+    const file = document.getElementById("image").files[0];
+    if (!file) {
+      alert("Image select karo");
+      return;
+    }
+
+    const imageRef = ref(storage, "uploads/" + Date.now() + "_" + file.name);
+    await uploadBytes(imageRef, file);
+    const url = await getDownloadURL(imageRef);
+
+    document.getElementById("link").innerHTML =
+      `Uploaded ✅ <br><a href="${url}" target="_blank">${url}</a>`;
+  }
+</script>
+
+</body>
+</html>
