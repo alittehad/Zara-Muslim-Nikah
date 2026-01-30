@@ -1,37 +1,17 @@
+body { font-family: Arial, sans-serif; margin:0; padding:0; }
+header { display:flex; justify-content: space-between; align-items:center; padding:10px 20px; background:#007bff; color:white; }
+header a { color:white; text-decoration:none; font-weight:bold; }
+
 /* Slider */
-.slider-container {
-  width: 100%;
-  max-height: 300px;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 20px;
-}
+.slider-container { width:100%; max-height:300px; overflow:hidden; margin-bottom:20px; }
+.slider { display:flex; width:100%; transition: transform 0.5s ease-in-out; }
+.slider img { width:100%; height:300px; object-fit:cover; }
 
-.slider {
-  display: flex;
-  width: 100%;
-  transition: transform 0.5s ease-in-out;
-}
+/* Ads Banners */
+.ads-container { display:flex; overflow-x:auto; gap:10px; padding:10px; margin-bottom:20px; }
+.ads-container img { width:300px; height:150px; object-fit:cover; border-radius:8px; flex-shrink:0; }
 
-.slider img {
-  width: 100%;
-  height: 300px;
-  object-fit: cover;
-}
-
-/* Advertising Banners */
-.ads-container {
-  display: flex;
-  overflow-x: auto;
-  gap: 10px;
-  margin: 20px 0;
-  padding: 10px 0;
-}
-
-.ads-container img {
-  width: 300px;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
+/* Profile Cards */
+.card-container { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; padding:10px; }
+.card { width:250px; border:1px solid #ccc; border-radius:8px; padding:10px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+.card img { width:100%; height:200px; object-fit:cover; border-radius:8px; margin-bottom:10px; }
