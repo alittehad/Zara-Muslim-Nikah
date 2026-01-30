@@ -10,26 +10,10 @@
 <header>
 <h1>Zara Muslim Nikah Dashboard</h1>
 <a href="https://wa.me/919112170192" target="_blank">WhatsApp</a>
+<span id="admin-link" style="display:none;">
+  <a href="add-profile.html">Add Profile</a>
+</span>
 </header>
-
-<div class="card-form" id="add-card">
-<h2>Add Profile (Admin Only)</h2>
-<input id="name" placeholder="Full Name">
-<input id="age" type="number" placeholder="Age">
-<select id="gender">
-  <option value="">Select Gender</option>
-  <option>Male</option>
-  <option>Female</option>
-</select>
-<input id="city" placeholder="City">
-<input id="marital" placeholder="Marital Status">
-<input id="education" placeholder="Education">
-<input id="profession" placeholder="Profession">
-<input id="religion" placeholder="Religion/Sect">
-<input id="phone" placeholder="Phone/WhatsApp">
-<input type="file" id="photo" accept="image/*" multiple>
-<button onclick="uploadImages()">Upload & Save Profile</button>
-</div>
 
 <div class="card-container" id="profiles"></div>
 
@@ -37,5 +21,28 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="script.js"></script>
+<script>
+initFirebase();
+
+// Show "Add Profile" link only for admin
+auth.onAuthStateChanged(user=>{
+  if(!user) window.location.href="index.html";
+  else if(user.email==="ngogrant454@gmail.com"){
+    document.getElementById("admin-link").style.display="inline-block";
+  }
+});
+
+// Display profiles
+db.ref("profiles").on("value",snap=>{
+  const list=document.getElementById("profiles");
+  if(!list) return;
+  list.innerHTML="";
+  snap.forEach(s=>{
+    const p=s.val();
+    const imgHTML=p.images.map(url=>`<img src="${url}">`).join("");
+    list.innerHTML+=`<div class="profile-card">${imgHTML}<h3>${p.name}, ${p.age}</h3><p>${p.city} | ${p.gender}</p><p>${p.marital} | ${p.education} | ${p.profession} | ${p.religion}</p><p>${p.phone}</p></div>`;
+  });
+});
+</script>
 </body>
 </html>
