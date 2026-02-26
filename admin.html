@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    body{
+      font-family: sans-serif;
+      padding:20px;
+      background-color:#fdf6f0;
+      text-align:center;
+    }
+
+    h2{ margin-bottom:20px; }
+
+    .profile-card{
+      border:1px solid #ccc;
+      border-radius:10px;
+      padding:10px;
+      margin:10px;
+      display:inline-block;
+      width:150px;
+      text-align:center;
+      box-shadow:0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .profile-card img{ width:100%; border-radius:10px; }
+
+    button{
+      padding:5px 10px;
+      margin-top:5px;
+      border:none;
+      background-color:#4CAF50;
+      color:white;
+      border-radius:5px;
+      cursor:pointer;
+    }
+    button:hover{ background-color:#45a049; }
+
+    @media(max-width:600px){
+      .profile-card{ width:120px; }
+    }
+  </style>
+</head>
+<body>
+  <h2>Admin Dashboard</h2>
+  <div id="pendingProfiles"></div>
+  <button onclick="logout()">Logout</button>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyD7x6epAwfshYNzc4G8JvmE4Bu3UNdMB5U",
+  authDomain: "nikah-c234b.firebaseapp.com",
+  databaseURL: "https://nikah-c234b-default-rtdb.firebaseio.com",
+  projectId: "nikah-c234b",
+  storageBucket: "nikah-c234b.appspot.com",
+  messagingSenderId: "760906560668",
+  appId: "1:760906560668:web:0a2c16a47aeaec26482959",
+  measurementId: "G-ENL0FZPEEF"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+const adminEmail="ngogrant454@gmail.com";
+
+auth.onAuthStateChanged(user=>{
+  if(!user || user.email!==adminEmail){
+    window.location.href="index.html"; // non-admin redirect
+  }else{
+    loadPendingProfiles();
+  }
+});
+
+function logout(){ auth.signOut(); }
+
+function loadPendingProfiles(){
+  db.ref("users").orderByChild("status").equalTo("pending").on("value",snapshot=>{
+    const div=document.getElementById("pendingProfiles");
+    div.innerHTML="";
+    snapshot.forEach(child=>{
+      const user=child.val();
+      const key=child.key;
+      const card=document.createElement("div");
+      card.className="profile-card";
+      card.innerHTML=`<strong>${user.email}</strong><br>
+                      <img src="${user.photo_url}"><br>
+                      <button onclick="approve('${key}')">Approve</button>`;
+      div.appendChild(card);
+    });
+  });
+}
+
+function approve(key){
+  db.ref("users/"+key).update({status:"approved"});
+  alert("Profile approved!");
+}
+</script>
+</body>
+</html>
