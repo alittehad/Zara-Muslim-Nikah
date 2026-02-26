@@ -2,40 +2,81 @@
 <html>
 <head>
   <title>Nikah Site - User</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <style>
-    body{ font-family:sans-serif; padding:20px;}
-    .hidden{ display:none;}
-    #preview img{ width:150px; margin-top:10px;}
+    body{
+      font-family: sans-serif;
+      margin:0;
+      padding:0;
+      background-color:#fdf6f0;
+      text-align:center;
+    }
+
+    /* Full screen top image */
+    .fullscreen-image{
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .hidden{ display:none; }
+    #preview img{ width:150px; margin-top:10px; border-radius:10px; }
+
+    /* Buttons */
+    button{
+      padding: 8px 15px;
+      margin:5px;
+      border:none;
+      background-color:#4CAF50;
+      color:white;
+      border-radius:5px;
+      cursor:pointer;
+    }
+    button:hover{ background-color:#45a049; }
+
+    /* Mobile friendly */
+    input[type=email], input[type=password], input[type=file]{
+      padding:8px;
+      width:90%;
+      max-width:300px;
+      margin:5px 0;
+      border-radius:5px;
+      border:1px solid #ccc;
+    }
   </style>
 </head>
 <body>
 
-<!-- Top Nikah Image -->
-<div style="text-align:center; margin-bottom:20px;">
+<!-- Full width Nikah Image -->
+<div>
   <img src="https://res.cloudinary.com/dlsqxs7zl/image/upload/v1690000000/nikah.jpg" 
-       alt="Nikah" style="width:100%; max-width:600px; border-radius:10px;">
+       class="fullscreen-image" alt="Nikah">
 </div>
 
-<h2>User Login / Signup</h2>
+<h2>Login / Signup</h2>
+
+<!-- Auth Div -->
 <div id="authDiv">
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button onclick="signup()">Sign Up</button>
-  <button onclick="login()">Login</button>
+  <button onclick="loginWithGoogle()">Login with Google</button><br><br>
 </div>
 
+<!-- User Dashboard -->
 <div id="userDiv" class="hidden">
   <h3>Welcome, <span id="userEmail"></span></h3>
-  <input type="file" id="photo">
+  <input type="file" id="photo"><br>
   <button onclick="uploadPhoto()">Upload Photo</button>
   <div id="preview"></div>
   <button onclick="logout()">Logout</button>
 </div>
 
 <script>
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyD7x6epAwfshYNzc4G8JvmE4Bu3UNdMB5U",
     authDomain: "nikah-c234b.firebaseapp.com",
@@ -46,18 +87,29 @@
     appId: "1:760906560668:web:0a2c16a47aeaec26482959",
     measurementId: "G-ENL0FZPEEF"
   };
+
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.database();
-
   const adminEmail = "ngogrant454@gmail.com";
+
+  // Google login
+  function loginWithGoogle(){
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then(result=>{
+        console.log("User signed in:", result.user.email);
+      })
+      .catch(err=>alert(err.message));
+  }
 
   auth.onAuthStateChanged(user=>{
     if(user){
       document.getElementById("authDiv").classList.add("hidden");
       document.getElementById("userEmail").innerText = user.email;
+
       if(user.email === adminEmail){
-        window.location.href = "admin.html"; // redirect admin
+        window.location.href="admin.html"; // redirect admin
       }else{
         document.getElementById("userDiv").classList.remove("hidden");
       }
@@ -67,36 +119,23 @@
     }
   });
 
-  function signup(){
-    const email=document.getElementById("email").value;
-    const password=document.getElementById("password").value;
-    auth.createUserWithEmailAndPassword(email,password)
-      .then(()=>alert("Signup success!"))
-      .catch(err=>alert(err.message));
-  }
-
-  function login(){
-    const email=document.getElementById("email").value;
-    const password=document.getElementById("password").value;
-    auth.signInWithEmailAndPassword(email,password)
-      .then(()=>console.log("Logged in"))
-      .catch(err=>alert(err.message));
-  }
-
   function logout(){ auth.signOut(); }
 
+  // Upload photo to Cloudinary
   async function uploadPhoto(){
     const file=document.getElementById("photo").files[0];
     if(!file){ alert("Select photo!"); return; }
     const formData=new FormData();
     formData.append('file',file);
-    formData.append('upload_preset','profiles');
+    formData.append('upload_preset','profiles'); // your unsigned preset
     const cloudName='dlsqxs7zl';
-    const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{
       method:'POST', body:formData
     });
-    const data=await res.json();
+    const data = await res.json();
     document.getElementById("preview").innerHTML=`<img src="${data.secure_url}">`;
+
+    // Save URL in Firebase
     const userId = auth.currentUser.uid;
     db.ref("users/"+userId).set({
       email:auth.currentUser.email,
