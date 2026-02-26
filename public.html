@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Approved Profiles</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background-color:#fdf6f0;
+      text-align:center;
+    }
+
+    h2{ margin-bottom:20px; }
+
+    #publicProfiles{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+
+    .profile-card{
+      width:150px;
+      height:200px;
+      perspective:1000px;
+      margin:10px;
+      cursor:pointer;
+    }
+
+    .profile-card-inner{
+      position:relative;
+      width:100%;
+      height:100%;
+      transition:transform 0.8s;
+      transform-style: preserve-3d;
+      border-radius:10px;
+    }
+
+    .profile-card:hover .profile-card-inner{
+      transform: rotateY(180deg);
+    }
+
+    .profile-card-front, .profile-card-back{
+      position:absolute;
+      width:100%;
+      height:100%;
+      backface-visibility:hidden;
+      border-radius:10px;
+      box-shadow:0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .profile-card-front{
+      background:#fff;
+      text-align:center;
+      padding:10px;
+    }
+
+    .profile-card-back{
+      background:#f8f8f8;
+      transform: rotateY(180deg);
+      text-align:center;
+      padding:10px;
+    }
+
+    .profile-card img{ width:100%; border-radius:10px; }
+
+    @media(max-width:600px){
+      .profile-card{ width:120px; height:180px; }
+    }
+
+  </style>
+</head>
+<body>
+
+<h2>Approved Profiles</h2>
+<div id="publicProfiles"></div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyD7x6epAwfshYNzc4G8JvmE4Bu3UNdMB5U",
+  authDomain: "nikah-c234b.firebaseapp.com",
+  databaseURL: "https://nikah-c234b-default-rtdb.firebaseio.com",
+  projectId: "nikah-c234b",
+  storageBucket: "nikah-c234b.appspot.com",
+  messagingSenderId: "760906560668",
+  appId: "1:760906560668:web:0a2c16a47aeaec26482959",
+  measurementId: "G-ENL0FZPEEF"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+db.ref("users").orderByChild("status").equalTo("approved").on("value",snapshot=>{
+  const div=document.getElementById("publicProfiles");
+  div.innerHTML="";
+  snapshot.forEach(child=>{
+    const user = child.val();
+    const card=document.createElement("div");
+    card.className="profile-card";
+    card.innerHTML=`
+      <div class="profile-card-inner">
+        <div class="profile-card-front">
+          <img src="${user.photo_url}">
+          <br>${user.email}
+        </div>
+        <div class="profile-card-back">
+          <strong>Approved</strong>
+        </div>
+      </div>
+    `;
+    div.appendChild(card);
+  });
+});
+</script>
+
+</body>
+</html>
