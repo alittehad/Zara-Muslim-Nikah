@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login - Zara Muslim Nikah</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI;
+  background:linear-gradient(135deg,#008080,#00b3b3);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.card{
+  background:white;
+  padding:40px;
+  border-radius:15px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  text-align:center;
+  width:300px;
+}
+button{
+  padding:10px 20px;
+  background:#008080;
+  color:white;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  font-size:16px;
+}
+button:hover{
+  background:#006666;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Zara Muslim Nikah</h2>
+  <p>Login with Google</p>
+  <button onclick="googleLogin()">Login with Google</button>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  projectId: "zara-muslim-nikah"
+});
+
+const auth = firebase.auth();
+
+/* Force persistent login */
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+/* Google Login */
+function googleLogin(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithRedirect(provider);
+}
+
+/* Handle redirect */
+auth.getRedirectResult()
+.then(result=>{
+  if(result.user){
+    window.location.href = "index.html";
+  }
+})
+.catch(error=>{
+  console.log(error.message);
+});
+
+/* If already logged in */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    window.location.href = "index.html";
+  }
+});
+</script>
+
+</body>
+</html>
