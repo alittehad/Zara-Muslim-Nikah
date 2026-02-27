@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>UPI Payment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="text-align:center;font-family:sans-serif;background:#f4f6f9;">
+
+<h2>Pay ₹199 to Unlock Chat</h2>
+
+<p>Scan QR & Pay</p>
+
+<img src="your-qr.png" width="250"><br><br>
+
+<p>UPI ID: yourupi@upi</p>
+
+<button onclick="confirmPayment()" 
+style="padding:10px 20px;background:#008080;color:white;border:none;border-radius:5px;">
+I Have Paid
+</button>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<script>
+firebase.initializeApp({
+ apiKey:"YOUR_KEY",
+ authDomain:"YOUR_AUTH",
+ databaseURL:"YOUR_DB",
+ projectId:"YOUR_ID"
+});
+
+const db=firebase.database();
+const auth=firebase.auth();
+
+function confirmPayment(){
+ const user=auth.currentUser;
+
+ if(!user){
+   alert("Login first");
+   return;
+ }
+
+ db.ref("payments/"+user.uid).set({
+   paid:true,
+   time:Date.now()
+ }).then(()=>{
+   alert("Payment verified! Chat unlocked.");
+   window.location="index.html";
+ });
+}
+</script>
+
+</body>
+</html>
