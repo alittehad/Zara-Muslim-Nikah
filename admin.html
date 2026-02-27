@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin</title>
+<title>Admin Dashboard</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -23,32 +23,42 @@ const auth=firebase.auth();
 const db=firebase.database();
 const adminEmail="ngogrant454@gmail.com";
 
+// Admin login check
 auth.onAuthStateChanged(user=>{
  if(!user || user.email!==adminEmail){
    alert("Not admin");
    window.location="index.html";
+ } else {
+   loadPending();
  }
 });
 
-db.ref("users").orderByChild("status").equalTo("pending")
-.on("value",snap=>{
- let html="";
- snap.forEach(child=>{
-   const d=child.val();
-   html+=`
-     <div>
-       <img src="${d.photo}" width="100"><br>
-       ${d.name}<br>
-       <button onclick="approve('${child.key}')">Approve</button>
-     </div><hr>
-   `;
+function loadPending(){
+ db.ref("users").orderByChild("status").equalTo("pending")
+ .on("value",snap=>{
+   let html="";
+   snap.forEach(child=>{
+     const d=child.val();
+     html+=`
+       <div>
+         <img src="${d.photo}" width="100"><br>
+         ${d.name}<br>
+         <button onclick="approve('${child.key}')">Approve</button>
+       </div><hr>
+     `;
+   });
+   document.getElementById("pending").innerHTML=html;
  });
- document.getElementById("pending").innerHTML=html;
-});
+}
 
+// Approve function
 function approve(uid){
- db.ref("users/"+uid).update({status:"approved"});
- alert("Approved");
+ const confirmApprove = confirm("Are you sure you want to approve?");
+ if(!confirmApprove) return;
+
+ db.ref("users/"+uid).update({status:"approved"})
+ .then(()=> alert("Profile approved!"))
+ .catch(err => alert("Error: "+err.message));
 }
 </script>
 
