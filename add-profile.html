@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Add Profile - Zara Muslim Nikah</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -12,15 +13,11 @@
 <style>
 body {font-family:Segoe UI; background:#f4f6f9; margin:0; padding:0;}
 header {background:#008080; color:white; padding:15px; text-align:center; font-size:22px;}
-.container {display:flex; flex-wrap:wrap; justify-content:center; padding:20px;}
-.card-form, .preview {background:white; padding:20px; margin:10px; width:350px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+.container {display:flex; justify-content:center; padding:20px;}
+.card-form {background:white; padding:20px; width:400px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);}
 .card-form input, .card-form select, .card-form textarea, .card-form button {width:100%; padding:10px; margin:8px 0; border-radius:5px; border:1px solid #ccc;}
 button {background:#008080; color:white; border:none; cursor:pointer;}
 button:hover {background:#006666;}
-.preview img {width:100%; max-height:400px; object-fit:contain; border-radius:10px; margin-bottom:10px;}
-.preview h3 {margin:5px 0; font-size:20px;}
-.preview p {margin:3px 0; color:#555;}
-.status {font-weight:bold; color:red;}
 </style>
 </head>
 <body>
@@ -55,25 +52,6 @@ button:hover {background:#006666;}
     <input type="file" id="photo" accept="image/*" required>
     <button onclick="submitProfile()">Submit Profile</button>
   </div>
-
-  <div class="preview" id="preview">
-    <h3>Live Preview</h3>
-    <img id="previewImg" src="" alt="Profile Image">
-    <p><b>Name:</b> <span id="previewName"></span></p>
-    <p><b>Gender:</b> <span id="previewGender"></span></p>
-    <p><b>Father:</b> <span id="previewFather"></span></p>
-    <p><b>Mother:</b> <span id="previewMother"></span></p>
-    <p><b>Age:</b> <span id="previewAge"></span></p>
-    <p><b>Marital Status:</b> <span id="previewMaritalStatus"></span></p>
-    <p><b>Children:</b> <span id="previewChildren"></span></p>
-    <p><b>City:</b> <span id="previewCity"></span></p>
-    <p><b>Education:</b> <span id="previewEducation"></span></p>
-    <p><b>Profession:</b> <span id="previewProfession"></span></p>
-    <p><b>Religion:</b> <span id="previewReligion"></span></p>
-    <p><b>Phone:</b> <span id="previewPhone"></span></p>
-    <p><b>Bio:</b> <span id="previewBio"></span></p>
-    <p><b>Status:</b> <span class="status" id="previewStatus">Waiting for approval</span></p>
-  </div>
 </div>
 
 <script>
@@ -92,42 +70,14 @@ auth.onAuthStateChanged(user => {
   if (!user) window.location.href = "index.html";
 });
 
-// Toggle Children input
+// Show/Hide Children field
 function toggleChildren() {
   const status = document.getElementById("maritalStatus").value;
   document.getElementById("children").style.display = (status === "Married") ? "block" : "none";
-  updatePreview();
-}
-
-// Live Preview
-const fields = ["name","gender","fatherName","motherName","age","maritalStatus","children","city","education","profession","religion","phone","bio"];
-fields.forEach(f=>{
-  document.getElementById(f).addEventListener("input", updatePreview);
-});
-document.getElementById("photo").addEventListener("change", function(){
-  const file=this.files[0];
-  if(file){
-    const reader=new FileReader();
-    reader.onload=function(ev){ document.getElementById("previewImg").src=ev.target.result; }
-    reader.readAsDataURL(file);
-  }
-});
-
-function updatePreview() {
-  fields.forEach(f=>{
-    let val=document.getElementById(f).value;
-    if(f==="children" && document.getElementById("maritalStatus").value!=="Married"){
-      val="N/A";
-    }
-    document.getElementById("preview"+f.charAt(0).toUpperCase()+f.slice(1)).innerText=val;
-  });
-
-  // Show status preview
-  document.getElementById("previewStatus").innerText = "Waiting for approval";
 }
 
 // Submit Profile
-function submitProfile(){
+function submitProfile() {
   const user = auth.currentUser;
   if(!user){ alert("Login first"); return; }
 
@@ -164,18 +114,18 @@ function submitProfile(){
   fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload", {
     method:"POST", body:formData
   })
-  .then(res=>res.json())
-  .then(data=>{
+  .then(res => res.json())
+  .then(data => {
     const photoUrl = data.secure_url;
 
+    // Save to Firebase
     db.ref("users/"+user.uid).set({
       name, gender, fatherName, motherName, age, maritalStatus,
       children, city, education, profession, religion, phone, bio,
       photo: photoUrl, status:"pending"
     }).then(()=>{
-      document.getElementById("previewStatus").innerText = "Waiting for approval";
-      alert("Profile submitted! Waiting for admin approval.");
-      window.location.href="index.html";
+      alert("Profile submitted successfully! Waiting for admin approval.");
+      window.location.href = "index.html";
     }).catch(err=>alert("Firebase Error: "+err.message));
   })
   .catch(err=>alert("Photo upload failed: "+err.message));
