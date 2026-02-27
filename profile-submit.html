@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Create Profile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<h2>Create Profile</h2>
+
+<input id="name" placeholder="Name"><br>
+<input id="age" placeholder="Age"><br>
+<input id="city" placeholder="City"><br>
+
+<select id="gender">
+<option>Male</option>
+<option>Female</option>
+</select><br>
+
+<textarea id="bio" placeholder="Bio"></textarea><br>
+<input type="file" id="photo"><br>
+<button onclick="saveProfile()">Submit</button>
+
+<script>
+firebase.initializeApp({
+ apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+ authDomain:"zara-muslim-nikah.firebaseapp.com",
+ databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+ projectId:"zara-muslim-nikah"
+});
+
+const auth=firebase.auth();
+const db=firebase.database();
+
+async function saveProfile(){
+ const user=auth.currentUser;
+ if(!user){alert("Login first");return;}
+
+ const file=document.getElementById("photo").files[0];
+ const formData=new FormData();
+ formData.append("file",file);
+ formData.append("upload_preset","profiles");
+
+ const res=await fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{method:"POST",body:formData});
+ const data=await res.json();
+
+ db.ref("users/"+user.uid).set({
+   name:name.value,
+   age:age.value,
+   city:city.value,
+   gender:gender.value,
+   bio:bio.value,
+   photo:data.secure_url,
+   status:"pending",
+   role:"user"
+ });
+
+ alert("Submitted. Waiting for admin approval.");
+}
+</script>
+
+</body>
+</html>
