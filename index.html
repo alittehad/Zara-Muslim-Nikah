@@ -3,44 +3,47 @@
 <head>
 <title>Zara Muslim Nikah</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <style>
-body{font-family:Arial;background:#fdf6f0;text-align:center;}
-input,select,textarea{padding:8px;margin:5px;width:90%;max-width:300px;}
-button{padding:8px 15px;background:#4CAF50;color:white;border:none;}
-.hidden{display:none;}
+body{font-family:Segoe UI;margin:0;background:#f4f6f9;}
+header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px;}
+.filters{text-align:center;padding:15px;}
+input,select{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:20px;}
+.card{background:white;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);overflow:hidden;cursor:pointer;transition:0.3s;}
+.card:hover{transform:translateY(-5px);}
+.card img{width:100%;height:220px;object-fit:cover;}
+.card-body{text-align:center;padding:15px;}
+.name{font-weight:bold;font-size:18px;}
+.city{color:gray;font-size:14px;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;justify-content:center;align-items:center;}
+.modal-content{background:white;padding:20px;border-radius:10px;width:90%;max-width:400px;}
+button{padding:8px 15px;background:#008080;color:white;border:none;border-radius:5px;cursor:pointer;}
 </style>
 </head>
+
 <body>
 
-<h2>Zara Muslim Nikah</h2>
+<header>Zara Muslim Nikah</header>
 
-<div id="loginDiv">
-<button onclick="login()">Login with Google</button>
-</div>
-
-<div id="profileDiv" class="hidden">
-<h3>Create Profile</h3>
-
-<input id="name" placeholder="Full Name"><br>
-<input id="age" placeholder="Age"><br>
-<input id="city" placeholder="City"><br>
-
-<select id="gender">
+<div class="filters">
+<input type="text" id="search" placeholder="Search name...">
+<select id="genderFilter">
+<option value="">All</option>
 <option value="Male">Male</option>
 <option value="Female">Female</option>
-</select><br>
+</select>
+<button onclick="googleLogin()">Login</button>
+</div>
 
-<textarea id="bio" placeholder="About you"></textarea><br>
+<div class="grid" id="profileGrid"></div>
 
-<input type="file" id="photo"><br>
-
-<button onclick="saveProfile()">Submit Profile</button>
-<p id="status"></p>
-
-<button onclick="logout()">Logout</button>
+<div class="modal" id="profileModal">
+<div class="modal-content" id="modalContent"></div>
 </div>
 
 <script>
@@ -54,57 +57,93 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.database();
 
-function login(){
+let allProfiles=[];
+
+function googleLogin(){
  const provider=new firebase.auth.GoogleAuthProvider();
  auth.signInWithPopup(provider);
 }
 
-auth.onAuthStateChanged(user=>{
- if(user){
-  db.ref("users/"+user.uid).once("value").then(snap=>{
-    if(snap.exists() && snap.val().role==="admin"){
-      window.location="admin.html";
-    }else{
-      document.getElementById("loginDiv").classList.add("hidden");
-      document.getElementById("profileDiv").classList.remove("hidden");
-    }
-  });
- }
+db.ref("users").orderByChild("status").equalTo("approved")
+.on("value",snap=>{
+ allProfiles=[];
+ snap.forEach(child=>{
+   allProfiles.push({id:child.key,...child.val()});
+ });
+ renderProfiles(allProfiles);
 });
 
-function logout(){auth.signOut();}
-
-async function saveProfile(){
- try{
-  const file=document.getElementById("photo").files[0];
-  if(!file){alert("Select photo");return;}
-
-  const formData=new FormData();
-  formData.append("file",file);
-  formData.append("upload_preset","profiles");
-
-  const res=await fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{
-    method:"POST",body:formData
-  });
-
-  const data=await res.json();
-
-  db.ref("users/"+auth.currentUser.uid).set({
-    name:document.getElementById("name").value,
-    age:document.getElementById("age").value,
-    city:document.getElementById("city").value,
-    gender:document.getElementById("gender").value,
-    bio:document.getElementById("bio").value,
-    photo:data.secure_url,
-    status:"pending",
-    role:"user"
-  });
-
-  document.getElementById("status").innerText="Profile submitted. Wait for admin approval.";
- }catch(e){
-  alert("Error saving profile");
- }
+function renderProfiles(data){
+ const grid=document.getElementById("profileGrid");
+ grid.innerHTML="";
+ data.forEach(user=>{
+   grid.innerHTML+=`
+     <div class="card" onclick="openProfile('${user.id}')">
+       <img src="${user.photo}">
+       <div class="card-body">
+         <div class="name">${user.name}</div>
+         <div class="city">${user.city}</div>
+       </div>
+     </div>
+   `;
+ });
 }
+
+document.getElementById("search").addEventListener("input",filterProfiles);
+document.getElementById("genderFilter").addEventListener("change",filterProfiles);
+
+function filterProfiles(){
+ const search=document.getElementById("search").value.toLowerCase();
+ const gender=document.getElementById("genderFilter").value;
+
+ const filtered=allProfiles.filter(p=>{
+   return p.name.toLowerCase().includes(search) &&
+         (gender==="" || p.gender===gender);
+ });
+ renderProfiles(filtered);
+}
+
+function openProfile(uid){
+ if(!auth.currentUser){
+   googleLogin();
+   return;
+ }
+
+ db.ref("users/"+uid).once("value").then(snap=>{
+   const d=snap.val();
+   document.getElementById("modalContent").innerHTML=`
+     <h3>${d.name}</h3>
+     <img src="${d.photo}" width="100%">
+     <p><b>Age:</b> ${d.age}</p>
+     <p><b>City:</b> ${d.city}</p>
+     <p><b>Bio:</b> ${d.bio}</p>
+     <button onclick="sendInterest('${uid}')">Send Interest</button>
+     <br><br>
+     <button onclick="closeModal()">Close</button>
+   `;
+   document.getElementById("profileModal").style.display="flex";
+ });
+}
+
+function closeModal(){
+ document.getElementById("profileModal").style.display="none";
+}
+
+function sendInterest(receiverId){
+ const sender=auth.currentUser.uid;
+ db.ref("interests/"+receiverId+"/"+sender).set(true);
+ alert("Interest Sent");
+}
+
+auth.onAuthStateChanged(user=>{
+ if(user){
+   db.ref("users/"+user.uid).once("value").then(snap=>{
+     if(snap.exists() && snap.val().status==="pending"){
+       alert("Your profile is waiting for admin approval");
+     }
+   });
+ }
+});
 </script>
 
 </body>
