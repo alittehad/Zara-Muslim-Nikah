@@ -14,7 +14,9 @@
 body{font-family:Segoe UI;background:#f4f6f9;margin:0;padding:0;}
 header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px;}
 .filters{text-align:center;padding:15px;}
-input,select{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+input,select,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+button{background:#008080;color:white;border:none;cursor:pointer;}
+button:hover{background:#006666;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:20px;}
 .card{background:white;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);overflow:hidden;cursor:pointer;transition:0.3s transform, 0.3s box-shadow;}
 .card:hover{transform:translateY(-10px) rotateX(5deg);box-shadow:0 12px 25px rgba(0,0,0,0.25);}
@@ -25,11 +27,8 @@ input,select{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
 .status{color:red;font-size:14px;margin-top:5px;}
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;justify-content:center;align-items:center;z-index:1000;}
 .modal-content{background:white;padding:20px;border-radius:10px;width:90%;max-width:400px;position:relative;}
-button{padding:8px 15px;background:#008080;color:white;border:none;border-radius:5px;cursor:pointer;margin-top:10px;}
-button:hover{background:#006666;}
 </style>
 </head>
-
 <body>
 
 <header>Zara Muslim Nikah</header>
@@ -41,8 +40,8 @@ button:hover{background:#006666;}
 <option value="Male">Male</option>
 <option value="Female">Female</option>
 </select>
-<button id="loginBtn" onclick="googleLogin()">Login</button>
-<button onclick="addProfile()">रिश्ता जोड़ें</button>
+<button id="loginBtn" onclick="handleAuth()">Login</button>
+<button onclick="goToAddProfile()">रिश्ता जोड़ें</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
@@ -63,53 +62,50 @@ firebase.initializeApp({
 
 const auth=firebase.auth();
 const db=firebase.database();
-
 let allProfiles=[];
 
-/* Google Login */
+/* Login/Logout */
+function handleAuth(){
+  const user = auth.currentUser;
+  if(user){
+    auth.signOut().then(()=>{ updateLoginUI(); alert("Logged out successfully"); });
+  } else { googleLogin(); }
+}
+
 function googleLogin(){
-  const provider=new firebase.auth.GoogleAuthProvider();
+  const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider)
   .then(()=>{ updateLoginUI(); })
   .catch(err=>{ alert(err.message); });
 }
 
-/* Update login button text */
 function updateLoginUI(){
   const btn=document.getElementById("loginBtn");
-  if(auth.currentUser) btn.innerText="Logout";
-  else btn.innerText="Login";
+  if(auth.currentUser){ btn.innerText="Logout"; } 
+  else{ btn.innerText="Login"; }
 }
 
-/* Add Profile Button */
-function addProfile(){
-  if(!auth.currentUser){
-    alert("पहले लॉगिन करें");
-    googleLogin();
-    return;
-  }
-  window.location.href="userDashboard.html"; // ya addProfile.html
+/* Redirect to Add Profile */
+function goToAddProfile(){
+  const user=auth.currentUser;
+  if(!user){ alert("पहले लॉगिन करें"); return; }
+  window.location.href="addProfile.html";
 }
 
 /* Listen auth state */
-auth.onAuthStateChanged(user=>{
-  updateLoginUI();
-  if(user && user.email=="ngogrant454@gmail.com"){
-    // Admin notification logic ya dashboard link
-  }
-});
+auth.onAuthStateChanged(user=>{ updateLoginUI(); });
 
-/* Load profiles */
+/* Load Profiles */
 db.ref("users").on("value", snap=>{
   allProfiles=[];
   snap.forEach(child=>{
-    const val = child.val();
+    const val=child.val();
     allProfiles.push({id:child.key,...val});
   });
   renderProfiles(allProfiles);
 });
 
-/* Render all cards */
+/* Render Cards */
 function renderProfiles(data){
   const grid=document.getElementById("profileGrid");
   grid.innerHTML="";
@@ -141,7 +137,7 @@ function filterProfiles(){
   renderProfiles(filtered);
 }
 
-/* Open Profile */
+/* Open Profile Modal */
 function openProfile(uid){
   const user=auth.currentUser;
   db.ref("users/"+uid).once("value").then(snap=>{
@@ -175,6 +171,5 @@ function sendInterest(receiverId){
   alert("Interest Sent");
 }
 </script>
-
 </body>
 </html>
