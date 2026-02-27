@@ -37,7 +37,7 @@ button{padding:8px 15px;background:#008080;color:white;border:none;border-radius
 <option value="Male">Male</option>
 <option value="Female">Female</option>
 </select>
-<button onclick="googleLogin()">Login</button>
+<button type="button" id="loginBtn">Login</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
@@ -54,96 +54,144 @@ firebase.initializeApp({
   projectId: "zara-muslim-nikah"
 });
 
-const auth=firebase.auth();
-const db=firebase.database();
+const auth = firebase.auth();
+const db = firebase.database();
 
-let allProfiles=[];
+let allProfiles = [];
+let selectedProfileId = null;
+
+/* ---------- LOGIN SYSTEM (VERCEL FIXED) ---------- */
+
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 function googleLogin(){
- const provider=new firebase.auth.GoogleAuthProvider();
- auth.signInWithPopup(provider);
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithRedirect(provider);
 }
+
+auth.getRedirectResult().catch(error=>{
+  console.log("Redirect Error:", error.message);
+});
+
+/* ---------- AUTH STATE ---------- */
+
+auth.onAuthStateChanged(user=>{
+  const btn = document.getElementById("loginBtn");
+
+  if(user){
+    btn.innerText = "Logout";
+    btn.onclick = () => auth.signOut();
+
+    if(selectedProfileId){
+      showProfile(selectedProfileId);
+      selectedProfileId = null;
+    }
+
+  }else{
+    btn.innerText = "Login";
+    btn.onclick = googleLogin;
+  }
+});
+
+/* ---------- LOAD APPROVED PROFILES ---------- */
 
 db.ref("users").orderByChild("status").equalTo("approved")
 .on("value",snap=>{
- allProfiles=[];
- snap.forEach(child=>{
-   allProfiles.push({id:child.key,...child.val()});
- });
- renderProfiles(allProfiles);
+  allProfiles=[];
+  snap.forEach(child=>{
+    allProfiles.push({id:child.key,...child.val()});
+  });
+  renderProfiles(allProfiles);
 });
 
 function renderProfiles(data){
- const grid=document.getElementById("profileGrid");
- grid.innerHTML="";
- data.forEach(user=>{
-   grid.innerHTML+=`
-     <div class="card" onclick="openProfile('${user.id}')">
-       <img src="${user.photo}">
-       <div class="card-body">
-         <div class="name">${user.name}</div>
-         <div class="city">${user.city}</div>
-       </div>
-     </div>
-   `;
- });
+  const grid=document.getElementById("profileGrid");
+  grid.innerHTML="";
+  data.forEach(user=>{
+    grid.innerHTML+=`
+      <div class="card" onclick="openProfile('${user.id}')">
+        <img src="${user.photo}">
+        <div class="card-body">
+          <div class="name">${user.name}</div>
+          <div class="city">${user.city}</div>
+        </div>
+      </div>
+    `;
+  });
 }
+
+/* ---------- SEARCH FILTER ---------- */
 
 document.getElementById("search").addEventListener("input",filterProfiles);
 document.getElementById("genderFilter").addEventListener("change",filterProfiles);
 
 function filterProfiles(){
- const search=document.getElementById("search").value.toLowerCase();
- const gender=document.getElementById("genderFilter").value;
+  const search=document.getElementById("search").value.toLowerCase();
+  const gender=document.getElementById("genderFilter").value;
 
- const filtered=allProfiles.filter(p=>{
-   return p.name.toLowerCase().includes(search) &&
-         (gender==="" || p.gender===gender);
- });
- renderProfiles(filtered);
+  const filtered=allProfiles.filter(p=>{
+    return p.name.toLowerCase().includes(search) &&
+          (gender==="" || p.gender===gender);
+  });
+
+  renderProfiles(filtered);
 }
 
-function openProfile(uid){
- if(!auth.currentUser){
-   googleLogin();
-   return;
- }
+/* ---------- PROFILE OPEN ---------- */
 
- db.ref("users/"+uid).once("value").then(snap=>{
-   const d=snap.val();
-   document.getElementById("modalContent").innerHTML=`
-     <h3>${d.name}</h3>
-     <img src="${d.photo}" width="100%">
-     <p><b>Age:</b> ${d.age}</p>
-     <p><b>City:</b> ${d.city}</p>
-     <p><b>Bio:</b> ${d.bio}</p>
-     <button onclick="sendInterest('${uid}')">Send Interest</button>
-     <br><br>
-     <button onclick="closeModal()">Close</button>
-   `;
-   document.getElementById("profileModal").style.display="flex";
- });
+function openProfile(uid){
+  if(!auth.currentUser){
+    selectedProfileId = uid;
+    googleLogin();
+    return;
+  }
+  showProfile(uid);
+}
+
+function showProfile(uid){
+  db.ref("users/"+uid).once("value").then(snap=>{
+    const d=snap.val();
+
+    document.getElementById("modalContent").innerHTML=`
+      <h3>${d.name}</h3>
+      <img src="${d.photo}" width="100%">
+      <p><b>Age:</b> ${d.age}</p>
+      <p><b>City:</b> ${d.city}</p>
+      <p><b>Bio:</b> ${d.bio}</p>
+      <button onclick="sendInterest('${uid}')">Send Interest</button>
+      <br><br>
+      <button onclick="closeModal()">Close</button>
+    `;
+
+    document.getElementById("profileModal").style.display="flex";
+  });
 }
 
 function closeModal(){
- document.getElementById("profileModal").style.display="none";
+  document.getElementById("profileModal").style.display="none";
 }
+
+/* ---------- INTEREST SYSTEM ---------- */
 
 function sendInterest(receiverId){
- const sender=auth.currentUser.uid;
- db.ref("interests/"+receiverId+"/"+sender).set(true);
- alert("Interest Sent");
-}
+  const sender = auth.currentUser.uid;
 
-auth.onAuthStateChanged(user=>{
- if(user){
-   db.ref("users/"+user.uid).once("value").then(snap=>{
-     if(snap.exists() && snap.val().status==="pending"){
-       alert("Your profile is waiting for admin approval");
-     }
-   });
- }
-});
+  db.ref("users/"+sender).once("value").then(snap=>{
+    if(!snap.exists() || snap.val().status!=="approved"){
+      alert("Your profile must be approved first");
+      return;
+    }
+
+    db.ref("interests").push({
+      senderId: sender,
+      receiverId: receiverId,
+      status: "pending",
+      timestamp: Date.now()
+    });
+
+    alert("Interest Sent Successfully");
+  });
+}
 </script>
 
 </body>
