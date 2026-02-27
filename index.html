@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zara Muslim Nikah</title>
+<title>Add Profile - Zara Muslim Nikah</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -13,43 +12,32 @@
 <style>
 body{font-family:Segoe UI;background:#f4f6f9;margin:0;padding:0;}
 header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px;}
-.filters{text-align:center;padding:15px;}
-input,select,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+.card-form{background:white;padding:20px;margin:20px auto;max-width:500px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+.card-form input, .card-form select, .card-form textarea, .card-form button{width:100%;padding:10px;margin:10px 0;border-radius:5px;border:1px solid #ccc;}
 button{background:#008080;color:white;border:none;cursor:pointer;}
 button:hover{background:#006666;}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:20px;}
-.card{background:white;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);overflow:hidden;cursor:pointer;transition:0.3s transform, 0.3s box-shadow;}
-.card:hover{transform:translateY(-10px) rotateX(5deg);box-shadow:0 12px 25px rgba(0,0,0,0.25);}
-.card img{width:100%;height:220px;object-fit:cover;}
-.card-body{text-align:center;padding:15px;}
-.name{font-weight:bold;font-size:18px;}
-.city{color:gray;font-size:14px;}
-.status{color:red;font-size:14px;margin-top:5px;}
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;justify-content:center;align-items:center;z-index:1000;}
-.modal-content{background:white;padding:20px;border-radius:10px;width:90%;max-width:400px;position:relative;}
 </style>
 </head>
+
 <body>
+<header>Add Profile</header>
 
-<header>Zara Muslim Nikah</header>
-
-<div class="filters">
-<input type="text" id="search" placeholder="Search name...">
-<select id="genderFilter">
-<option value="">All</option>
-<option value="Male">Male</option>
-<option value="Female">Female</option>
+<div class="card-form">
+<input id="name" placeholder="Full Name">
+<input id="age" type="number" placeholder="Age">
+<select id="gender">
+  <option value="">Select Gender</option>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
 </select>
-<button id="loginBtn" onclick="handleAuth()">Login</button>
-<button onclick="goToAddProfile()">रिश्ता जोड़ें</button>
-</div>
-
-<div class="grid" id="profileGrid"></div>
-
-<div class="modal" id="profileModal">
-<div class="modal-content" id="modalContent">
-<button onclick="closeModal()" style="position:absolute;top:10px;right:10px;">✖</button>
-</div>
+<input id="city" placeholder="City">
+<input id="marital" placeholder="Marital Status">
+<input id="education" placeholder="Education">
+<input id="profession" placeholder="Profession">
+<input id="religion" placeholder="Religion/Sect">
+<input id="phone" placeholder="Phone/WhatsApp">
+<input type="file" id="photo" accept="image/*">
+<button onclick="submitProfile()">Submit Profile</button>
 </div>
 
 <script>
@@ -62,113 +50,68 @@ firebase.initializeApp({
 
 const auth=firebase.auth();
 const db=firebase.database();
-let allProfiles=[];
 
-/* Login/Logout */
-function handleAuth(){
-  const user = auth.currentUser;
-  if(user){
-    auth.signOut().then(()=>{ updateLoginUI(); alert("Logged out successfully"); });
-  } else { googleLogin(); }
-}
-
-function googleLogin(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider)
-  .then(()=>{ updateLoginUI(); })
-  .catch(err=>{ alert(err.message); });
-}
-
-function updateLoginUI(){
-  const btn=document.getElementById("loginBtn");
-  if(auth.currentUser){ btn.innerText="Logout"; } 
-  else{ btn.innerText="Login"; }
-}
-
-/* Redirect to Add Profile */
-function goToAddProfile(){
-  const user=auth.currentUser;
-  if(!user){ alert("पहले लॉगिन करें"); return; }
-  window.location.href="addProfile.html";
-}
-
-/* Listen auth state */
-auth.onAuthStateChanged(user=>{ updateLoginUI(); });
-
-/* Load Profiles */
-db.ref("users").on("value", snap=>{
-  allProfiles=[];
-  snap.forEach(child=>{
-    const val=child.val();
-    allProfiles.push({id:child.key,...val});
-  });
-  renderProfiles(allProfiles);
+// Redirect if not logged in
+auth.onAuthStateChanged(user=>{
+  if(!user) window.location.href="index.html";
 });
 
-/* Render Cards */
-function renderProfiles(data){
-  const grid=document.getElementById("profileGrid");
-  grid.innerHTML="";
-  data.forEach(user=>{
-    const statusLabel=user.status==="approved"?"":"<div class='status'>Waiting for admin approval</div>";
-    grid.innerHTML+=`
-      <div class="card" onclick="openProfile('${user.id}')">
-        <img src="${user.photo}">
-        <div class="card-body">
-          <div class="name">${user.name}</div>
-          <div class="city">${user.city}</div>
-          ${statusLabel}
-        </div>
-      </div>
-    `;
-  });
-}
+// Submit Profile
+function submitProfile(){
+  const user = auth.currentUser;
+  if(!user) { alert("Login first"); return; }
 
-/* Filter */
-document.getElementById("search").addEventListener("input",filterProfiles);
-document.getElementById("genderFilter").addEventListener("change",filterProfiles);
+  const name=document.getElementById("name").value;
+  const age=document.getElementById("age").value;
+  const gender=document.getElementById("gender").value;
+  const city=document.getElementById("city").value;
+  const marital=document.getElementById("marital").value;
+  const education=document.getElementById("education").value;
+  const profession=document.getElementById("profession").value;
+  const religion=document.getElementById("religion").value;
+  const phone=document.getElementById("phone").value;
+  const photoFile=document.getElementById("photo").files[0];
 
-function filterProfiles(){
-  const search=document.getElementById("search").value.toLowerCase();
-  const gender=document.getElementById("genderFilter").value;
-  const filtered=allProfiles.filter(p=>{
-    return p.name.toLowerCase().includes(search) && (gender==="" || p.gender===gender);
-  });
-  renderProfiles(filtered);
-}
+  if(!name || !age || !gender || !city || !photoFile){
+    alert("Please fill all required fields and select a photo");
+    return;
+  }
 
-/* Open Profile Modal */
-function openProfile(uid){
-  const user=auth.currentUser;
-  db.ref("users/"+uid).once("value").then(snap=>{
-    const d=snap.val();
-    if(d.status!=="approved" && (!user || user.email!=="ngogrant454@gmail.com")){
-      alert("Profile waiting for admin approval");
-      return;
-    }
-    let interestBtn="";
-    if(user && user.uid!==uid) interestBtn=`<button onclick="sendInterest('${uid}')">Interest भेजें</button>`;
-    document.getElementById("modalContent").innerHTML=`
-      <button onclick="closeModal()" style="position:absolute;top:10px;right:10px;">✖</button>
-      <h3>${d.name}</h3>
-      <img src="${d.photo}" width="100%">
-      <p><b>Age:</b> ${d.age}</p>
-      <p><b>City:</b> ${d.city}</p>
-      <p><b>Bio:</b> ${d.bio || "N/A"}</p>
-      ${interestBtn}
-    `;
-    document.getElementById("profileModal").style.display="flex";
-  });
-}
+  // Upload photo to Cloudinary (or Firebase Storage)
+  const formData=new FormData();
+  formData.append("file", photoFile);
+  formData.append("upload_preset","profiles"); // Use your Cloudinary unsigned preset
 
-/* Close Modal */
-function closeModal(){ document.getElementById("profileModal").style.display="none"; }
+  fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{
+    method:"POST",
+    body:formData
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    const photoUrl=data.secure_url;
 
-/* Send Interest */
-function sendInterest(receiverId){
-  const sender=auth.currentUser.uid;
-  db.ref("interests/"+receiverId+"/"+sender).set(true);
-  alert("Interest Sent");
+    // Save profile in Firebase Realtime Database
+    const profileRef=db.ref("users/"+user.uid);
+    profileRef.set({
+      name,
+      age,
+      gender,
+      city,
+      marital,
+      education,
+      profession,
+      religion,
+      phone,
+      photo:photoUrl,
+      status:"pending" // admin approval pending
+    })
+    .then(()=>{
+      alert("Profile submitted. Waiting for admin approval.");
+      window.location.href="index.html";
+    })
+    .catch(err=>alert(err.message));
+  })
+  .catch(err=>alert("Photo upload failed: "+err.message));
 }
 </script>
 </body>
