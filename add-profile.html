@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Add Profile - Zara Muslim Nikah</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -13,9 +12,13 @@
 <style>
 body{font-family:Segoe UI;background:#f4f6f9;margin:0;padding:0;}
 header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px;}
-.card-form{background:white;padding:20px;margin:20px auto;max-width:600px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
-.card-form label{display:block;margin-top:10px;font-weight:bold;}
-.card-form input, .card-form select, .card-form textarea, .card-form button{width:100%;padding:10px;margin:5px 0;border-radius:5px;border:1px solid #ccc;}
+.container{display:flex;flex-wrap:wrap;gap:20px;padding:20px;}
+.card-form{background:white;padding:20px;flex:1;min-width:300px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+.card-preview{background:white;padding:20px;flex:1;min-width:300px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+.card-preview img{width:100%;height:250px;object-fit:cover;border-radius:10px;margin-bottom:10px;}
+.card-preview h3{margin:5px 0;}
+.card-preview p{margin:3px 0;color:#555;font-size:14px;}
+input,select,textarea,button{width:100%;padding:10px;margin:5px 0;border-radius:5px;border:1px solid #ccc;}
 button{background:#008080;color:white;border:none;cursor:pointer;margin-top:10px;}
 button:hover{background:#006666;}
 </style>
@@ -24,28 +27,30 @@ button:hover{background:#006666;}
 <body>
 <header>Add Your Profile</header>
 
+<div class="container">
+
 <div class="card-form">
   <label>Full Name *</label>
-  <input id="name" placeholder="Full Name" required>
+  <input id="name" placeholder="Full Name" oninput="updatePreview()">
 
   <label>Gender *</label>
-  <select id="gender" required>
+  <select id="gender" onchange="updatePreview()">
     <option value="">Select Gender</option>
     <option value="Male">Male</option>
     <option value="Female">Female</option>
   </select>
 
   <label>Father's Name</label>
-  <input id="fatherName" placeholder="Father's Name">
+  <input id="fatherName" placeholder="Father's Name" oninput="updatePreview()">
 
   <label>Mother's Name</label>
-  <input id="motherName" placeholder="Mother's Name">
+  <input id="motherName" placeholder="Mother's Name" oninput="updatePreview()">
 
   <label>Age *</label>
-  <input id="age" type="number" placeholder="Age" required>
+  <input id="age" type="number" placeholder="Age" oninput="updatePreview()">
 
   <label>Marital Status</label>
-  <select id="maritalStatus">
+  <select id="maritalStatus" onchange="updatePreview(); toggleChildren()">
     <option value="">Select</option>
     <option value="Unmarried">Unmarried</option>
     <option value="Married">Married</option>
@@ -54,30 +59,50 @@ button:hover{background:#006666;}
   </select>
 
   <label>Number of Children</label>
-  <input id="children" type="number" placeholder="Number of Children" disabled>
+  <input id="children" type="number" placeholder="Number of Children" disabled oninput="updatePreview()">
 
   <label>City *</label>
-  <input id="city" placeholder="City" required>
+  <input id="city" placeholder="City" oninput="updatePreview()">
 
   <label>Education</label>
-  <input id="education" placeholder="Education">
+  <input id="education" placeholder="Education" oninput="updatePreview()">
 
   <label>Profession</label>
-  <input id="profession" placeholder="Profession">
+  <input id="profession" placeholder="Profession" oninput="updatePreview()">
 
   <label>Religion/Sect</label>
-  <input id="religion" placeholder="Religion/Sect">
+  <input id="religion" placeholder="Religion/Sect" oninput="updatePreview()">
 
   <label>Phone / WhatsApp</label>
-  <input id="phone" placeholder="Phone / WhatsApp">
+  <input id="phone" placeholder="Phone / WhatsApp" oninput="updatePreview()">
 
   <label>Short Bio</label>
-  <textarea id="bio" placeholder="About Yourself"></textarea>
+  <textarea id="bio" placeholder="About Yourself" oninput="updatePreview()"></textarea>
 
   <label>Profile Photo *</label>
-  <input type="file" id="photo" accept="image/*" required>
+  <input type="file" id="photo" accept="image/*" onchange="previewPhoto(event)">
 
   <button onclick="submitProfile()">Submit Profile</button>
+</div>
+
+<!-- Live Preview Card -->
+<div class="card-preview" id="previewCard">
+  <img id="previewPhoto" src="" alt="Profile Photo Preview">
+  <h3 id="previewName">Full Name</h3>
+  <p id="previewGender">Gender: </p>
+  <p id="previewFather">Father: </p>
+  <p id="previewMother">Mother: </p>
+  <p id="previewAge">Age: </p>
+  <p id="previewMarital">Marital Status: </p>
+  <p id="previewChildren">Children: </p>
+  <p id="previewCity">City: </p>
+  <p id="previewEducation">Education: </p>
+  <p id="previewProfession">Profession: </p>
+  <p id="previewReligion">Religion: </p>
+  <p id="previewPhone">Phone: </p>
+  <p id="previewBio">Bio: </p>
+</div>
+
 </div>
 
 <script>
@@ -91,36 +116,57 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.database();
 
-// Redirect if not logged in
-auth.onAuthStateChanged(user => {
-  if(!user) window.location.href="index.html";
-});
+auth.onAuthStateChanged(user => { if(!user) window.location.href="index.html"; });
 
-// Show/hide children input based on marital status
-const maritalSelect = document.getElementById("maritalStatus");
-const childrenInput = document.getElementById("children");
-maritalSelect.addEventListener("change", ()=>{
-  if(maritalSelect.value === "Married") {
-    childrenInput.disabled = false;
-  } else {
-    childrenInput.value = "";
-    childrenInput.disabled = true;
+// Toggle children input
+function toggleChildren(){
+  const marital = document.getElementById("maritalStatus").value;
+  const children = document.getElementById("children");
+  children.disabled = marital !== "Married";
+  if(!children.disabled) children.value = "";
+}
+
+// Photo preview
+function previewPhoto(event){
+  const file = event.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      document.getElementById("previewPhoto").src = e.target.result;
+    }
+    reader.readAsDataURL(file);
   }
-});
+}
 
-// Submit Profile
+// Update live preview
+function updatePreview(){
+  document.getElementById("previewName").innerText = document.getElementById("name").value || "Full Name";
+  document.getElementById("previewGender").innerText = "Gender: " + (document.getElementById("gender").value || "");
+  document.getElementById("previewFather").innerText = "Father: " + document.getElementById("fatherName").value;
+  document.getElementById("previewMother").innerText = "Mother: " + document.getElementById("motherName").value;
+  document.getElementById("previewAge").innerText = "Age: " + document.getElementById("age").value;
+  document.getElementById("previewMarital").innerText = "Marital Status: " + document.getElementById("maritalStatus").value;
+  document.getElementById("previewChildren").innerText = "Children: " + document.getElementById("children").value;
+  document.getElementById("previewCity").innerText = "City: " + document.getElementById("city").value;
+  document.getElementById("previewEducation").innerText = "Education: " + document.getElementById("education").value;
+  document.getElementById("previewProfession").innerText = "Profession: " + document.getElementById("profession").value;
+  document.getElementById("previewReligion").innerText = "Religion: " + document.getElementById("religion").value;
+  document.getElementById("previewPhone").innerText = "Phone: " + document.getElementById("phone").value;
+  document.getElementById("previewBio").innerText = "Bio: " + document.getElementById("bio").value;
+}
+
+// Submit profile with Cloudinary upload
 function submitProfile(){
   const user = auth.currentUser;
   if(!user){ alert("Login first"); return; }
 
-  // Collect form data
   const name = document.getElementById("name").value.trim();
   const age = document.getElementById("age").value.trim();
   const gender = document.getElementById("gender").value;
   const fatherName = document.getElementById("fatherName").value.trim();
   const motherName = document.getElementById("motherName").value.trim();
-  const maritalStatus = maritalSelect.value;
-  const children = childrenInput.value;
+  const maritalStatus = document.getElementById("maritalStatus").value;
+  const children = document.getElementById("children").value;
   const city = document.getElementById("city").value.trim();
   const education = document.getElementById("education").value.trim();
   const profession = document.getElementById("profession").value.trim();
@@ -129,39 +175,31 @@ function submitProfile(){
   const bio = document.getElementById("bio").value.trim();
   const photoFile = document.getElementById("photo").files[0];
 
-  if(!name || !age || !gender || !city || !photoFile){
-    alert("Please fill all required fields and select a photo.");
-    return;
-  }
+  if(!name || !age || !gender || !city || !photoFile){ alert("Fill all required fields."); return; }
 
-  // Upload photo to Cloudinary
   const formData = new FormData();
   formData.append("file", photoFile);
-  formData.append("upload_preset", "profiles"); // Cloudinary unsigned preset
+  formData.append("upload_preset", "profiles"); // Cloudinary preset
 
   fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload", {
-    method: "POST",
-    body: formData
+    method: "POST", body: formData
   })
-  .then(res => res.json())
-  .then(data => {
+  .then(res=>res.json())
+  .then(data=>{
     const photoUrl = data.secure_url;
-
-    // Save profile in Firebase using push() to allow multiple profiles per user
     const profileRef = db.ref("users").push();
     profileRef.set({
       name, age, gender, fatherName, motherName, maritalStatus, children,
-      city, education, profession, religion, phone, bio, photo: photoUrl,
-      status: "pending" // admin approval
-    })
-    .then(()=> {
-      alert("Profile submitted successfully! Waiting for admin approval.");
+      city, education, profession, religion, phone, bio, photo: photoUrl, status:"pending"
+    }).then(()=> {
+      alert("Profile submitted! Waiting for admin approval.");
       window.location.href="index.html";
     })
-    .catch(err=> alert("Database error: "+err.message));
+    .catch(err=> alert("DB error: "+err.message));
   })
-  .catch(err => alert("Photo upload failed: "+err.message));
+  .catch(err=> alert("Photo upload failed: "+err.message));
 }
 </script>
+
 </body>
 </html>
