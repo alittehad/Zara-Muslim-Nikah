@@ -4,31 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Add Profile - Zara Muslim Nikah</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <style>
 body{font-family:Segoe UI;background:#f4f6f9;margin:0;padding:0;}
-header{background:#008080;color:white;padding:15px;text-align:center;}
-header h1{margin:0;font-size:22px;}
-header a{color:white;text-decoration:none;float:right;margin-right:20px;font-weight:bold;}
-.card-form{background:white;padding:25px;margin:20px auto;border-radius:15px;max-width:500px;box-shadow:0 8px 25px rgba(0,0,0,0.15);}
-input,select{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #ccc;}
-button{width:100%;padding:12px;background:#008080;color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;transition:0.3s;}
-button:hover{background:#006666;transform:translateY(-3px);}
+header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px;}
+.card-form{background:white;padding:20px;margin:20px auto;max-width:500px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+.card-form input, .card-form select, .card-form textarea, .card-form button{width:100%;padding:10px;margin:10px 0;border-radius:5px;border:1px solid #ccc;}
+button{background:#008080;color:white;border:none;cursor:pointer;}
+button:hover{background:#006666;}
 </style>
 </head>
-<body>
 
-<header>
-<h1>Add Profile (Admin Only)</h1>
-<a href="dashboard.html">Back to Dashboard</a>
-</header>
+<body>
+<header>Add Profile</header>
 
 <div class="card-form">
 <input id="name" placeholder="Full Name">
 <input id="age" type="number" placeholder="Age">
 <select id="gender">
   <option value="">Select Gender</option>
-  <option>Male</option>
-  <option>Female</option>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
 </select>
 <input id="city" placeholder="City">
 <input id="marital" placeholder="Marital Status">
@@ -37,12 +37,8 @@ button:hover{background:#006666;transform:translateY(-3px);}
 <input id="religion" placeholder="Religion/Sect">
 <input id="phone" placeholder="Phone/WhatsApp">
 <input type="file" id="photo" accept="image/*">
-<button onclick="uploadProfile()">Upload & Save Profile</button>
+<button onclick="submitProfile()">Submit Profile</button>
 </div>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
 firebase.initializeApp({
@@ -55,48 +51,68 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.database();
 
-// Only admin access
+// Redirect if not logged in
 auth.onAuthStateChanged(user=>{
   if(!user) window.location.href="index.html";
-  else if(user.email!=="ngogrant454@gmail.com") window.location.href="index.html";
 });
 
-async function uploadProfile(){
-  const file=document.getElementById("photo").files[0];
-  if(!file){alert("Please select a photo"); return;}
+// Submit Profile
+function submitProfile(){
+  const user = auth.currentUser;
+  if(!user) { alert("Login first"); return; }
 
-  // Cloudinary Upload
+  const name=document.getElementById("name").value;
+  const age=document.getElementById("age").value;
+  const gender=document.getElementById("gender").value;
+  const city=document.getElementById("city").value;
+  const marital=document.getElementById("marital").value;
+  const education=document.getElementById("education").value;
+  const profession=document.getElementById("profession").value;
+  const religion=document.getElementById("religion").value;
+  const phone=document.getElementById("phone").value;
+  const photoFile=document.getElementById("photo").files[0];
+
+  if(!name || !age || !gender || !city || !photoFile){
+    alert("Please fill all required fields and select a photo");
+    return;
+  }
+
+  // Upload photo to Cloudinary (or Firebase Storage)
   const formData=new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset","profiles"); // Cloudinary preset
+  formData.append("file", photoFile);
+  formData.append("upload_preset","profiles"); // Use your Cloudinary unsigned preset
 
-  const res=await fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{
+  fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{
     method:"POST",
-    body: formData
-  });
-  const data=await res.json();
-  const photoURL=data.secure_url;
+    body:formData
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    const photoUrl=data.secure_url;
 
-  // Save profile
-  const uid=db.ref("users").push().key;
-  db.ref("users/"+uid).set({
-    name:document.getElementById("name").value,
-    age:document.getElementById("age").value,
-    gender:document.getElementById("gender").value,
-    city:document.getElementById("city").value,
-    marital:document.getElementById("marital").value,
-    education:document.getElementById("education").value,
-    profession:document.getElementById("profession").value,
-    religion:document.getElementById("religion").value,
-    phone:document.getElementById("phone").value,
-    photo:photoURL,
-    status:"pending"
-  });
-
-  alert("Profile added! Waiting for admin approval.");
-  document.querySelector(".card-form").reset();
+    // Save profile in Firebase Realtime Database
+    const profileRef=db.ref("users/"+user.uid);
+    profileRef.set({
+      name,
+      age,
+      gender,
+      city,
+      marital,
+      education,
+      profession,
+      religion,
+      phone,
+      photo:photoUrl,
+      status:"pending" // admin approval pending
+    })
+    .then(()=>{
+      alert("Profile submitted. Waiting for admin approval.");
+      window.location.href="index.html";
+    })
+    .catch(err=>alert(err.message));
+  })
+  .catch(err=>alert("Photo upload failed: "+err.message));
 }
 </script>
-
 </body>
 </html>
