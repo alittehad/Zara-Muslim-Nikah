@@ -1,88 +1,180 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Login - Zara Muslim Nikah</title>
+<title>Zara Muslim Nikah</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:Segoe UI;
-  background:linear-gradient(135deg,#008080,#00b3b3);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.card{
-  background:white;
-  padding:40px;
-  border-radius:15px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-  text-align:center;
-  width:300px;
-}
-button{
-  padding:10px 20px;
-  background:#008080;
-  color:white;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
-  font-size:16px;
-}
-button:hover{
-  background:#006666;
-}
+body{font-family:Segoe UI;margin:0;background:#f4f6f9;}
+header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px;}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;background:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+.filters{text-align:center;padding:15px;}
+input,select{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:20px;}
+.card{background:white;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);overflow:hidden;cursor:pointer;transition:0.3s;}
+.card:hover{transform:translateY(-5px);}
+.card img{width:100%;height:220px;object-fit:cover;}
+.card-body{text-align:center;padding:15px;}
+.name{font-weight:bold;font-size:18px;}
+.city{color:gray;font-size:14px;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;justify-content:center;align-items:center;}
+.modal-content{background:white;padding:20px;border-radius:10px;width:90%;max-width:400px;}
+button{padding:8px 15px;background:#008080;color:white;border:none;border-radius:5px;cursor:pointer;}
+button:hover{background:#006666;}
 </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h2>Zara Muslim Nikah</h2>
-  <p>Login with Google</p>
-  <button onclick="googleLogin()">Login with Google</button>
+<header>Zara Muslim Nikah</header>
+
+<div class="topbar">
+<div>
+<input type="text" id="search" placeholder="Search name...">
+<select id="genderFilter">
+<option value="">All</option>
+<option value="Male">Male</option>
+<option value="Female">Female</option>
+</select>
+</div>
+<button id="loginBtn">Login</button>
+</div>
+
+<div class="grid" id="profileGrid"></div>
+
+<div class="modal" id="profileModal">
+<div class="modal-content" id="modalContent"></div>
 </div>
 
 <script>
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
   projectId: "zara-muslim-nikah"
 });
 
 const auth = firebase.auth();
+const db = firebase.database();
 
-/* Force persistent login */
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+let allProfiles = [];
 
-/* Google Login */
-function googleLogin(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider);
+/* ---------- AUTH STATE ---------- */
+
+auth.onAuthStateChanged(user=>{
+  const btn = document.getElementById("loginBtn");
+
+  if(user){
+    btn.innerText = "Logout";
+    btn.onclick = ()=> auth.signOut();
+  }else{
+    btn.innerText = "Login";
+    btn.onclick = ()=> window.location.href="login.html";
+  }
+});
+
+/* ---------- LOAD APPROVED PROFILES ---------- */
+
+db.ref("users").orderByChild("status").equalTo("approved")
+.on("value",snap=>{
+  allProfiles=[];
+  snap.forEach(child=>{
+    allProfiles.push({id:child.key,...child.val()});
+  });
+  renderProfiles(allProfiles);
+});
+
+/* ---------- RENDER CARDS ---------- */
+
+function renderProfiles(data){
+  const grid=document.getElementById("profileGrid");
+  grid.innerHTML="";
+  data.forEach(user=>{
+    grid.innerHTML+=`
+      <div class="card" onclick="openProfile('${user.id}')">
+        <img src="${user.photo}">
+        <div class="card-body">
+          <div class="name">${user.name}</div>
+          <div class="city">${user.city}</div>
+        </div>
+      </div>
+    `;
+  });
 }
 
-/* Handle redirect */
-auth.getRedirectResult()
-.then(result=>{
-  if(result.user){
-    window.location.href = "index.html";
-  }
-})
-.catch(error=>{
-  console.log(error.message);
-});
+/* ---------- SEARCH + FILTER ---------- */
 
-/* If already logged in */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    window.location.href = "index.html";
+document.getElementById("search").addEventListener("input",filterProfiles);
+document.getElementById("genderFilter").addEventListener("change",filterProfiles);
+
+function filterProfiles(){
+  const search=document.getElementById("search").value.toLowerCase();
+  const gender=document.getElementById("genderFilter").value;
+
+  const filtered=allProfiles.filter(p=>{
+    return p.name.toLowerCase().includes(search) &&
+          (gender==="" || p.gender===gender);
+  });
+
+  renderProfiles(filtered);
+}
+
+/* ---------- PROFILE OPEN ---------- */
+
+function openProfile(uid){
+  if(!auth.currentUser){
+    alert("Please login first");
+    window.location.href="login.html";
+    return;
   }
-});
+
+  db.ref("users/"+uid).once("value").then(snap=>{
+    const d=snap.val();
+
+    document.getElementById("modalContent").innerHTML=`
+      <h3>${d.name}</h3>
+      <img src="${d.photo}" width="100%">
+      <p><b>Age:</b> ${d.age}</p>
+      <p><b>City:</b> ${d.city}</p>
+      <p><b>Bio:</b> ${d.bio}</p>
+      <button onclick="sendInterest('${uid}')">Send Interest</button>
+      <br><br>
+      <button onclick="closeModal()">Close</button>
+    `;
+
+    document.getElementById("profileModal").style.display="flex";
+  });
+}
+
+function closeModal(){
+  document.getElementById("profileModal").style.display="none";
+}
+
+/* ---------- INTEREST SYSTEM ---------- */
+
+function sendInterest(receiverId){
+  const sender = auth.currentUser.uid;
+
+  db.ref("users/"+sender).once("value").then(snap=>{
+    if(!snap.exists() || snap.val().status!=="approved"){
+      alert("Your profile must be approved first");
+      return;
+    }
+
+    db.ref("interests").push({
+      senderId: sender,
+      receiverId: receiverId,
+      status: "pending",
+      timestamp: Date.now()
+    });
+
+    alert("Interest Sent Successfully");
+  });
+}
 </script>
 
 </body>
