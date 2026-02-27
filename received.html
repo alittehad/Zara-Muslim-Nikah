@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Received Interests</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<h2>Received Interests</h2>
+<div id="receivedList"></div>
+
+<script>
+firebase.initializeApp({
+ apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+ authDomain:"zara-muslim-nikah.firebaseapp.com",
+ databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+ projectId:"zara-muslim-nikah"
+});
+
+const auth=firebase.auth();
+const db=firebase.database();
+
+auth.onAuthStateChanged(user=>{
+ if(!user){
+   window.location="index.html";
+   return;
+ }
+
+ db.ref("interests").on("value",snap=>{
+   let html="";
+
+   snap.forEach(child=>{
+     const d=child.val();
+
+     if(d.receiverId===user.uid){
+       html+=`
+         <div style="border:1px solid #ccc;padding:10px;margin:10px;">
+           From: ${d.senderId}<br>
+           Status: ${d.status}<br>
+           <button onclick="accept('${child.key}')">Accept</button>
+           <button onclick="reject('${child.key}')">Reject</button>
+         </div>
+       `;
+     }
+   });
+
+   document.getElementById("receivedList").innerHTML=html;
+ });
+});
+
+function accept(id){
+ db.ref("interests/"+id).update({status:"accepted"});
+ alert("Accepted");
+}
+
+function reject(id){
+ db.ref("interests/"+id).update({status:"rejected"});
+ alert("Rejected");
+}
+</script>
+
+</body>
+</html>
