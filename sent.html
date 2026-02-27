@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sent Interests</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<h2>Sent Interests</h2>
+<div id="sentList"></div>
+
+<script>
+firebase.initializeApp({
+ apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+ authDomain:"zara-muslim-nikah.firebaseapp.com",
+ databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+ projectId:"zara-muslim-nikah"
+});
+
+const auth=firebase.auth();
+const db=firebase.database();
+
+auth.onAuthStateChanged(user=>{
+ if(!user){
+   window.location="index.html";
+   return;
+ }
+
+ db.ref("interests").on("value",snap=>{
+   let html="";
+
+   snap.forEach(child=>{
+     const d=child.val();
+
+     if(d.senderId===user.uid){
+       html+=`
+         <div style="border:1px solid #ccc;padding:10px;margin:10px;">
+           To: ${d.receiverId}<br>
+           Status: ${d.status}
+         </div>
+       `;
+     }
+   });
+
+   document.getElementById("sentList").innerHTML=html;
+ });
+});
+</script>
+
+</body>
+</html>
