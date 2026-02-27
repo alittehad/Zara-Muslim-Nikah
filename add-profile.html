@@ -12,8 +12,8 @@
 <style>
 body{font-family:Segoe UI;background:#f4f6f9;margin:0;padding:0;}
 header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px;}
-.card-form{background:white;padding:20px;margin:20px auto;max-width:500px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
-.card-form input, .card-form select, .card-form textarea, .card-form button{width:100%;padding:10px;margin:10px 0;border-radius:5px;border:1px solid #ccc;}
+.card-form{background:white;padding:20px;margin:20px auto;max-width:600px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+.card-form input, .card-form select, .card-form textarea, .card-form button{width:100%;padding:10px;margin:8px 0;border-radius:5px;border:1px solid #ccc;}
 button{background:#008080;color:white;border:none;cursor:pointer;}
 button:hover{background:#006666;}
 </style>
@@ -23,21 +23,30 @@ button:hover{background:#006666;}
 <header>Add Profile</header>
 
 <div class="card-form">
-<input id="name" placeholder="Full Name">
-<input id="age" type="number" placeholder="Age">
-<select id="gender">
-  <option value="">Select Gender</option>
-  <option value="Male">Male</option>
-  <option value="Female">Female</option>
-</select>
-<input id="city" placeholder="City">
-<input id="marital" placeholder="Marital Status">
-<input id="education" placeholder="Education">
-<input id="profession" placeholder="Profession">
-<input id="religion" placeholder="Religion/Sect">
-<input id="phone" placeholder="Phone/WhatsApp">
-<input type="file" id="photo" accept="image/*">
-<button onclick="submitProfile()">Submit Profile</button>
+  <input id="name" placeholder="Full Name" required>
+  <select id="gender" required>
+    <option value="">Gender</option>
+    <option value="Male">Ladka</option>
+    <option value="Female">Ladki</option>
+  </select>
+  <input id="age" type="number" placeholder="Age" required>
+  <input id="fatherName" placeholder="Father's Name">
+  <input id="city" placeholder="City" required>
+  <select id="marital" required>
+    <option value="">Marital Status</option>
+    <option value="Unmarried">Unmarried</option>
+    <option value="Married">Married</option>
+    <option value="Divorced">Divorced</option>
+    <option value="Widow/Widower">Widow/Widower</option>
+  </select>
+  <input id="children" type="number" placeholder="Number of Children (if married)">
+  <input id="education" placeholder="Education">
+  <input id="profession" placeholder="Profession">
+  <input id="religion" placeholder="Religion/Sect">
+  <input id="phone" placeholder="Phone/WhatsApp" required>
+  <textarea id="bio" placeholder="Short Bio / About Yourself"></textarea>
+  <input type="file" id="photo" accept="image/*" required>
+  <button onclick="submitProfile()">Submit Profile</button>
 </div>
 
 <script>
@@ -56,23 +65,25 @@ auth.onAuthStateChanged(user=>{
   if(!user) window.location.href="index.html";
 });
 
-// Submit Profile
 function submitProfile(){
   const user = auth.currentUser;
-  if(!user) { alert("Login first"); return; }
+  if(!user){ alert("Please login first"); return; }
 
-  const name=document.getElementById("name").value;
-  const age=document.getElementById("age").value;
+  const name=document.getElementById("name").value.trim();
   const gender=document.getElementById("gender").value;
-  const city=document.getElementById("city").value;
+  const age=document.getElementById("age").value;
+  const fatherName=document.getElementById("fatherName").value.trim();
+  const city=document.getElementById("city").value.trim();
   const marital=document.getElementById("marital").value;
-  const education=document.getElementById("education").value;
-  const profession=document.getElementById("profession").value;
-  const religion=document.getElementById("religion").value;
-  const phone=document.getElementById("phone").value;
+  const children=document.getElementById("children").value;
+  const education=document.getElementById("education").value.trim();
+  const profession=document.getElementById("profession").value.trim();
+  const religion=document.getElementById("religion").value.trim();
+  const phone=document.getElementById("phone").value.trim();
+  const bio=document.getElementById("bio").value.trim();
   const photoFile=document.getElementById("photo").files[0];
 
-  if(!name || !age || !gender || !city || !photoFile){
+  if(!name || !gender || !age || !city || !marital || !phone || !photoFile){
     alert("Please fill all required fields and select a photo");
     return;
   }
@@ -80,7 +91,7 @@ function submitProfile(){
   // Upload photo to Cloudinary (or Firebase Storage)
   const formData=new FormData();
   formData.append("file", photoFile);
-  formData.append("upload_preset","profiles"); // Use your Cloudinary unsigned preset
+  formData.append("upload_preset","profiles"); // Your Cloudinary preset
 
   fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{
     method:"POST",
@@ -90,29 +101,15 @@ function submitProfile(){
   .then(data=>{
     const photoUrl=data.secure_url;
 
-    // Save profile in Firebase Realtime Database
-    const profileRef=db.ref("users/"+user.uid);
-    profileRef.set({
-      name,
-      age,
-      gender,
-      city,
-      marital,
-      education,
-      profession,
-      religion,
-      phone,
-      photo:photoUrl,
-      status:"pending" // admin approval pending
+    db.ref("users/"+user.uid).set({
+      name, gender, age, fatherName, city, marital, children, education, profession, religion, phone, bio, photo:photoUrl, status:"pending"
     })
-    .then(()=>{
-      alert("Profile submitted. Waiting for admin approval.");
-      window.location.href="index.html";
-    })
+    .then(()=>{ alert("Profile submitted successfully. Waiting for admin approval."); window.location.href="index.html"; })
     .catch(err=>alert(err.message));
   })
   .catch(err=>alert("Photo upload failed: "+err.message));
 }
 </script>
+
 </body>
 </html>
