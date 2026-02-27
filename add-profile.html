@@ -14,12 +14,11 @@
 body {font-family:Segoe UI; background:#f4f6f9; margin:0; padding:0;}
 header {background:#008080; color:white; padding:15px; text-align:center; font-size:22px;}
 .container {display:flex; flex-wrap:wrap; justify-content:center; padding:20px;}
-.card-form {background:white; padding:20px; margin:10px; width:350px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+.card-form, .preview {background:white; padding:20px; margin:10px; width:350px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);}
 .card-form input, .card-form select, .card-form textarea, .card-form button {width:100%; padding:10px; margin:8px 0; border-radius:5px; border:1px solid #ccc;}
 button {background:#008080; color:white; border:none; cursor:pointer;}
 button:hover {background:#006666;}
-.preview {background:white; padding:20px; margin:10px; width:350px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);}
-.preview img {width:100%; height:auto; border-radius:10px; margin-bottom:10px;}
+.preview img {width:100%; max-height:400px; object-fit:contain; border-radius:10px; margin-bottom:10px;}
 .preview h3 {margin:5px 0; font-size:20px;}
 .preview p {margin:3px 0; color:#555;}
 </style>
@@ -65,7 +64,7 @@ button:hover {background:#006666;}
     <p><b>Father:</b> <span id="previewFather"></span></p>
     <p><b>Mother:</b> <span id="previewMother"></span></p>
     <p><b>Age:</b> <span id="previewAge"></span></p>
-    <p><b>Marital Status:</b> <span id="previewMarital"></span></p>
+    <p><b>Marital Status:</b> <span id="previewMaritalStatus"></span></p>
     <p><b>Children:</b> <span id="previewChildren"></span></p>
     <p><b>City:</b> <span id="previewCity"></span></p>
     <p><b>Education:</b> <span id="previewEducation"></span></p>
@@ -92,10 +91,11 @@ auth.onAuthStateChanged(user=>{
   if(!user) window.location.href="index.html";
 });
 
-// Show/Hide Children field
+// Toggle Children input
 function toggleChildren(){
   const status=document.getElementById("maritalStatus").value;
   document.getElementById("children").style.display = (status==="Married") ? "block" : "none";
+  updatePreview();
 }
 
 // Live Preview
@@ -104,7 +104,6 @@ fields.forEach(f=>{
   const el=document.getElementById(f);
   el.addEventListener("input",updatePreview);
 });
-
 document.getElementById("photo").addEventListener("change",function(e){
   const file=this.files[0];
   if(file){
@@ -116,7 +115,10 @@ document.getElementById("photo").addEventListener("change",function(e){
 
 function updatePreview(){
   fields.forEach(f=>{
-    const val=document.getElementById(f).value;
+    let val=document.getElementById(f).value;
+    if(f==="children" && document.getElementById("maritalStatus").value!=="Married"){
+      val="N/A";
+    }
     document.getElementById("preview"+f.charAt(0).toUpperCase()+f.slice(1)).innerText=val;
   });
 }
@@ -132,7 +134,7 @@ function submitProfile(){
   const motherName = document.getElementById("motherName").value;
   const age = document.getElementById("age").value;
   const maritalStatus = document.getElementById("maritalStatus").value;
-  const children = document.getElementById("children").value;
+  const children = document.getElementById("children").value || 0;
   const city = document.getElementById("city").value;
   const education = document.getElementById("education").value;
   const profession = document.getElementById("profession").value;
@@ -146,19 +148,25 @@ function submitProfile(){
     return;
   }
 
-  // Upload image to Cloudinary
+  if(maritalStatus==="Married" && !children){
+    alert("Please enter number of children");
+    return;
+  }
+
+  // Cloudinary Upload
   const formData = new FormData();
   formData.append("file", photoFile);
-  formData.append("upload_preset", "profiles"); // your Cloudinary unsigned preset
+  formData.append("upload_preset", "profiles"); // Your Cloudinary preset
 
   fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload", {
-    method:"POST", body:formData
+    method:"POST",
+    body:formData
   })
-  .then(res=>res.json())
-  .then(data=>{
+  .then(res => res.json())
+  .then(data => {
     const photoUrl = data.secure_url;
 
-    // Save to Firebase
+    // Firebase Save
     db.ref("users/"+user.uid).set({
       name, gender, fatherName, motherName, age, maritalStatus,
       children, city, education, profession, religion, phone, bio,
@@ -168,7 +176,7 @@ function submitProfile(){
       window.location.href="index.html";
     }).catch(err=>alert("Firebase Error: "+err.message));
   })
-  .catch(err=>alert("Photo upload failed: "+err.message));
+  .catch(err => alert("Photo upload failed: "+err.message));
 }
 </script>
 
