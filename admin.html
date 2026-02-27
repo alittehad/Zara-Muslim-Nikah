@@ -1,64 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Admin Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - Zara Muslim Nikah</title>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body {font-family:Segoe UI; margin:0; padding:0; background:#f4f6f9;}
+header {background:#008080; color:white; padding:15px; text-align:center; font-size:22px;}
+.grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; padding:20px;}
+.card {background:white; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1); cursor:pointer; transition:0.3s transform;}
+.card:hover {transform:translateY(-5px);}
+.card img {width:100%; height:180px; object-fit:cover; border-radius:15px 15px 0 0;}
+.card-body {padding:10px;}
+.card-body h3 {margin:5px 0; font-size:18px;}
+.card-body p {margin:3px 0; font-size:14px; color:#555;}
+.modal {display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;}
+.modal-content {background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; position:relative;}
+.modal-content img {width:100%; border-radius:10px; margin-bottom:10px;}
+.modal-content h3 {margin:5px 0;}
+.modal-content p {margin:3px 0; color:#555;}
+.close {position:absolute; top:10px; right:10px; cursor:pointer; font-size:20px; border:none; background:none;}
+button.approve-btn {background:#008080; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;}
+button.approve-btn:hover {background:#006666;}
+</style>
 </head>
 <body>
 
-<h2>Admin Dashboard</h2>
-<div id="pending"></div>
+<header>Admin Dashboard</header>
+<div class="grid" id="pendingGrid"></div>
+
+<!-- Modal -->
+<div class="modal" id="profileModal">
+  <div class="modal-content" id="modalContent">
+    <button class="close" onclick="closeModal()">✖</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
 
 <script>
 firebase.initializeApp({
- apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
- authDomain:"zara-muslim-nikah.firebaseapp.com",
- databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
- projectId:"zara-muslim-nikah"
+  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain:"zara-muslim-nikah.firebaseapp.com",
+  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId:"zara-muslim-nikah"
 });
 
-const auth=firebase.auth();
-const db=firebase.database();
-const adminEmail="ngogrant454@gmail.com";
+const auth = firebase.auth();
+const db = firebase.database();
+const adminEmail = "ngogrant454@gmail.com";
 
-// Admin login check
-auth.onAuthStateChanged(user=>{
- if(!user || user.email!==adminEmail){
-   alert("Not admin");
-   window.location="index.html";
- } else {
-   loadPending();
- }
+// Check admin login
+auth.onAuthStateChanged(user => {
+  if(!user || user.email !== adminEmail){
+    alert("Not admin");
+    window.location="index.html";
+  } else {
+    loadPending();
+  }
 });
 
+// Load pending profiles
 function loadPending(){
- db.ref("users").orderByChild("status").equalTo("pending")
- .on("value",snap=>{
-   let html="";
-   snap.forEach(child=>{
-     const d=child.val();
-     html+=`
-       <div>
-         <img src="${d.photo}" width="100"><br>
-         ${d.name}<br>
-         <button onclick="approve('${child.key}')">Approve</button>
-       </div><hr>
-     `;
-   });
-   document.getElementById("pending").innerHTML=html;
- });
+  db.ref("users").orderByChild("status").equalTo("pending").on("value", snap=>{
+    const grid = document.getElementById("pendingGrid");
+    grid.innerHTML = "";
+    snap.forEach(child=>{
+      const d = child.val();
+      grid.innerHTML += `
+        <div class="card" onclick="openProfile('${child.key}')">
+          <img src="${d.photo}" alt="${d.name}">
+          <div class="card-body">
+            <h3>${d.name}</h3>
+            <p><b>City:</b> ${d.city || '-'}</p>
+            <p><b>Age:</b> ${d.age || '-'}</p>
+            <p><b>Status:</b> Waiting for Approval</p>
+          </div>
+        </div>
+      `;
+    });
+  });
 }
 
-// Approve function
-function approve(uid){
- const confirmApprove = confirm("Are you sure you want to approve?");
- if(!confirmApprove) return;
+// Open modal
+function openProfile(uid){
+  db.ref("users/"+uid).once("value").then(snap=>{
+    const d = snap.val();
+    const modalBody = document.getElementById("modalBody");
+    modalBody.innerHTML = `
+      <img src="${d.photo}" alt="${d.name}">
+      <h3>${d.name}</h3>
+      <p><b>Gender:</b> ${d.gender}</p>
+      <p><b>Father:</b> ${d.fatherName}</p>
+      <p><b>Mother:</b> ${d.motherName || '-'}</p>
+      <p><b>Age:</b> ${d.age}</p>
+      <p><b>Marital Status:</b> ${d.maritalStatus}</p>
+      <p><b>Children:</b> ${d.children || 0}</p>
+      <p><b>City:</b> ${d.city}</p>
+      <p><b>Education:</b> ${d.education || '-'}</p>
+      <p><b>Profession:</b> ${d.profession || '-'}</p>
+      <p><b>Religion:</b> ${d.religion || '-'}</p>
+      <p><b>Phone:</b> ${d.phone}</p>
+      <p><b>Bio:</b> ${d.bio || '-'}</p>
+      <button class="approve-btn" onclick="approve('${uid}')">Approve</button>
+    `;
+    document.getElementById("profileModal").style.display="flex";
+  });
+}
 
- db.ref("users/"+uid).update({status:"approved"})
- .then(()=> alert("Profile approved!"))
- .catch(err => alert("Error: "+err.message));
+// Close modal
+function closeModal(){
+  document.getElementById("profileModal").style.display="none";
+}
+
+// Approve profile
+function approve(uid){
+  if(confirm("Are you sure you want to approve this profile?")){
+    db.ref("users/"+uid).update({status:"approved"})
+    .then(()=>{
+      alert("Profile approved successfully!");
+      closeModal();
+      loadPending(); // refresh list
+    })
+    .catch(err => alert("Error: "+err.message));
+  }
 }
 </script>
 
