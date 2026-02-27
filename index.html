@@ -25,8 +25,11 @@ button:hover{background:#006666;}
 .name{font-weight:bold;font-size:18px;}
 .city{color:gray;font-size:14px;}
 .status{color:red;font-size:14px;margin-top:5px;}
+.admin-buttons{margin-top:10px;}
+.admin-buttons button{width:48%; margin:1%; background:#008080;}
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;justify-content:center;align-items:center;z-index:1000;}
 .modal-content{background:white;padding:20px;border-radius:10px;width:90%;max-width:400px;position:relative;}
+.modal-content img{width:100%;height:auto;margin-bottom:10px;}
 </style>
 </head>
 <body>
@@ -63,6 +66,7 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.database();
 let allProfiles=[];
+const adminEmail="ngogrant454@gmail.com";
 
 /* Login/Logout */
 function handleAuth(){
@@ -102,22 +106,40 @@ db.ref("users").on("value", snap=>{
     const val=child.val();
     allProfiles.push({id:child.key,...val});
   });
+  // New posts on top
+  allProfiles = allProfiles.slice().reverse();
   renderProfiles(allProfiles);
 });
 
 /* Render Cards */
 function renderProfiles(data){
+  const user = auth.currentUser;
   const grid=document.getElementById("profileGrid");
   grid.innerHTML="";
-  data.forEach(user=>{
-    const statusLabel=user.status==="approved"?"":"<div class='status'>Waiting for admin approval</div>";
+  data.forEach(profile=>{
+    // Show only approved for normal user
+    if(!user || (user.email!==adminEmail && profile.status!=="approved")) return;
+
+    let statusLabel = profile.status==="approved"?"":"<div class='status'>Waiting for admin approval</div>";
+
+    let adminBtns = "";
+    if(user && user.email===adminEmail && profile.status==="pending"){
+      adminBtns = `
+        <div class="admin-buttons">
+          <button onclick="approveProfile('${profile.id}')">Approve</button>
+          <button onclick="rejectProfile('${profile.id}')">Reject</button>
+        </div>
+      `;
+    }
+
     grid.innerHTML+=`
-      <div class="card" onclick="openProfile('${user.id}')">
-        <img src="${user.photo}">
+      <div class="card" onclick="openProfile('${profile.id}')">
+        <img src="${profile.photo}">
         <div class="card-body">
-          <div class="name">${user.name}</div>
-          <div class="city">${user.city}</div>
+          <div class="name">${profile.name}</div>
+          <div class="city">${profile.city}</div>
           ${statusLabel}
+          ${adminBtns}
         </div>
       </div>
     `;
@@ -142,20 +164,37 @@ function openProfile(uid){
   const user=auth.currentUser;
   db.ref("users/"+uid).once("value").then(snap=>{
     const d=snap.val();
-    if(d.status!=="approved" && (!user || user.email!=="ngogrant454@gmail.com")){
+    if(d.status!=="approved" && (!user || user.email!==adminEmail)){
       alert("Profile waiting for admin approval");
       return;
     }
-    let interestBtn="";
-    if(user && user.uid!==uid) interestBtn=`<button onclick="sendInterest('${uid}')">Interest भेजें</button>`;
+
+    let adminBtns = "";
+    if(user && user.email===adminEmail && d.status==="pending"){
+      adminBtns = `
+        <div class="admin-buttons">
+          <button onclick="approveProfile('${uid}')">Approve</button>
+          <button onclick="rejectProfile('${uid}')">Reject</button>
+        </div>
+      `;
+    }
+
     document.getElementById("modalContent").innerHTML=`
       <button onclick="closeModal()" style="position:absolute;top:10px;right:10px;">✖</button>
       <h3>${d.name}</h3>
-      <img src="${d.photo}" width="100%">
+      <img src="${d.photo}">
       <p><b>Age:</b> ${d.age}</p>
+      <p><b>Father:</b> ${d.fatherName}</p>
+      <p><b>Mother:</b> ${d.motherName}</p>
+      <p><b>Marital Status:</b> ${d.maritalStatus}</p>
+      <p><b>Children:</b> ${d.children || 0}</p>
       <p><b>City:</b> ${d.city}</p>
-      <p><b>Bio:</b> ${d.bio || "N/A"}</p>
-      ${interestBtn}
+      <p><b>Education:</b> ${d.education}</p>
+      <p><b>Profession:</b> ${d.profession}</p>
+      <p><b>Religion:</b> ${d.religion}</p>
+      <p><b>Phone:</b> ${d.phone}</p>
+      <p><b>Bio:</b> ${d.bio}</p>
+      ${adminBtns}
     `;
     document.getElementById("profileModal").style.display="flex";
   });
@@ -164,12 +203,20 @@ function openProfile(uid){
 /* Close Modal */
 function closeModal(){ document.getElementById("profileModal").style.display="none"; }
 
-/* Send Interest */
-function sendInterest(receiverId){
-  const sender=auth.currentUser.uid;
-  db.ref("interests/"+receiverId+"/"+sender).set(true);
-  alert("Interest Sent");
+/* Admin Approve / Reject */
+function approveProfile(uid){
+  db.ref("users/"+uid).update({status:"approved"}).then(()=>{
+    alert("Profile Approved");
+    closeModal();
+  }).catch(err=>alert("Error: "+err.message));
 }
+function rejectProfile(uid){
+  db.ref("users/"+uid).update({status:"rejected"}).then(()=>{
+    alert("Profile Rejected");
+    closeModal();
+  }).catch(err=>alert("Error: "+err.message));
+}
+
 </script>
 
 </body>
