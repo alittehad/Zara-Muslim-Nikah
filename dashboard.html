@@ -1,68 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zara Muslim Nikah Dashboard</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<header>
-  <h1>Zara Muslim Nikah</h1>
-  <div>
-    <a href="https://wa.me/919112170192" target="_blank">WhatsApp</a>
-    <button id="admin-btn" style="display:none;">Admin Panel</button>
-  </div>
-</header>
-
-<!-- Slider Section -->
-<div class="slider-container">
-  <div id="slider" class="slider"></div>
-</div>
-
-<!-- Advertising Banners -->
-<div class="ads-container" id="ads"></div>
-
-<!-- Admin Upload Section -->
-<div id="admin-section" style="display:none; margin:20px;">
-  <h2>Admin Panel</h2>
-
-  <!-- Upload Ads -->
-  <div>
-    <h3>Upload Ads Banner</h3>
-    <input type="file" id="ad-photo" accept="image/*" multiple>
-    <button onclick="uploadAds()">Upload Ads</button>
-  </div>
-
-  <!-- Add Profile -->
-  <div style="margin-top:20px;">
-    <h3>Add Profile</h3>
-    <input id="name" placeholder="Full Name"><br>
-    <input id="age" type="number" placeholder="Age"><br>
-    <select id="gender">
-      <option value="">Select Gender</option>
-      <option>Male</option>
-      <option>Female</option>
-    </select><br>
-    <input id="city" placeholder="City"><br>
-    <input id="marital" placeholder="Marital Status"><br>
-    <input id="education" placeholder="Education"><br>
-    <input id="profession" placeholder="Profession"><br>
-    <input id="religion" placeholder="Religion/Sect"><br>
-    <input id="phone" placeholder="Phone/WhatsApp"><br>
-    <input type="file" id="profile-photo" accept="image/*"><br>
-    <button onclick="uploadProfile()">Add Profile</button>
-  </div>
-</div>
-
-<!-- Profiles Cards -->
-<div class="card-container" id="profiles"></div>
-
-<!-- Firebase Scripts -->
+<title>User Dashboard</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="script.js"></script>
+</head>
+<body>
+
+<h2>My Dashboard</h2>
+
+<button onclick="location.href='received.html'">Received Interests</button>
+<button onclick="location.href='sent.html'">Sent Interests</button>
+
+<h3>My Profile Status:</h3>
+<div id="profileStatus"></div>
+
+<script>
+firebase.initializeApp({
+ apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+ authDomain:"zara-muslim-nikah.firebaseapp.com",
+ databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+ projectId:"zara-muslim-nikah"
+});
+
+const auth=firebase.auth();
+const db=firebase.database();
+
+auth.onAuthStateChanged(user=>{
+ if(!user){
+   window.location="index.html";
+   return;
+ }
+
+ db.ref("users/"+user.uid).once("value").then(snap=>{
+   if(snap.exists()){
+     document.getElementById("profileStatus").innerHTML =
+       snap.val().status.toUpperCase();
+   }
+ });
+});
+</script>
+
 </body>
 </html>
