@@ -1,83 +1,71 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Nikah Site - User</title>
+  <title>Zara Muslim Nikah</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Firebase SDK -->
+
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
     body{
-      font-family: sans-serif;
       margin:0;
-      padding:0;
-      background-color:#fdf6f0;
+      font-family:Arial;
+      background:#fdf6f0;
       text-align:center;
     }
 
-    /* Full screen top image */
-    .fullscreen-image{
-      width: 100%;
-      height: auto;
-      display: block;
+    .top-image{
+      width:100%;
+      height:auto;
+      display:block;
     }
 
-    .hidden{ display:none; }
-    #preview img{ width:150px; margin-top:10px; border-radius:10px; }
+    .box{
+      padding:20px;
+    }
 
-    /* Buttons */
     button{
-      padding: 8px 15px;
-      margin:5px;
+      padding:8px 15px;
       border:none;
-      background-color:#4CAF50;
+      background:#4CAF50;
       color:white;
       border-radius:5px;
       cursor:pointer;
     }
-    button:hover{ background-color:#45a049; }
 
-    /* Mobile friendly */
-    input[type=email], input[type=password], input[type=file]{
+    input{
       padding:8px;
-      width:90%;
-      max-width:300px;
-      margin:5px 0;
-      border-radius:5px;
-      border:1px solid #ccc;
+      margin:10px;
     }
+
+    .hidden{display:none;}
   </style>
 </head>
 <body>
 
-<!-- Full width Nikah Image -->
-<div>
-  <img src="https://res.cloudinary.com/dlsqxs7zl/image/upload/v1690000000/nikah.jpg" 
-       class="fullscreen-image" alt="Nikah">
-</div>
+<img src="https://res.cloudinary.com/dlsqxs7zl/image/upload/v1690000000/nikah.jpg" class="top-image">
 
-<h2>Login / Signup</h2>
+<div class="box">
 
-<!-- Auth Div -->
-<div id="authDiv">
-  <button onclick="loginWithGoogle()">Login with Google</button><br><br>
-</div>
+  <div id="loginDiv">
+    <h2>Zara Muslim Nikah</h2>
+    <button onclick="googleLogin()">Login with Google</button>
+  </div>
 
-<!-- User Dashboard -->
-<div id="userDiv" class="hidden">
-  <h3>Welcome, <span id="userEmail"></span></h3>
-  <input type="file" id="photo"><br>
-  <button onclick="uploadPhoto()">Upload Photo</button>
-  <div id="preview"></div>
-  <button onclick="logout()">Logout</button>
+  <div id="userDiv" class="hidden">
+    <h3 id="userEmail"></h3>
+    <input type="file" id="photo"><br>
+    <button onclick="uploadPhoto()">Upload Profile Photo</button>
+    <p>Status: <span id="statusText"></span></p>
+    <button onclick="logout()">Logout</button>
+  </div>
+
 </div>
 
 <script>
-  // Firebase config
- const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
@@ -86,62 +74,65 @@
   messagingSenderId: "690336186269",
   appId: "1:690336186269:web:8215c1d313c4273c1f7974"
 };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
-  const adminEmail = "ngogrant454@gmail.com";
 
-  // Google login
-  function loginWithGoogle(){
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-      .then(result=>{
-        console.log("User signed in:", result.user.email);
-      })
-      .catch(err=>alert(err.message));
-  }
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
 
-  auth.onAuthStateChanged(user=>{
-    if(user){
-      document.getElementById("authDiv").classList.add("hidden");
-      document.getElementById("userEmail").innerText = user.email;
+const adminEmail = "ngogrant454@gmail.com";
 
-      if(user.email === adminEmail){
-        window.location.href="admin.html"; // redirect admin
-      }else{
-        document.getElementById("userDiv").classList.remove("hidden");
-      }
-    }else{
-      document.getElementById("authDiv").classList.remove("hidden");
-      document.getElementById("userDiv").classList.add("hidden");
+function googleLogin(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider);
+}
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    if(user.email === adminEmail){
+      window.location="admin.html";
+      return;
     }
+    document.getElementById("loginDiv").classList.add("hidden");
+    document.getElementById("userDiv").classList.remove("hidden");
+    document.getElementById("userEmail").innerText=user.email;
+
+    db.ref("users/"+user.uid).on("value",snap=>{
+      if(snap.exists()){
+        document.getElementById("statusText").innerText=snap.val().status;
+      }
+    });
+
+  }else{
+    document.getElementById("loginDiv").classList.remove("hidden");
+    document.getElementById("userDiv").classList.add("hidden");
+  }
+});
+
+function logout(){ auth.signOut(); }
+
+async function uploadPhoto(){
+  const file=document.getElementById("photo").files[0];
+  if(!file){ alert("Select photo"); return;}
+
+  const formData=new FormData();
+  formData.append("file",file);
+  formData.append("upload_preset","profiles");
+
+  const res=await fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{
+    method:"POST",
+    body:formData
   });
 
-  function logout(){ auth.signOut(); }
+  const data=await res.json();
 
-  // Upload photo to Cloudinary
-  async function uploadPhoto(){
-    const file=document.getElementById("photo").files[0];
-    if(!file){ alert("Select photo!"); return; }
-    const formData=new FormData();
-    formData.append('file',file);
-    formData.append('upload_preset','profiles'); // your unsigned preset
-    const cloudName='dlsqxs7zl';
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{
-      method:'POST', body:formData
-    });
-    const data = await res.json();
-    document.getElementById("preview").innerHTML=`<img src="${data.secure_url}">`;
+  db.ref("users/"+auth.currentUser.uid).set({
+    email:auth.currentUser.email,
+    photo:data.secure_url,
+    status:"pending"
+  });
 
-    // Save URL in Firebase
-    const userId = auth.currentUser.uid;
-    db.ref("users/"+userId).set({
-      email:auth.currentUser.email,
-      photo_url:data.secure_url,
-      status:"pending"
-    });
-    alert("Photo uploaded! Waiting admin approval.");
-  }
+  alert("Uploaded! Wait for admin approval.");
+}
 </script>
 
 </body>
