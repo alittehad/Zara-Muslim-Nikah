@@ -9,43 +9,37 @@
 
 <style>
 body{
-  margin:0;
   font-family:Segoe UI;
-  background:linear-gradient(135deg,#008080,#00b3b3);
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
+  background:#f4f6f9;
 }
-.card{
+.box{
   background:white;
   padding:40px;
   border-radius:15px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  box-shadow:0 5px 20px rgba(0,0,0,0.1);
   text-align:center;
-  width:300px;
 }
 button{
-  padding:10px 20px;
+  padding:12px 25px;
   background:#008080;
   color:white;
   border:none;
-  border-radius:5px;
+  border-radius:8px;
   cursor:pointer;
   font-size:16px;
 }
-button:hover{
-  background:#006666;
-}
+button:hover{background:#006666;}
 </style>
 </head>
-
 <body>
 
-<div class="card">
-  <h2>Zara Muslim Nikah</h2>
-  <p>Login with Google</p>
-  <button onclick="googleLogin()">Login with Google</button>
+<div class="box">
+<h2>Login</h2>
+<button onclick="googleLogin()">Login with Google</button>
 </div>
 
 <script>
@@ -57,30 +51,22 @@ firebase.initializeApp({
 
 const auth = firebase.auth();
 
-/* Force persistent login */
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-/* Google Login */
 function googleLogin(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider);
+
+  auth.signInWithPopup(provider)
+  .then(()=>{
+    window.location.replace("index.html");
+  })
+  .catch(error=>{
+    alert(error.message);
+  });
 }
 
-/* Handle redirect */
-auth.getRedirectResult()
-.then(result=>{
-  if(result.user){
-    window.location.href = "index.html";
-  }
-})
-.catch(error=>{
-  console.log(error.message);
-});
-
-/* If already logged in */
+/* IMPORTANT REDIRECT FIX */
 auth.onAuthStateChanged(user=>{
   if(user){
-    window.location.href = "index.html";
+    window.location.replace("index.html");
   }
 });
 </script>
