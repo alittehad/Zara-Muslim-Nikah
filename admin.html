@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<title>Admin</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -11,14 +9,14 @@
 <body>
 
 <h2>Admin Dashboard</h2>
-<div id="profiles"></div>
+<div id="pending"></div>
 
 <script>
 firebase.initializeApp({
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
+ apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+ authDomain:"zara-muslim-nikah.firebaseapp.com",
+ databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+ projectId:"zara-muslim-nikah"
 });
 
 const auth=firebase.auth();
@@ -27,28 +25,29 @@ const adminEmail="ngogrant454@gmail.com";
 
 auth.onAuthStateChanged(user=>{
  if(!user || user.email!==adminEmail){
+   alert("Not admin");
    window.location="index.html";
  }
 });
 
 db.ref("users").orderByChild("status").equalTo("pending")
 .on("value",snap=>{
- const div=document.getElementById("profiles");
- div.innerHTML="";
+ let html="";
  snap.forEach(child=>{
-   const data=child.val();
-   div.innerHTML+=`
+   const d=child.val();
+   html+=`
      <div>
-       <p>${data.email}</p>
-       <img src="${data.photo}" width="100">
+       <img src="${d.photo}" width="100"><br>
+       ${d.name}<br>
        <button onclick="approve('${child.key}')">Approve</button>
-     </div>
+     </div><hr>
    `;
  });
+ document.getElementById("pending").innerHTML=html;
 });
 
-function approve(id){
- db.ref("users/"+id).update({status:"approved"});
+function approve(uid){
+ db.ref("users/"+uid).update({status:"approved"});
  alert("Approved");
 }
 </script>
