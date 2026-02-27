@@ -1,137 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Zara Muslim Nikah</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-  <style>
-    body{
-      margin:0;
-      font-family:Arial;
-      background:#fdf6f0;
-      text-align:center;
-    }
-
-    .top-image{
-      width:100%;
-      height:auto;
-      display:block;
-    }
-
-    .box{
-      padding:20px;
-    }
-
-    button{
-      padding:8px 15px;
-      border:none;
-      background:#4CAF50;
-      color:white;
-      border-radius:5px;
-      cursor:pointer;
-    }
-
-    input{
-      padding:8px;
-      margin:10px;
-    }
-
-    .hidden{display:none;}
-  </style>
+<title>Zara Muslim Nikah</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+body{font-family:Arial;background:#fdf6f0;text-align:center;}
+input,select,textarea{padding:8px;margin:5px;width:90%;max-width:300px;}
+button{padding:8px 15px;background:#4CAF50;color:white;border:none;}
+.hidden{display:none;}
+</style>
 </head>
 <body>
 
-<img src="https://res.cloudinary.com/dlsqxs7zl/image/upload/v1690000000/nikah.jpg" class="top-image">
+<h2>Zara Muslim Nikah</h2>
 
-<div class="box">
+<div id="loginDiv">
+<button onclick="login()">Login with Google</button>
+</div>
 
-  <div id="loginDiv">
-    <h2>Zara Muslim Nikah</h2>
-    <button onclick="googleLogin()">Login with Google</button>
-  </div>
+<div id="profileDiv" class="hidden">
+<h3>Create Profile</h3>
 
-  <div id="userDiv" class="hidden">
-    <h3 id="userEmail"></h3>
-    <input type="file" id="photo"><br>
-    <button onclick="uploadPhoto()">Upload Profile Photo</button>
-    <p>Status: <span id="statusText"></span></p>
-    <button onclick="logout()">Logout</button>
-  </div>
+<input id="name" placeholder="Full Name"><br>
+<input id="age" placeholder="Age"><br>
+<input id="city" placeholder="City"><br>
 
+<select id="gender">
+<option value="Male">Male</option>
+<option value="Female">Female</option>
+</select><br>
+
+<textarea id="bio" placeholder="About you"></textarea><br>
+
+<input type="file" id="photo"><br>
+
+<button onclick="saveProfile()">Submit Profile</button>
+<p id="status"></p>
+
+<button onclick="logout()">Logout</button>
 </div>
 
 <script>
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah",
-  storageBucket: "zara-muslim-nikah.appspot.com",
-  messagingSenderId: "690336186269",
-  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
-};
+  projectId: "zara-muslim-nikah"
+});
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
+const auth=firebase.auth();
+const db=firebase.database();
 
-const adminEmail = "ngogrant454@gmail.com";
-
-function googleLogin(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider);
+function login(){
+ const provider=new firebase.auth.GoogleAuthProvider();
+ auth.signInWithPopup(provider);
 }
 
 auth.onAuthStateChanged(user=>{
-  if(user){
-    if(user.email === adminEmail){
+ if(user){
+  db.ref("users/"+user.uid).once("value").then(snap=>{
+    if(snap.exists() && snap.val().role==="admin"){
       window.location="admin.html";
-      return;
+    }else{
+      document.getElementById("loginDiv").classList.add("hidden");
+      document.getElementById("profileDiv").classList.remove("hidden");
     }
-    document.getElementById("loginDiv").classList.add("hidden");
-    document.getElementById("userDiv").classList.remove("hidden");
-    document.getElementById("userEmail").innerText=user.email;
-
-    db.ref("users/"+user.uid).on("value",snap=>{
-      if(snap.exists()){
-        document.getElementById("statusText").innerText=snap.val().status;
-      }
-    });
-
-  }else{
-    document.getElementById("loginDiv").classList.remove("hidden");
-    document.getElementById("userDiv").classList.add("hidden");
-  }
+  });
+ }
 });
 
-function logout(){ auth.signOut(); }
+function logout(){auth.signOut();}
 
-async function uploadPhoto(){
+async function saveProfile(){
+ try{
   const file=document.getElementById("photo").files[0];
-  if(!file){ alert("Select photo"); return;}
+  if(!file){alert("Select photo");return;}
 
   const formData=new FormData();
   formData.append("file",file);
   formData.append("upload_preset","profiles");
 
   const res=await fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{
-    method:"POST",
-    body:formData
+    method:"POST",body:formData
   });
 
   const data=await res.json();
 
   db.ref("users/"+auth.currentUser.uid).set({
-    email:auth.currentUser.email,
+    name:document.getElementById("name").value,
+    age:document.getElementById("age").value,
+    city:document.getElementById("city").value,
+    gender:document.getElementById("gender").value,
+    bio:document.getElementById("bio").value,
     photo:data.secure_url,
-    status:"pending"
+    status:"pending",
+    role:"user"
   });
 
-  alert("Uploaded! Wait for admin approval.");
+  document.getElementById("status").innerText="Profile submitted. Wait for admin approval.";
+ }catch(e){
+  alert("Error saving profile");
+ }
 }
 </script>
 
