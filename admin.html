@@ -25,8 +25,10 @@ header {background:#008080; color:white; padding:15px; text-align:center; font-s
 .modal-content h3 {margin:5px 0;}
 .modal-content p {margin:3px 0; color:#555;}
 .close {position:absolute; top:10px; right:10px; cursor:pointer; font-size:20px; border:none; background:none;}
-button.approve-btn {background:#008080; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;}
+button.approve-btn {background:#008080; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer; margin-right:10px;}
 button.approve-btn:hover {background:#006666;}
+button.reject-btn {background:#d9534f; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;}
+button.reject-btn:hover {background:#b52b27;}
 </style>
 </head>
 <body>
@@ -107,6 +109,7 @@ function openProfile(uid){
       <p><b>Phone:</b> ${d.phone}</p>
       <p><b>Bio:</b> ${d.bio || '-'}</p>
       <button class="approve-btn" onclick="approve('${uid}')">Approve</button>
+      <button class="reject-btn" onclick="reject('${uid}')">Reject</button>
     `;
     document.getElementById("profileModal").style.display="flex";
   });
@@ -124,7 +127,20 @@ function approve(uid){
     .then(()=>{
       alert("Profile approved successfully!");
       closeModal();
-      loadPending(); // refresh list
+      loadPending();
+    })
+    .catch(err => alert("Error: "+err.message));
+  }
+}
+
+// Reject profile
+function reject(uid){
+  if(confirm("Are you sure you want to reject this profile?")){
+    db.ref("users/"+uid).update({status:"rejected"})
+    .then(()=>{
+      alert("Profile rejected!");
+      closeModal();
+      loadPending();
     })
     .catch(err => alert("Error: "+err.message));
   }
