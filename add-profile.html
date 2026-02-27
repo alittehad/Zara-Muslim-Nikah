@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Add Profile - Zara Muslim Nikah</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -21,6 +20,7 @@ button:hover {background:#006666;}
 .preview img {width:100%; max-height:400px; object-fit:contain; border-radius:10px; margin-bottom:10px;}
 .preview h3 {margin:5px 0; font-size:20px;}
 .preview p {margin:3px 0; color:#555;}
+.status {font-weight:bold; color:red;}
 </style>
 </head>
 <body>
@@ -72,6 +72,7 @@ button:hover {background:#006666;}
     <p><b>Religion:</b> <span id="previewReligion"></span></p>
     <p><b>Phone:</b> <span id="previewPhone"></span></p>
     <p><b>Bio:</b> <span id="previewBio"></span></p>
+    <p><b>Status:</b> <span class="status" id="previewStatus">Waiting for approval</span></p>
   </div>
 </div>
 
@@ -83,28 +84,27 @@ firebase.initializeApp({
   projectId: "zara-muslim-nikah"
 });
 
-const auth=firebase.auth();
-const db=firebase.database();
+const auth = firebase.auth();
+const db = firebase.database();
 
 // Redirect if not logged in
-auth.onAuthStateChanged(user=>{
-  if(!user) window.location.href="index.html";
+auth.onAuthStateChanged(user => {
+  if (!user) window.location.href = "index.html";
 });
 
 // Toggle Children input
-function toggleChildren(){
-  const status=document.getElementById("maritalStatus").value;
-  document.getElementById("children").style.display = (status==="Married") ? "block" : "none";
+function toggleChildren() {
+  const status = document.getElementById("maritalStatus").value;
+  document.getElementById("children").style.display = (status === "Married") ? "block" : "none";
   updatePreview();
 }
 
 // Live Preview
 const fields = ["name","gender","fatherName","motherName","age","maritalStatus","children","city","education","profession","religion","phone","bio"];
 fields.forEach(f=>{
-  const el=document.getElementById(f);
-  el.addEventListener("input",updatePreview);
+  document.getElementById(f).addEventListener("input", updatePreview);
 });
-document.getElementById("photo").addEventListener("change",function(e){
+document.getElementById("photo").addEventListener("change", function(){
   const file=this.files[0];
   if(file){
     const reader=new FileReader();
@@ -113,7 +113,7 @@ document.getElementById("photo").addEventListener("change",function(e){
   }
 });
 
-function updatePreview(){
+function updatePreview() {
   fields.forEach(f=>{
     let val=document.getElementById(f).value;
     if(f==="children" && document.getElementById("maritalStatus").value!=="Married"){
@@ -121,6 +121,9 @@ function updatePreview(){
     }
     document.getElementById("preview"+f.charAt(0).toUpperCase()+f.slice(1)).innerText=val;
   });
+
+  // Show status preview
+  document.getElementById("previewStatus").innerText = "Waiting for approval";
 }
 
 // Submit Profile
@@ -156,27 +159,26 @@ function submitProfile(){
   // Cloudinary Upload
   const formData = new FormData();
   formData.append("file", photoFile);
-  formData.append("upload_preset", "profiles"); // Your Cloudinary preset
+  formData.append("upload_preset", "profiles");
 
   fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload", {
-    method:"POST",
-    body:formData
+    method:"POST", body:formData
   })
-  .then(res => res.json())
-  .then(data => {
+  .then(res=>res.json())
+  .then(data=>{
     const photoUrl = data.secure_url;
 
-    // Firebase Save
     db.ref("users/"+user.uid).set({
       name, gender, fatherName, motherName, age, maritalStatus,
       children, city, education, profession, religion, phone, bio,
       photo: photoUrl, status:"pending"
     }).then(()=>{
+      document.getElementById("previewStatus").innerText = "Waiting for approval";
       alert("Profile submitted! Waiting for admin approval.");
       window.location.href="index.html";
     }).catch(err=>alert("Firebase Error: "+err.message));
   })
-  .catch(err => alert("Photo upload failed: "+err.message));
+  .catch(err=>alert("Photo upload failed: "+err.message));
 }
 </script>
 
