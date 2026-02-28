@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,142 +10,268 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body {font-family:Segoe UI; margin:0; padding:0; background:#f4f6f9;}
-header {background:#008080; color:white; padding:15px; text-align:center; font-size:22px;}
-.grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; padding:20px;}
-.card {background:white; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1); cursor:pointer; transition:0.3s transform;}
-.card:hover {transform:translateY(-5px);}
-.card img {width:100%; height:180px; object-fit:cover; border-radius:15px 15px 0 0;}
-.card-body {padding:10px;}
-.card-body h3 {margin:5px 0; font-size:18px;}
-.card-body p {margin:3px 0; font-size:14px; color:#555;}
-.modal {display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;}
-.modal-content {background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; position:relative;}
-.modal-content img {width:100%; border-radius:10px; margin-bottom:10px;}
-.modal-content h3 {margin:5px 0;}
-.modal-content p {margin:3px 0; color:#555;}
-.close {position:absolute; top:10px; right:10px; cursor:pointer; font-size:20px; border:none; background:none;}
-button.approve-btn {background:#008080; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer; margin-right:10px;}
-button.approve-btn:hover {background:#006666;}
-button.reject-btn {background:#d9534f; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;}
-button.reject-btn:hover {background:#b52b27;}
+body{
+margin:0;
+font-family:Segoe UI;
+display:flex;
+background:#f4f6f9;
+}
+
+/* Sidebar */
+.sidebar{
+width:220px;
+background:#111827;
+color:white;
+min-height:100vh;
+padding:20px;
+}
+
+.sidebar h2{
+text-align:center;
+margin-bottom:30px;
+}
+
+.sidebar button{
+width:100%;
+margin:10px 0;
+padding:10px;
+background:#1f2937;
+border:none;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+.sidebar button:hover{
+background:#374151;
+}
+
+/* Main */
+.main{
+flex:1;
+padding:20px;
+}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
+margin-bottom:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+.card h3{
+margin:0;
+font-size:18px;
+color:gray;
+}
+
+.card p{
+font-size:22px;
+font-weight:bold;
+margin:10px 0 0;
+}
+
+/* Tables */
+.section{
+background:white;
+padding:20px;
+border-radius:12px;
+margin-bottom:20px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
+text-align:left;
+}
+
+button.approve{
+background:green;
+}
+
+button.reject{
+background:red;
+}
 </style>
 </head>
 <body>
 
-<header>Admin Dashboard</header>
-<div class="grid" id="pendingGrid"></div>
+<div class="sidebar">
+<h2>Admin Panel</h2>
+<button onclick="showSection('dashboard')">📊 Dashboard</button>
+<button onclick="showSection('pending')">⏳ Pending</button>
+<button onclick="showSection('premium')">🏆 Premium Users</button>
+<button onclick="showSection('payments')">💳 Payments</button>
+<button onclick="logout()">🚪 Logout</button>
+</div>
 
-<!-- Modal -->
-<div class="modal" id="profileModal">
-  <div class="modal-content" id="modalContent">
-    <button class="close" onclick="closeModal()">✖</button>
-    <div id="modalBody"></div>
-  </div>
+<div class="main">
+
+<div class="topbar">
+<h2>Dashboard Overview</h2>
+</div>
+
+<!-- Stats -->
+<div class="cards">
+<div class="card">
+<h3>Total Users</h3>
+<p id="totalUsers">0</p>
+</div>
+
+<div class="card">
+<h3>Approved Profiles</h3>
+<p id="approvedUsers">0</p>
+</div>
+
+<div class="card">
+<h3>Premium Users</h3>
+<p id="premiumUsers">0</p>
+</div>
+
+<div class="card">
+<h3>Total Revenue (₹)</h3>
+<p id="totalRevenue">0</p>
+</div>
+</div>
+
+<!-- Pending Section -->
+<div class="section" id="pendingSection">
+<h3>Pending Approvals</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>City</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="pendingTable"></tbody>
+</table>
+</div>
+
+<!-- Premium Section -->
+<div class="section" id="premiumSection" style="display:none;">
+<h3>Premium Users</h3>
+<ul id="premiumList"></ul>
+</div>
+
+<!-- Payments Section -->
+<div class="section" id="paymentsSection" style="display:none;">
+<h3>Recent Payments</h3>
+<ul id="paymentsList"></ul>
+</div>
+
 </div>
 
 <script>
+
 firebase.initializeApp({
-  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain:"zara-muslim-nikah.firebaseapp.com",
-  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId:"zara-muslim-nikah"
+ apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+ authDomain:"zara-muslim-nikah.firebaseapp.com",
+ databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+ projectId:"zara-muslim-nikah"
 });
 
-const auth = firebase.auth();
-const db = firebase.database();
-const adminEmail = "ngogrant454@gmail.com";
+const auth=firebase.auth();
+const db=firebase.database();
+const adminEmail="ngogrant454@gmail.com";
 
-// Check admin login
-auth.onAuthStateChanged(user => {
-  if(!user || user.email !== adminEmail){
-    alert("Not admin");
-    window.location="index.html";
-  } else {
-    loadPending();
-  }
+/* AUTH CHECK */
+auth.onAuthStateChanged(user=>{
+ if(!user || user.email!==adminEmail){
+   alert("Not Authorized");
+   window.location="index.html";
+ }
 });
 
-// Load pending profiles
-function loadPending(){
-  db.ref("users").orderByChild("status").equalTo("pending").on("value", snap=>{
-    const grid = document.getElementById("pendingGrid");
-    grid.innerHTML = "";
-    snap.forEach(child=>{
-      const d = child.val();
-      grid.innerHTML += `
-        <div class="card" onclick="openProfile('${child.key}')">
-          <img src="${d.photo}" alt="${d.name}">
-          <div class="card-body">
-            <h3>${d.name}</h3>
-            <p><b>City:</b> ${d.city || '-'}</p>
-            <p><b>Age:</b> ${d.age || '-'}</p>
-            <p><b>Status:</b> Waiting for Approval</p>
-          </div>
-        </div>
-      `;
-    });
-  });
+/* LOAD STATS */
+db.ref("users").on("value",snap=>{
+ let total=0, approved=0, premium=0;
+ snap.forEach(child=>{
+   total++;
+   const d=child.val();
+   if(d.status==="approved") approved++;
+   if(d.premium) premium++;
+   if(d.status==="pending"){
+     document.getElementById("pendingTable").innerHTML+=`
+     <tr>
+     <td>${d.name}</td>
+     <td>${d.city}</td>
+     <td>
+     <button class="approve" onclick="approve('${child.key}')">Approve</button>
+     <button class="reject" onclick="reject('${child.key}')">Reject</button>
+     </td>
+     </tr>`;
+   }
+   if(d.premium){
+     document.getElementById("premiumList").innerHTML+=`<li>${d.name} (${d.city})</li>`;
+   }
+ });
+
+ document.getElementById("totalUsers").innerText=total;
+ document.getElementById("approvedUsers").innerText=approved;
+ document.getElementById("premiumUsers").innerText=premium;
+});
+
+/* PAYMENTS */
+db.ref("payments").on("value",snap=>{
+ let revenue=0;
+ snap.forEach(child=>{
+   const d=child.val();
+   revenue+=d.amount || 0;
+   document.getElementById("paymentsList").innerHTML+=
+   `<li>${d.uid} - ₹${d.amount}</li>`;
+ });
+ document.getElementById("totalRevenue").innerText=revenue;
+});
+
+/* ACTIONS */
+function approve(id){
+ db.ref("users/"+id).update({status:"approved"});
+ alert("Approved");
+ location.reload();
 }
 
-// Open modal
-function openProfile(uid){
-  db.ref("users/"+uid).once("value").then(snap=>{
-    const d = snap.val();
-    const modalBody = document.getElementById("modalBody");
-    modalBody.innerHTML = `
-      <img src="${d.photo}" alt="${d.name}">
-      <h3>${d.name}</h3>
-      <p><b>Gender:</b> ${d.gender}</p>
-      <p><b>Father:</b> ${d.fatherName}</p>
-      <p><b>Mother:</b> ${d.motherName || '-'}</p>
-      <p><b>Age:</b> ${d.age}</p>
-      <p><b>Marital Status:</b> ${d.maritalStatus}</p>
-      <p><b>Children:</b> ${d.children || 0}</p>
-      <p><b>City:</b> ${d.city}</p>
-      <p><b>Education:</b> ${d.education || '-'}</p>
-      <p><b>Profession:</b> ${d.profession || '-'}</p>
-      <p><b>Religion:</b> ${d.religion || '-'}</p>
-      <p><b>Phone:</b> ${d.phone}</p>
-      <p><b>Bio:</b> ${d.bio || '-'}</p>
-      <button class="approve-btn" onclick="approve('${uid}')">Approve</button>
-      <button class="reject-btn" onclick="reject('${uid}')">Reject</button>
-    `;
-    document.getElementById("profileModal").style.display="flex";
-  });
+function reject(id){
+ db.ref("users/"+id).remove();
+ alert("Deleted");
+ location.reload();
 }
 
-// Close modal
-function closeModal(){
-  document.getElementById("profileModal").style.display="none";
+function logout(){
+ auth.signOut();
 }
 
-// Approve profile
-function approve(uid){
-  if(confirm("Are you sure you want to approve this profile?")){
-    db.ref("users/"+uid).update({status:"approved"})
-    .then(()=>{
-      alert("Profile approved successfully!");
-      closeModal();
-      loadPending();
-    })
-    .catch(err => alert("Error: "+err.message));
-  }
+function showSection(sec){
+ document.getElementById("pendingSection").style.display="none";
+ document.getElementById("premiumSection").style.display="none";
+ document.getElementById("paymentsSection").style.display="none";
+
+ if(sec==="pending") document.getElementById("pendingSection").style.display="block";
+ if(sec==="premium") document.getElementById("premiumSection").style.display="block";
+ if(sec==="payments") document.getElementById("paymentsSection").style.display="block";
 }
 
-// Reject profile
-function reject(uid){
-  if(confirm("Are you sure you want to reject this profile?")){
-    db.ref("users/"+uid).update({status:"rejected"})
-    .then(()=>{
-      alert("Profile rejected!");
-      closeModal();
-      loadPending();
-    })
-    .catch(err => alert("Error: "+err.message));
-  }
-}
 </script>
-
 </body>
 </html>
