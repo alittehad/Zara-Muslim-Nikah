@@ -4,7 +4,277 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zara Muslim Nikah</title>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zara Muslim Nikah</title>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#f2f2f2}
+header{background:#0a7c7c;color:white;padding:15px;text-align:center;font-size:22px}
+button{padding:7px 12px;border:none;border-radius:6px;background:#0a7c7c;color:white;cursor:pointer}
+button:hover{background:#075e5e}
+
+.topbar{text-align:center;padding:10px}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+padding:20px;
+}
+
+.card{
+background:white;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+overflow:hidden;
+cursor:pointer;
+transition:0.3s;
+}
+
+.card:hover{transform:translateY(-5px)}
+
+.card img{
+width:100%;
+height:260px;
+object-fit:contain;
+background:#eee;
+}
+
+.card-body{text-align:center;padding:10px}
+.name{font-weight:bold;font-size:18px}
+.city{color:gray}
+.premium{color:gold;font-size:14px}
+.featured{color:red;font-size:13px}
+
+.modal{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.modal-content{
+background:white;
+width:95%;
+max-width:500px;
+max-height:90vh;
+overflow-y:auto;
+border-radius:10px;
+padding:20px;
+position:relative;
+}
+
+.modal-content img{
+width:100%;
+height:auto;
+object-fit:contain;
+}
+.close{
+position:absolute;
+top:10px;
+right:10px;
+cursor:pointer;
+font-size:18px;
+}
+</style>
+</head>
+<body>
+
+<header>Zara Muslim Nikah</header>
+
+<div class="topbar">
+<button id="loginBtn" onclick="handleAuth()">Login</button>
+<button onclick="goAdd()">रिश्ता जोड़ें</button>
+</div>
+
+<div class="grid" id="profileGrid"></div>
+
+<div class="modal" id="profileModal">
+<div class="modal-content" id="modalContent"></div>
+</div>
+
+<script>
+
+firebase.initializeApp({
+ apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+ authDomain:"zara-muslim-nikah.firebaseapp.com",
+ databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+ projectId:"zara-muslim-nikah"
+});
+
+const auth=firebase.auth();
+const db=firebase.database();
+const adminEmail="ngogrant454@gmail.com";
+let profiles=[];
+
+/* LOGIN */
+function handleAuth(){
+ if(auth.currentUser){
+   auth.signOut();
+ }else{
+   const provider=new firebase.auth.GoogleAuthProvider();
+   auth.signInWithPopup(provider);
+ }
+}
+
+auth.onAuthStateChanged(user=>{
+ document.getElementById("loginBtn").innerText=user?"Logout":"Login";
+ renderProfiles();
+});
+
+/* ADD */
+function goAdd(){
+ if(!auth.currentUser){
+   alert("Login required");
+   return;
+ }
+ window.location="add-profile.html";
+}
+
+/* LOAD */
+db.ref("users").on("value",snap=>{
+ profiles=[];
+ snap.forEach(child=>{
+   profiles.push({id:child.key,...child.val()});
+ });
+
+ // Featured first
+ profiles.sort((a,b)=>{
+   if(a.featured && !b.featured) return -1;
+   if(!a.featured && b.featured) return 1;
+   return 0;
+ });
+
+ // Newest first
+ profiles.reverse();
+
+ renderProfiles();
+});
+
+/* RENDER */
+function renderProfiles(){
+ const grid=document.getElementById("profileGrid");
+ const user=auth.currentUser;
+ grid.innerHTML="";
+
+ profiles.forEach(p=>{
+
+   if(!user && p.status!=="approved") return;
+   if(user && user.email!==adminEmail && p.status!=="approved") return;
+
+   let adminBtns="";
+   if(user && user.email===adminEmail && p.status==="pending"){
+     adminBtns=`
+     <button onclick="event.stopPropagation();approve('${p.id}')">Approve</button>
+     <button onclick="event.stopPropagation();reject('${p.id}')">Reject</button>`;
+   }
+
+   grid.innerHTML+=`
+   <div class="card" onclick="openProfile('${p.id}')">
+     <img src="${p.photo}">
+     <div class="card-body">
+       <div class="name">${p.name}</div>
+       <div class="city">${p.city}</div>
+       ${p.premium?"<div class='premium'>🏆 Premium</div>":""}
+       ${p.featured?"<div class='featured'>🔥 Featured</div>":""}
+       <div id="likeCount-${p.id}">❤️</div>
+       ${adminBtns}
+     </div>
+   </div>`;
+
+   // Load like count
+   db.ref("likes/"+p.id).once("value").then(s=>{
+     document.getElementById("likeCount-"+p.id).innerText=
+     "❤️ "+s.numChildren()+" Likes";
+   });
+ });
+}
+
+/* OPEN */
+function openProfile(id){
+ const user=auth.currentUser;
+ if(!user){ alert("Login required"); return; }
+
+ db.ref("users/"+id).once("value").then(snap=>{
+   const d=snap.val();
+   if(user.email!==adminEmail && d.status!=="approved"){
+     alert("Waiting approval");
+     return;
+   }
+
+   document.getElementById("modalContent").innerHTML=`
+   <div class="close" onclick="closeModal()">✖</div>
+   <h3>${d.name}</h3>
+   <img src="${d.photo}">
+   <p>Age: ${d.age}</p>
+   <p>City: ${d.city}</p>
+   <p>Education: ${d.education}</p>
+   <p>Profession: ${d.profession}</p>
+   <p>Bio: ${d.bio}</p>
+
+   <button onclick="like('${id}')">❤️ Like</button>
+   <button onclick="interest('${id}')">🔔 Interest</button>
+   <button onclick="chat()">💬 Chat Now</button>
+   `;
+
+   document.getElementById("profileModal").style.display="flex";
+ });
+}
+
+function closeModal(){
+ document.getElementById("profileModal").style.display="none";
+}
+
+/* LIKE */
+function like(id){
+ db.ref("likes/"+id+"/"+auth.currentUser.uid).set(true);
+ alert("Liked");
+}
+
+/* INTEREST */
+function interest(id){
+ db.ref("interests/"+id+"/"+auth.currentUser.uid).set(true);
+ alert("Interest Sent");
+}
+
+/* CHAT */
+function chat(){
+ const user=auth.currentUser;
+ db.ref("payments/"+user.uid).once("value").then(s=>{
+   if(s.exists()){
+     window.open("https://wa.me/918806940156","_blank");
+   }else{
+     alert("पहले Payment करें");
+     window.location="payment.html";
+   }
+ });
+}
+
+/* ADMIN */
+function approve(id){
+ db.ref("users/"+id).update({status:"approved"});
+ alert("Approved");
+}
+
+function reject(id){
+ db.ref("users/"+id).remove();
+ alert("Deleted");
+}
+
+</script>
+</body>
+</html>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
