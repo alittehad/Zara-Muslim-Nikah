@@ -5,31 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zara Muslim Nikah</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{font-family:Segoe UI;background:#f4f6f9;margin:0;padding:0;}
-header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px;}
-.filters{text-align:center;padding:15px;}
-input,select,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
-button{background:#008080;color:white;border:none;cursor:pointer;}
-button:hover{background:#006666;}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:20px;}
-.card{background:white;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);overflow:hidden;cursor:pointer;transition:0.3s transform,0.3s box-shadow;}
-.card:hover{transform:translateY(-10px) rotateX(5deg);box-shadow:0 12px 25px rgba(0,0,0,0.25);}
-.card img{width:100%;height:220px;object-fit:cover;}
-.card-body{text-align:center;padding:15px;}
-.name{font-weight:bold;font-size:18px;}
-.city{color:gray;font-size:14px;}
-.status{color:red;font-size:14px;margin-top:5px;}
-.admin-buttons{margin-top:10px;}
-.admin-buttons button{width:48%; margin:1%; background:#008080;}
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;justify-content:center;align-items:center;z-index:1000;}
-.modal-content{background:white;padding:20px;border-radius:10px;width:90%;max-width:400px;position:relative;}
-.modal-content img{width:100%;height:auto;margin-bottom:10px;}
+body{font-family:Segoe UI;background:#f4f6f9;margin:0}
+header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px}
+
+.filters{text-align:center;padding:10px}
+button{padding:8px 12px;border:none;border-radius:5px;background:#008080;color:white;cursor:pointer}
+button:hover{background:#006666}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+padding:20px;
+}
+
+.card{
+background:white;
+border-radius:15px;
+box-shadow:0 4px 15px rgba(0,0,0,0.1);
+overflow:hidden;
+cursor:pointer;
+transition:0.3s;
+position:relative;
+}
+
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 8px 20px rgba(0,0,0,0.2);
+}
+
+.card img{
+width:100%;
+height:250px;
+object-fit:contain;
+background:#eee;
+}
+
+.card-body{text-align:center;padding:15px}
+.name{font-weight:bold;font-size:18px}
+.city{color:gray}
+.premium{color:gold;font-size:14px}
+
+.admin-buttons button{
+width:48%;
+margin:2px;
+background:#444;
+}
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.modal-content{
+background:white;
+padding:20px;
+border-radius:10px;
+width:95%;
+max-width:500px;
+max-height:90vh;
+overflow-y:auto;
+position:relative;
+}
+
+.modal-content img{
+width:100%;
+height:auto;
+object-fit:contain;
+margin-bottom:10px;
+}
 </style>
 </head>
 <body>
@@ -37,12 +93,6 @@ button:hover{background:#006666;}
 <header>Zara Muslim Nikah</header>
 
 <div class="filters">
-<input type="text" id="search" placeholder="Search name...">
-<select id="genderFilter">
-<option value="">All</option>
-<option value="Male">Male</option>
-<option value="Female">Female</option>
-</select>
 <button id="loginBtn" onclick="handleAuth()">Login</button>
 <button onclick="goToAddProfile()">रिश्ता जोड़ें</button>
 </div>
@@ -50,12 +100,11 @@ button:hover{background:#006666;}
 <div class="grid" id="profileGrid"></div>
 
 <div class="modal" id="profileModal">
-<div class="modal-content" id="modalContent">
-<button onclick="closeModal()" style="position:absolute;top:10px;right:10px;">✖</button>
-</div>
+<div class="modal-content" id="modalContent"></div>
 </div>
 
 <script>
+
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -65,156 +114,168 @@ firebase.initializeApp({
 
 const auth=firebase.auth();
 const db=firebase.database();
-let allProfiles=[];
 const adminEmail="ngogrant454@gmail.com";
+let allProfiles=[];
 
-/* Login/Logout */
+/* LOGIN */
 function handleAuth(){
-  const user = auth.currentUser;
-  if(user){
-    auth.signOut().then(()=>{ updateLoginUI(); alert("Logged out successfully"); });
-  } else { googleLogin(); }
+ if(auth.currentUser){
+   auth.signOut();
+ }else{
+   const provider=new firebase.auth.GoogleAuthProvider();
+   auth.signInWithPopup(provider);
+ }
 }
 
-function googleLogin(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider)
-  .then(()=>{ updateLoginUI(); })
-  .catch(err=>{ alert(err.message); });
-}
-
-function updateLoginUI(){
-  const btn=document.getElementById("loginBtn");
-  if(auth.currentUser){ btn.innerText="Logout"; } 
-  else{ btn.innerText="Login"; }
-}
-
-/* Redirect to Add Profile */
-function goToAddProfile(){
-  const user=auth.currentUser;
-  if(!user){ alert("पहले लॉगिन करें"); return; }
-  window.location.href="add-profile.html";
-}
-
-/* Listen auth state */
-auth.onAuthStateChanged(user=>{ updateLoginUI(); });
-
-/* Load Profiles */
-db.ref("users").on("value", snap=>{
-  allProfiles=[];
-  snap.forEach(child=>{
-    const val=child.val();
-    allProfiles.push({id:child.key,...val});
-  });
-  // New posts on top
-  allProfiles = allProfiles.slice().reverse();
-  renderProfiles(allProfiles);
+auth.onAuthStateChanged(user=>{
+ document.getElementById("loginBtn").innerText=user?"Logout":"Login";
+ renderProfiles();
 });
 
-/* Render Cards */
-function renderProfiles(data){
-  const user = auth.currentUser;
-  const grid=document.getElementById("profileGrid");
-  grid.innerHTML="";
-  data.forEach(profile=>{
-    // Show only approved for normal user
-    if(!user || (user.email!==adminEmail && profile.status!=="approved")) return;
-
-    let statusLabel = profile.status==="approved"?"":"<div class='status'>Waiting for admin approval</div>";
-
-    let adminBtns = "";
-    if(user && user.email===adminEmail && profile.status==="pending"){
-      adminBtns = `
-        <div class="admin-buttons">
-          <button onclick="approveProfile('${profile.id}')">Approve</button>
-          <button onclick="rejectProfile('${profile.id}')">Reject</button>
-        </div>
-      `;
-    }
-
-    grid.innerHTML+=`
-      <div class="card" onclick="openProfile('${profile.id}')">
-        <img src="${profile.photo}">
-        <div class="card-body">
-          <div class="name">${profile.name}</div>
-          <div class="city">${profile.city}</div>
-          ${statusLabel}
-          ${adminBtns}
-        </div>
-      </div>
-    `;
-  });
+/* ADD PROFILE */
+function goToAddProfile(){
+ if(!auth.currentUser){
+   alert("पहले लॉगिन करें");
+   return;
+ }
+ window.location="add-profile.html";
 }
 
-/* Filter */
-document.getElementById("search").addEventListener("input",filterProfiles);
-document.getElementById("genderFilter").addEventListener("change",filterProfiles);
+/* LOAD PROFILES */
+db.ref("users").on("value",snap=>{
+ allProfiles=[];
+ snap.forEach(child=>{
+   allProfiles.push({id:child.key,...child.val()});
+ });
 
-function filterProfiles(){
-  const search=document.getElementById("search").value.toLowerCase();
-  const gender=document.getElementById("genderFilter").value;
-  const filtered=allProfiles.filter(p=>{
-    return p.name.toLowerCase().includes(search) && (gender==="" || p.gender===gender);
-  });
-  renderProfiles(filtered);
+ // Newest first
+ allProfiles=allProfiles.reverse();
+
+ renderProfiles();
+});
+
+/* RENDER */
+function renderProfiles(){
+ const grid=document.getElementById("profileGrid");
+ const user=auth.currentUser;
+ grid.innerHTML="";
+
+ allProfiles.forEach(p=>{
+
+   if(!user && p.status!=="approved") return;
+   if(user && user.email!==adminEmail && p.status!=="approved") return;
+
+   let adminBtns="";
+   if(user && user.email===adminEmail && p.status==="pending"){
+     adminBtns=`
+     <div class="admin-buttons">
+       <button onclick="event.stopPropagation();approveProfile('${p.id}')">Approve</button>
+       <button onclick="event.stopPropagation();rejectProfile('${p.id}')">Reject</button>
+     </div>`;
+   }
+
+   grid.innerHTML+=`
+   <div class="card" onclick="openProfile('${p.id}')">
+     <img src="${p.photo}">
+     <div class="card-body">
+       <div class="name">${p.name}</div>
+       <div class="city">${p.city}</div>
+       ${p.premium?"<div class='premium'>🏆 Premium</div>":""}
+       ${adminBtns}
+     </div>
+   </div>`;
+ });
 }
 
-/* Open Profile Modal */
+/* OPEN PROFILE */
 function openProfile(uid){
-  const user=auth.currentUser;
-  db.ref("users/"+uid).once("value").then(snap=>{
-    const d=snap.val();
-    if(d.status!=="approved" && (!user || user.email!==adminEmail)){
-      alert("Profile waiting for admin approval");
-      return;
-    }
+ const user=auth.currentUser;
 
-    let adminBtns = "";
-    if(user && user.email===adminEmail && d.status==="pending"){
-      adminBtns = `
-        <div class="admin-buttons">
-          <button onclick="approveProfile('${uid}')">Approve</button>
-          <button onclick="rejectProfile('${uid}')">Reject</button>
-        </div>
-      `;
-    }
+ if(!user){
+   alert("Profile dekhne ke liye login karein");
+   return;
+ }
 
-    document.getElementById("modalContent").innerHTML=`
-      <button onclick="closeModal()" style="position:absolute;top:10px;right:10px;">✖</button>
-      <h3>${d.name}</h3>
-      <img src="${d.photo}">
-      <p><b>Age:</b> ${d.age}</p>
-      <p><b>Father:</b> ${d.fatherName}</p>
-      <p><b>Mother:</b> ${d.motherName}</p>
-      <p><b>Marital Status:</b> ${d.maritalStatus}</p>
-      <p><b>Children:</b> ${d.children || 0}</p>
-      <p><b>City:</b> ${d.city}</p>
-      <p><b>Education:</b> ${d.education}</p>
-      <p><b>Profession:</b> ${d.profession}</p>
-      <p><b>Religion:</b> ${d.religion}</p>
-      <p><b>Phone:</b> ${d.phone}</p>
-      <p><b>Bio:</b> ${d.bio}</p>
-      ${adminBtns}
-    `;
-    document.getElementById("profileModal").style.display="flex";
-  });
+ db.ref("users/"+uid).once("value").then(snap=>{
+  const d=snap.val();
+
+  if(user.email!==adminEmail && d.status!=="approved"){
+    alert("Waiting for approval");
+    return;
+  }
+
+  let adminBtns="";
+  if(user.email===adminEmail && d.status==="pending"){
+    adminBtns=`
+      <button onclick="approveProfile('${uid}')">Approve</button>
+      <button onclick="rejectProfile('${uid}')">Reject</button>`;
+  }
+
+  document.getElementById("modalContent").innerHTML=`
+   <button onclick="closeModal()" style="position:absolute;top:10px;right:10px">✖</button>
+   <h3>${d.name}</h3>
+   <img src="${d.photo}">
+   <p><b>Age:</b> ${d.age}</p>
+   <p><b>Father:</b> ${d.fatherName}</p>
+   <p><b>Mother:</b> ${d.motherName}</p>
+   <p><b>City:</b> ${d.city}</p>
+   <p><b>Education:</b> ${d.education}</p>
+   <p><b>Profession:</b> ${d.profession}</p>
+   <p><b>Religion:</b> ${d.religion}</p>
+   <p><b>Phone:</b> ${d.phone}</p>
+   <p><b>Bio:</b> ${d.bio}</p>
+
+   <button onclick="likeProfile('${uid}')">❤️ Like</button>
+   <button onclick="sendInterest('${uid}')">🔔 Interest</button>
+   <button onclick="startChat()">💬 Chat Now</button>
+
+   ${adminBtns}
+  `;
+
+  document.getElementById("profileModal").style.display="flex";
+ });
 }
 
-/* Close Modal */
-function closeModal(){ document.getElementById("profileModal").style.display="none"; }
+function closeModal(){
+ document.getElementById("profileModal").style.display="none";
+}
 
-/* Admin Approve / Reject */
+/* LIKE */
+function likeProfile(id){
+ db.ref("likes/"+id+"/"+auth.currentUser.uid).set(true);
+ alert("Liked ❤️");
+}
+
+/* INTEREST */
+function sendInterest(id){
+ db.ref("interests/"+id+"/"+auth.currentUser.uid).set(true);
+ alert("Interest Sent 🔔");
+}
+
+/* CHAT WITH PAYMENT */
+function startChat(){
+ const user=auth.currentUser;
+
+ db.ref("payments/"+user.uid).once("value").then(snap=>{
+   if(snap.exists()){
+     window.open("https://wa.me/918806940156","_blank");
+   }else{
+     window.location="payment.html";
+   }
+ });
+}
+
+/* ADMIN */
 function approveProfile(uid){
-  db.ref("users/"+uid).update({status:"approved"}).then(()=>{
-    alert("Profile Approved");
-    closeModal();
-  }).catch(err=>alert("Error: "+err.message));
+ db.ref("users/"+uid).update({status:"approved"});
+ alert("Approved");
+ closeModal();
 }
+
 function rejectProfile(uid){
-  db.ref("users/"+uid).update({status:"rejected"}).then(()=>{
-    alert("Profile Rejected");
-    closeModal();
-  }).catch(err=>alert("Error: "+err.message));
+ db.ref("users/"+uid).update({status:"rejected"});
+ alert("Rejected");
+ closeModal();
 }
 
 </script>
