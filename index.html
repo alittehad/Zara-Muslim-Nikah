@@ -102,10 +102,10 @@ cursor:pointer;
 <script>
 
 firebase.initializeApp({
- apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
- authDomain:"zara-muslim-nikah.firebaseapp.com",
- databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
- projectId:"zara-muslim-nikah"
+ apiKey:"YOUR_API_KEY",
+ authDomain:"YOUR_AUTH_DOMAIN",
+ databaseURL:"YOUR_DATABASE_URL",
+ projectId:"YOUR_PROJECT_ID"
 });
 
 const auth=firebase.auth();
@@ -125,10 +125,10 @@ auth.onAuthStateChanged(user=>{
  document.getElementById("loginBtn").innerText=user?"Logout":"Login";
 });
 
-/* ADD */
+/* ADD PAGE */
 function goAdd(){
  if(!auth.currentUser){ alert("Login required"); return; }
- window.location="add-profile.html";
+ window.location="poster.html";
 }
 
 /* LOAD PROFILES */
@@ -140,7 +140,6 @@ db.ref("users").on("value",snap=>{
      profiles.push({id:child.key,...d});
    }
  });
-
  sortProfiles();
  renderProfiles();
 });
@@ -158,7 +157,6 @@ function sortProfiles(){
 function renderProfiles(){
  const grid=document.getElementById("profileGrid");
  grid.innerHTML="";
-
  profiles.forEach(p=>{
    grid.innerHTML+=`
    <div class="card" onclick="openProfile('${p.id}')">
@@ -173,22 +171,16 @@ function renderProfiles(){
    </div>`;
 
    db.ref("likes/"+p.id).once("value").then(s=>{
-     document.getElementById("like-"+p.id).innerText=
-     "❤️ "+s.numChildren();
+     document.getElementById("like-"+p.id).innerText="❤️ "+s.numChildren();
    });
  });
 }
 
 /* OPEN PROFILE */
 function openProfile(id){
- if(!auth.currentUser){
-   alert("Login required");
-   return;
- }
-
+ if(!auth.currentUser){ alert("Login required"); return; }
  db.ref("users/"+id).once("value").then(s=>{
    const d=s.val();
-
    document.getElementById("modalContent").innerHTML=`
    <div class="close" onclick="closeModal()">✖</div>
    <h3>${d.name}</h3>
@@ -200,10 +192,9 @@ function openProfile(id){
    <p><b>Bio:</b> ${d.bio}</p>
 
    <button onclick="toggleLike('${id}')">❤️ Like</button>
-   <button onclick="sendInterest('${id}','${d.name}')">🔔 Interest</button>
+   <button onclick="sendInterest('${id}')">🔔 Interest</button>
    <button onclick="startChat()">💬 Chat</button>
    `;
-
    document.getElementById("profileModal").style.display="flex";
  });
 }
@@ -212,7 +203,6 @@ function closeModal(){
  document.getElementById("profileModal").style.display="none";
 }
 
-/* LIKE TOGGLE */
 function toggleLike(id){
  const uid=auth.currentUser.uid;
  const ref=db.ref("likes/"+id+"/"+uid);
@@ -222,8 +212,7 @@ function toggleLike(id){
  });
 }
 
-/* INTEREST */
-function sendInterest(id,name){
+function sendInterest(id){
  const sender=auth.currentUser;
  db.ref("interests/"+id+"/"+sender.uid).set({
    name:sender.displayName,
@@ -232,7 +221,6 @@ function sendInterest(id,name){
  alert("Interest Sent");
 }
 
-/* CHAT WITH SUBSCRIPTION CHECK */
 function startChat(){
  const uid=auth.currentUser.uid;
  db.ref("subscriptions/"+uid).once("value").then(s=>{
