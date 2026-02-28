@@ -1,107 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zara Muslim Nikah</title>
-<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zara Muslim Nikah</title>
+<title>Admin Dashboard - Zara Muslim Nikah</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#f2f2f2}
-header{background:#0a7c7c;color:white;padding:15px;text-align:center;font-size:22px}
-button{padding:7px 12px;border:none;border-radius:6px;background:#0a7c7c;color:white;cursor:pointer}
-button:hover{background:#075e5e}
+body{
+margin:0;
+font-family:Segoe UI;
+display:flex;
+background:#f4f6f9;
+}
 
-.topbar{text-align:center;padding:10px}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:20px;
+/* Sidebar */
+.sidebar{
+width:220px;
+background:#111827;
+color:white;
+min-height:100vh;
 padding:20px;
+}
+
+.sidebar h2{
+text-align:center;
+margin-bottom:30px;
+}
+
+.sidebar button{
+width:100%;
+margin:10px 0;
+padding:10px;
+background:#1f2937;
+border:none;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+.sidebar button:hover{
+background:#374151;
+}
+
+/* Main */
+.main{
+flex:1;
+padding:20px;
+}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
+margin-bottom:30px;
 }
 
 .card{
 background:white;
-border-radius:12px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
-overflow:hidden;
-cursor:pointer;
-transition:0.3s;
-}
-
-.card:hover{transform:translateY(-5px)}
-
-.card img{
-width:100%;
-height:260px;
-object-fit:contain;
-background:#eee;
-}
-
-.card-body{text-align:center;padding:10px}
-.name{font-weight:bold;font-size:18px}
-.city{color:gray}
-.premium{color:gold;font-size:14px}
-.featured{color:red;font-size:13px}
-
-.modal{
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,0.6);
-display:none;
-justify-content:center;
-align-items:center;
-}
-
-.modal-content{
-background:white;
-width:95%;
-max-width:500px;
-max-height:90vh;
-overflow-y:auto;
-border-radius:10px;
 padding:20px;
-position:relative;
+border-radius:12px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
 }
 
-.modal-content img{
-width:100%;
-height:auto;
-object-fit:contain;
-}
-.close{
-position:absolute;
-top:10px;
-right:10px;
-cursor:pointer;
+.card h3{
+margin:0;
 font-size:18px;
+color:gray;
+}
+
+.card p{
+font-size:22px;
+font-weight:bold;
+margin:10px 0 0;
+}
+
+/* Tables */
+.section{
+background:white;
+padding:20px;
+border-radius:12px;
+margin-bottom:20px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
+text-align:left;
+}
+
+button.approve{
+background:green;
+}
+
+button.reject{
+background:red;
 }
 </style>
 </head>
 <body>
 
-<header>Zara Muslim Nikah</header>
-
-<div class="topbar">
-<button id="loginBtn" onclick="handleAuth()">Login</button>
-<button onclick="goAdd()">रिश्ता जोड़ें</button>
+<div class="sidebar">
+<h2>Admin Panel</h2>
+<button onclick="showSection('dashboard')">📊 Dashboard</button>
+<button onclick="showSection('pending')">⏳ Pending</button>
+<button onclick="showSection('premium')">🏆 Premium Users</button>
+<button onclick="showSection('payments')">💳 Payments</button>
+<button onclick="logout()">🚪 Logout</button>
 </div>
 
-<div class="grid" id="profileGrid"></div>
+<div class="main">
 
-<div class="modal" id="profileModal">
-<div class="modal-content" id="modalContent"></div>
+<div class="topbar">
+<h2>Dashboard Overview</h2>
+</div>
+
+<!-- Stats -->
+<div class="cards">
+<div class="card">
+<h3>Total Users</h3>
+<p id="totalUsers">0</p>
+</div>
+
+<div class="card">
+<h3>Approved Profiles</h3>
+<p id="approvedUsers">0</p>
+</div>
+
+<div class="card">
+<h3>Premium Users</h3>
+<p id="premiumUsers">0</p>
+</div>
+
+<div class="card">
+<h3>Total Revenue (₹)</h3>
+<p id="totalRevenue">0</p>
+</div>
+</div>
+
+<!-- Pending Section -->
+<div class="section" id="pendingSection">
+<h3>Pending Approvals</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>City</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="pendingTable"></tbody>
+</table>
+</div>
+
+<!-- Premium Section -->
+<div class="section" id="premiumSection" style="display:none;">
+<h3>Premium Users</h3>
+<ul id="premiumList"></ul>
+</div>
+
+<!-- Payments Section -->
+<div class="section" id="paymentsSection" style="display:none;">
+<h3>Recent Payments</h3>
+<ul id="paymentsList"></ul>
+</div>
+
 </div>
 
 <script>
@@ -116,439 +195,83 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.database();
 const adminEmail="ngogrant454@gmail.com";
-let profiles=[];
 
-/* LOGIN */
-function handleAuth(){
- if(auth.currentUser){
-   auth.signOut();
- }else{
-   const provider=new firebase.auth.GoogleAuthProvider();
-   auth.signInWithPopup(provider);
- }
-}
-
+/* AUTH CHECK */
 auth.onAuthStateChanged(user=>{
- document.getElementById("loginBtn").innerText=user?"Logout":"Login";
- renderProfiles();
-});
-
-/* ADD */
-function goAdd(){
- if(!auth.currentUser){
-   alert("Login required");
-   return;
+ if(!user || user.email!==adminEmail){
+   alert("Not Authorized");
+   window.location="index.html";
  }
- window.location="add-profile.html";
-}
-
-/* LOAD */
-db.ref("users").on("value",snap=>{
- profiles=[];
- snap.forEach(child=>{
-   profiles.push({id:child.key,...child.val()});
- });
-
- // Featured first
- profiles.sort((a,b)=>{
-   if(a.featured && !b.featured) return -1;
-   if(!a.featured && b.featured) return 1;
-   return 0;
- });
-
- // Newest first
- profiles.reverse();
-
- renderProfiles();
 });
 
-/* RENDER */
-function renderProfiles(){
- const grid=document.getElementById("profileGrid");
- const user=auth.currentUser;
- grid.innerHTML="";
-
- profiles.forEach(p=>{
-
-   if(!user && p.status!=="approved") return;
-   if(user && user.email!==adminEmail && p.status!=="approved") return;
-
-   let adminBtns="";
-   if(user && user.email===adminEmail && p.status==="pending"){
-     adminBtns=`
-     <button onclick="event.stopPropagation();approve('${p.id}')">Approve</button>
-     <button onclick="event.stopPropagation();reject('${p.id}')">Reject</button>`;
+/* LOAD STATS */
+db.ref("users").on("value",snap=>{
+ let total=0, approved=0, premium=0;
+ snap.forEach(child=>{
+   total++;
+   const d=child.val();
+   if(d.status==="approved") approved++;
+   if(d.premium) premium++;
+   if(d.status==="pending"){
+     document.getElementById("pendingTable").innerHTML+=`
+     <tr>
+     <td>${d.name}</td>
+     <td>${d.city}</td>
+     <td>
+     <button class="approve" onclick="approve('${child.key}')">Approve</button>
+     <button class="reject" onclick="reject('${child.key}')">Reject</button>
+     </td>
+     </tr>`;
    }
-
-   grid.innerHTML+=`
-   <div class="card" onclick="openProfile('${p.id}')">
-     <img src="${p.photo}">
-     <div class="card-body">
-       <div class="name">${p.name}</div>
-       <div class="city">${p.city}</div>
-       ${p.premium?"<div class='premium'>🏆 Premium</div>":""}
-       ${p.featured?"<div class='featured'>🔥 Featured</div>":""}
-       <div id="likeCount-${p.id}">❤️</div>
-       ${adminBtns}
-     </div>
-   </div>`;
-
-   // Load like count
-   db.ref("likes/"+p.id).once("value").then(s=>{
-     document.getElementById("likeCount-"+p.id).innerText=
-     "❤️ "+s.numChildren()+" Likes";
-   });
- });
-}
-
-/* OPEN */
-function openProfile(id){
- const user=auth.currentUser;
- if(!user){ alert("Login required"); return; }
-
- db.ref("users/"+id).once("value").then(snap=>{
-   const d=snap.val();
-   if(user.email!==adminEmail && d.status!=="approved"){
-     alert("Waiting approval");
-     return;
-   }
-
-   document.getElementById("modalContent").innerHTML=`
-   <div class="close" onclick="closeModal()">✖</div>
-   <h3>${d.name}</h3>
-   <img src="${d.photo}">
-   <p>Age: ${d.age}</p>
-   <p>City: ${d.city}</p>
-   <p>Education: ${d.education}</p>
-   <p>Profession: ${d.profession}</p>
-   <p>Bio: ${d.bio}</p>
-
-   <button onclick="like('${id}')">❤️ Like</button>
-   <button onclick="interest('${id}')">🔔 Interest</button>
-   <button onclick="chat()">💬 Chat Now</button>
-   `;
-
-   document.getElementById("profileModal").style.display="flex";
- });
-}
-
-function closeModal(){
- document.getElementById("profileModal").style.display="none";
-}
-
-/* LIKE */
-function like(id){
- db.ref("likes/"+id+"/"+auth.currentUser.uid).set(true);
- alert("Liked");
-}
-
-/* INTEREST */
-function interest(id){
- db.ref("interests/"+id+"/"+auth.currentUser.uid).set(true);
- alert("Interest Sent");
-}
-
-/* CHAT */
-function chat(){
- const user=auth.currentUser;
- db.ref("payments/"+user.uid).once("value").then(s=>{
-   if(s.exists()){
-     window.open("https://wa.me/918806940156","_blank");
-   }else{
-     alert("पहले Payment करें");
-     window.location="payment.html";
+   if(d.premium){
+     document.getElementById("premiumList").innerHTML+=`<li>${d.name} (${d.city})</li>`;
    }
  });
-}
 
-/* ADMIN */
+ document.getElementById("totalUsers").innerText=total;
+ document.getElementById("approvedUsers").innerText=approved;
+ document.getElementById("premiumUsers").innerText=premium;
+});
+
+/* PAYMENTS */
+db.ref("payments").on("value",snap=>{
+ let revenue=0;
+ snap.forEach(child=>{
+   const d=child.val();
+   revenue+=d.amount || 0;
+   document.getElementById("paymentsList").innerHTML+=
+   `<li>${d.uid} - ₹${d.amount}</li>`;
+ });
+ document.getElementById("totalRevenue").innerText=revenue;
+});
+
+/* ACTIONS */
 function approve(id){
  db.ref("users/"+id).update({status:"approved"});
  alert("Approved");
+ location.reload();
 }
 
 function reject(id){
  db.ref("users/"+id).remove();
  alert("Deleted");
+ location.reload();
+}
+
+function logout(){
+ auth.signOut();
+}
+
+function showSection(sec){
+ document.getElementById("pendingSection").style.display="none";
+ document.getElementById("premiumSection").style.display="none";
+ document.getElementById("paymentsSection").style.display="none";
+
+ if(sec==="pending") document.getElementById("pendingSection").style.display="block";
+ if(sec==="premium") document.getElementById("premiumSection").style.display="block";
+ if(sec==="payments") document.getElementById("paymentsSection").style.display="block";
 }
 
 </script>
-</body>
-</html>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<style>
-body{font-family:Segoe UI;background:#f4f6f9;margin:0}
-header{background:#008080;color:white;padding:15px;text-align:center;font-size:22px}
-
-.filters{text-align:center;padding:10px}
-button{padding:8px 12px;border:none;border-radius:5px;background:#008080;color:white;cursor:pointer}
-button:hover{background:#006666}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:20px;
-padding:20px;
-}
-
-.card{
-background:white;
-border-radius:15px;
-box-shadow:0 4px 15px rgba(0,0,0,0.1);
-overflow:hidden;
-cursor:pointer;
-transition:0.3s;
-position:relative;
-}
-
-.card:hover{
-transform:translateY(-5px);
-box-shadow:0 8px 20px rgba(0,0,0,0.2);
-}
-
-.card img{
-width:100%;
-height:250px;
-object-fit:contain;
-background:#eee;
-}
-
-.card-body{text-align:center;padding:15px}
-.name{font-weight:bold;font-size:18px}
-.city{color:gray}
-.premium{color:gold;font-size:14px}
-
-.admin-buttons button{
-width:48%;
-margin:2px;
-background:#444;
-}
-
-.modal{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.6);
-display:none;
-justify-content:center;
-align-items:center;
-}
-
-.modal-content{
-background:white;
-padding:20px;
-border-radius:10px;
-width:95%;
-max-width:500px;
-max-height:90vh;
-overflow-y:auto;
-position:relative;
-}
-
-.modal-content img{
-width:100%;
-height:auto;
-object-fit:contain;
-margin-bottom:10px;
-}
-</style>
-</head>
-<body>
-
-<header>Zara Muslim Nikah</header>
-
-<div class="filters">
-<button id="loginBtn" onclick="handleAuth()">Login</button>
-<button onclick="goToAddProfile()">रिश्ता जोड़ें</button>
-</div>
-
-<div class="grid" id="profileGrid"></div>
-
-<div class="modal" id="profileModal">
-<div class="modal-content" id="modalContent"></div>
-</div>
-
-<script>
-
-firebase.initializeApp({
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
-});
-
-const auth=firebase.auth();
-const db=firebase.database();
-const adminEmail="ngogrant454@gmail.com";
-let allProfiles=[];
-
-/* LOGIN */
-function handleAuth(){
- if(auth.currentUser){
-   auth.signOut();
- }else{
-   const provider=new firebase.auth.GoogleAuthProvider();
-   auth.signInWithPopup(provider);
- }
-}
-
-auth.onAuthStateChanged(user=>{
- document.getElementById("loginBtn").innerText=user?"Logout":"Login";
- renderProfiles();
-});
-
-/* ADD PROFILE */
-function goToAddProfile(){
- if(!auth.currentUser){
-   alert("पहले लॉगिन करें");
-   return;
- }
- window.location="add-profile.html";
-}
-
-/* LOAD PROFILES */
-db.ref("users").on("value",snap=>{
- allProfiles=[];
- snap.forEach(child=>{
-   allProfiles.push({id:child.key,...child.val()});
- });
-
- // Newest first
- allProfiles=allProfiles.reverse();
-
- renderProfiles();
-});
-
-/* RENDER */
-function renderProfiles(){
- const grid=document.getElementById("profileGrid");
- const user=auth.currentUser;
- grid.innerHTML="";
-
- allProfiles.forEach(p=>{
-
-   if(!user && p.status!=="approved") return;
-   if(user && user.email!==adminEmail && p.status!=="approved") return;
-
-   let adminBtns="";
-   if(user && user.email===adminEmail && p.status==="pending"){
-     adminBtns=`
-     <div class="admin-buttons">
-       <button onclick="event.stopPropagation();approveProfile('${p.id}')">Approve</button>
-       <button onclick="event.stopPropagation();rejectProfile('${p.id}')">Reject</button>
-     </div>`;
-   }
-
-   grid.innerHTML+=`
-   <div class="card" onclick="openProfile('${p.id}')">
-     <img src="${p.photo}">
-     <div class="card-body">
-       <div class="name">${p.name}</div>
-       <div class="city">${p.city}</div>
-       ${p.premium?"<div class='premium'>🏆 Premium</div>":""}
-       ${adminBtns}
-     </div>
-   </div>`;
- });
-}
-
-/* OPEN PROFILE */
-function openProfile(uid){
- const user=auth.currentUser;
-
- if(!user){
-   alert("Profile dekhne ke liye login karein");
-   return;
- }
-
- db.ref("users/"+uid).once("value").then(snap=>{
-  const d=snap.val();
-
-  if(user.email!==adminEmail && d.status!=="approved"){
-    alert("Waiting for approval");
-    return;
-  }
-
-  let adminBtns="";
-  if(user.email===adminEmail && d.status==="pending"){
-    adminBtns=`
-      <button onclick="approveProfile('${uid}')">Approve</button>
-      <button onclick="rejectProfile('${uid}')">Reject</button>`;
-  }
-
-  document.getElementById("modalContent").innerHTML=`
-   <button onclick="closeModal()" style="position:absolute;top:10px;right:10px">✖</button>
-   <h3>${d.name}</h3>
-   <img src="${d.photo}">
-   <p><b>Age:</b> ${d.age}</p>
-   <p><b>Father:</b> ${d.fatherName}</p>
-   <p><b>Mother:</b> ${d.motherName}</p>
-   <p><b>City:</b> ${d.city}</p>
-   <p><b>Education:</b> ${d.education}</p>
-   <p><b>Profession:</b> ${d.profession}</p>
-   <p><b>Religion:</b> ${d.religion}</p>
-   <p><b>Phone:</b> ${d.phone}</p>
-   <p><b>Bio:</b> ${d.bio}</p>
-
-   <button onclick="likeProfile('${uid}')">❤️ Like</button>
-   <button onclick="sendInterest('${uid}')">🔔 Interest</button>
-   <button onclick="startChat()">💬 Chat Now</button>
-
-   ${adminBtns}
-  `;
-
-  document.getElementById("profileModal").style.display="flex";
- });
-}
-
-function closeModal(){
- document.getElementById("profileModal").style.display="none";
-}
-
-/* LIKE */
-function likeProfile(id){
- db.ref("likes/"+id+"/"+auth.currentUser.uid).set(true);
- alert("Liked ❤️");
-}
-
-/* INTEREST */
-function sendInterest(id){
- db.ref("interests/"+id+"/"+auth.currentUser.uid).set(true);
- alert("Interest Sent 🔔");
-}
-
-/* CHAT WITH PAYMENT */
-function startChat(){
- const user=auth.currentUser;
-
- db.ref("payments/"+user.uid).once("value").then(snap=>{
-   if(snap.exists()){
-     window.open("https://wa.me/918806940156","_blank");
-   }else{
-     window.location="payment.html";
-   }
- });
-}
-
-/* ADMIN */
-function approveProfile(uid){
- db.ref("users/"+uid).update({status:"approved"});
- alert("Approved");
- closeModal();
-}
-
-function rejectProfile(uid){
- db.ref("users/"+uid).update({status:"rejected"});
- alert("Rejected");
- closeModal();
-}
-
-</script>
-
 </body>
 </html>
