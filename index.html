@@ -12,6 +12,7 @@
 <style>
 body{margin:0;font-family:Segoe UI;background:#f4f6f9}
 header{background:#0f766e;color:white;padding:15px;text-align:center;font-size:22px}
+
 .topbar{text-align:center;padding:10px}
 button{padding:8px 14px;border:none;border-radius:6px;background:#0f766e;color:white;cursor:pointer}
 button:hover{background:#0b5e57}
@@ -84,6 +85,7 @@ cursor:pointer;
 <div class="topbar">
 <button id="loginBtn" onclick="handleAuth()">Login</button>
 <button onclick="goAdd()">रिश्ता जोड़ें</button>
+<button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
@@ -94,7 +96,7 @@ cursor:pointer;
 
 <script>
 
-// ✅ Firebase Config Added
+// 🔥 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -109,9 +111,12 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.database();
+
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
+
 let profiles = [];
 
-// ✅ LOGIN
+// ✅ LOGIN / LOGOUT
 function handleAuth(){
  if(auth.currentUser){ 
    auth.signOut(); 
@@ -121,17 +126,30 @@ function handleAuth(){
  }
 }
 
+// ✅ AUTH STATE
 auth.onAuthStateChanged(user=>{
- document.getElementById("loginBtn").innerText=user?"Logout":"Login";
+ document.getElementById("loginBtn").innerText = user ? "Logout" : "Login";
+
+ // Admin button show
+ if(user && user.email === ADMIN_EMAIL){
+   document.getElementById("adminBtn").style.display = "inline-block";
+ } else {
+   document.getElementById("adminBtn").style.display = "none";
+ }
 });
 
-// ✅ ADD PAGE
+// ✅ GO ADD
 function goAdd(){
  if(!auth.currentUser){ 
    alert("Login required"); 
    return; 
  }
  window.location="poster.html";
+}
+
+// ✅ GO ADMIN
+function goAdmin(){
+ window.location="admin.html";
 }
 
 // ✅ LOAD PROFILES
@@ -162,7 +180,7 @@ function renderProfiles(){
  grid.innerHTML="";
 
  if(profiles.length===0){
-   grid.innerHTML="<p>No profiles found</p>";
+   grid.innerHTML="<p style='text-align:center'>No profiles found</p>";
    return;
  }
 
@@ -179,7 +197,6 @@ function renderProfiles(){
      </div>
    </div>`;
 
-   // ✅ REALTIME LIKE
    db.ref("likes/"+p.id).on("value",s=>{
      const el=document.getElementById("like-"+p.id);
      if(el) el.innerText="❤️ "+s.numChildren();
@@ -203,9 +220,9 @@ function openProfile(id){
    <img src="${d.photo}" style="width:100%" onerror="this.src='https://via.placeholder.com/300'">
    <p><b>Age:</b> ${d.age}</p>
    <p><b>City:</b> ${d.city}</p>
-   <p><b>Education:</b> ${d.education}</p>
-   <p><b>Profession:</b> ${d.profession}</p>
-   <p><b>Bio:</b> ${d.bio}</p>
+   <p><b>Education:</b> ${d.education || ""}</p>
+   <p><b>Profession:</b> ${d.profession || ""}</p>
+   <p><b>Bio:</b> ${d.bio || ""}</p>
 
    <button onclick="toggleLike('${id}')">❤️ Like</button>
    <button onclick="sendInterest('${id}')">🔔 Interest</button>
