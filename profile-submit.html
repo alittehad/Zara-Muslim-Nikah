@@ -7,81 +7,118 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
-    body{
-      font-family:Segoe UI;
-      padding:20px;
-      background:#f4f6f9;
+    /* Basic Body */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
     }
-    /* 3D Home Button */
-    #homeBtn {
+
+    /* Form Container */
+    .form-container {
+      background: #fff;
+      margin: 20px;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #0f766e;
+    }
+
+    /* Inputs & Textarea */
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-shadow: 0 3px #ddd;
+      transition: all 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #0f766e;
+      box-shadow: 0 5px #0a4f46;
+    }
+    textarea {
+      resize: vertical;
+    }
+
+    /* Buttons */
+    .btn {
       background: #0f766e;
       color: white;
-      border-radius: 8px;
-      padding: 10px 18px;
       border: none;
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 8px;
       cursor: pointer;
+      font-size: 16px;
+      width: 100%;
       box-shadow: 0 5px #0a4f46;
       transition: all 0.2s;
-      margin-bottom: 20px;
-      font-size:16px;
     }
-    #homeBtn:hover {
+    .btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 7px #0a4f46;
     }
-    #homeBtn:active {
+    .btn:active {
       transform: translateY(2px);
       box-shadow: 0 3px #0a4f46;
     }
 
-    input, select, textarea, button{
-      display:block;
-      margin:10px 0;
-      padding:8px;
-      width:100%;
-      max-width:400px;
+    /* Home Button */
+    #homeBtn {
+      margin-bottom: 20px;
     }
-    button.submitBtn{
-      background:#0f766e;
-      color:white;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      box-shadow: 0 4px #0a4f46;
-      transition: all 0.2s;
-    }
-    button.submitBtn:hover{
-      transform: translateY(-2px);
-      box-shadow: 0 6px #0a4f46;
-      background:#0b5e57;
-    }
-    button.submitBtn:active{
-      transform: translateY(2px);
-      box-shadow: 0 3px #0a4f46;
+
+    /* Responsive for very small screens */
+    @media (max-width: 360px) {
+      .form-container {
+        padding: 15px;
+      }
+      input, select, textarea, .btn {
+        font-size: 14px;
+        padding: 10px;
+      }
     }
   </style>
 </head>
 <body>
 
-<!-- Home Button -->
-<button id="homeBtn" onclick="goHome()">🏠 Home</button>
+<div class="form-container">
+  <!-- Home Button -->
+  <button class="btn" id="homeBtn" onclick="goHome()">🏠 Home</button>
 
-<h2>Create Profile</h2>
+  <h2>Create Profile</h2>
 
-<input id="name" placeholder="Full Name" required>
-<input id="age" placeholder="Age" type="number" required>
-<input id="city" placeholder="City" required>
-<select id="gender">
-  <option value="">Select Gender</option>
-  <option value="Male">Male</option>
-  <option value="Female">Female</option>
-</select>
-<input id="education" placeholder="Education">
-<input id="profession" placeholder="Profession">
-<input id="phone" placeholder="Phone Number" type="tel">
-<textarea id="bio" placeholder="Short Bio"></textarea>
-<input type="file" id="photo" accept="image/*">
-<button class="submitBtn" onclick="saveProfile()">Submit</button>
+  <input id="name" placeholder="Full Name" required>
+  <input id="age" placeholder="Age" type="number" required>
+  <input id="city" placeholder="City" required>
+  <select id="gender">
+    <option value="">Select Gender</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+  </select>
+  <input id="education" placeholder="Education">
+  <input id="profession" placeholder="Profession">
+  <input id="phone" placeholder="Phone Number" type="tel">
+  <textarea id="bio" placeholder="Short Bio"></textarea>
+  <input type="file" id="photo" accept="image/*">
+  <button class="btn" onclick="saveProfile()">Submit Profile</button>
+</div>
 
 <script>
 firebase.initializeApp({
@@ -94,7 +131,6 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.database();
 
-// Redirect to Home
 function goHome(){
   location="index.html";
 }
@@ -111,7 +147,6 @@ async function saveProfile(){
   const user=auth.currentUser;
   if(!user){ alert("Login first"); return; }
 
-  // Get values
   const nameVal=document.getElementById("name").value.trim();
   const ageVal=document.getElementById("age").value.trim();
   const cityVal=document.getElementById("city").value.trim();
@@ -128,7 +163,6 @@ async function saveProfile(){
   }
 
   try{
-    // Upload photo to Cloudinary
     const formData=new FormData();
     formData.append("file",file);
     formData.append("upload_preset","profiles");
@@ -136,7 +170,6 @@ async function saveProfile(){
     const res=await fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{method:"POST",body:formData});
     const data=await res.json();
 
-    // Save to Firebase
     await db.ref("users/"+user.uid).set({
       name:nameVal,
       age:ageVal,
