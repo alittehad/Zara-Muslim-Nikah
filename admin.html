@@ -25,7 +25,9 @@ padding:10px;
 border-radius:12px;
 box-shadow:0 4px 10px rgba(0,0,0,0.1);
 text-align:center;
+transition:0.3s;
 }
+.card:hover{transform:translateY(-5px) rotateX(5deg)}
 
 img{width:100%;height:200px;object-fit:cover;border-radius:10px}
 
@@ -35,7 +37,10 @@ padding:6px 10px;
 border:none;
 border-radius:6px;
 cursor:pointer;
+box-shadow:0 4px 6px rgba(0,0,0,0.2);
+transition:0.2s;
 }
+button:hover{transform:translateY(-2px) translateZ(2px); box-shadow:0 6px 10px rgba(0,0,0,0.3);}
 
 .approve{background:green;color:white}
 .reject{background:red;color:white}
@@ -47,6 +52,7 @@ position:absolute;
 top:10px;
 right:10px;
 background:black;
+color:white;
 }
 </style>
 </head>
@@ -58,8 +64,7 @@ background:black;
 <div class="grid" id="list"></div>
 
 <script>
-
-// ✅ Firebase config
+// Firebase Config
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -72,25 +77,25 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.database();
 
-// 🔐 ADMIN EMAIL (yaha apna email daalo)
-const ADMIN_EMAIL="yourgmail@gmail.com";
+const ADMIN_EMAIL="ngogrant454@gmail.com"; // ✅ Correct admin email
 
-// ✅ LOGIN CHECK
+// LOGIN CHECK
 auth.onAuthStateChanged(user=>{
  if(!user){
    alert("Login required");
    location="index.html";
- } 
- else if(user.email!==ADMIN_EMAIL){
-   alert("Access denied (Not admin)");
-   location="index.html";
- } 
- else{
-   loadProfiles();
+ } else {
+   const userEmail = (user.email || "").toLowerCase().trim();
+   if(userEmail !== ADMIN_EMAIL.toLowerCase().trim()){
+     alert("Access denied (Not admin)");
+     location="index.html";
+   } else {
+     loadProfiles();
+   }
  }
 });
 
-// ✅ LOAD PROFILES
+// LOAD PROFILES
 function loadProfiles(){
  db.ref("users").on("value",snap=>{
    const list=document.getElementById("list");
@@ -103,7 +108,6 @@ function loadProfiles(){
 
      if(d.status==="pending"){
        found=true;
-
        list.innerHTML+=`
        <div class="card">
          <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
@@ -121,41 +125,37 @@ function loadProfiles(){
    if(!found){
      list.innerHTML="<h3 style='text-align:center'>No Pending Profiles</h3>";
    }
-
  });
 }
 
-// ✅ APPROVE
+// APPROVE
 function approve(id){
  db.ref("users/"+id+"/status").set("approved");
 }
 
-// ❌ REJECT
+// REJECT
 function reject(id){
  if(confirm("Delete profile?")){
    db.ref("users/"+id).remove();
  }
 }
 
-// ⭐ PREMIUM
+// PREMIUM
 function makePremium(id){
  db.ref("users/"+id+"/premium").set(true);
  alert("Marked as Premium");
 }
 
-// 🔥 FEATURED
+// FEATURED
 function makeFeatured(id){
  db.ref("users/"+id+"/featured").set(true);
  alert("Marked as Featured");
 }
 
-// 🚪 LOGOUT
+// LOGOUT
 function logout(){
- auth.signOut().then(()=>{
-   location="index.html";
- });
+ auth.signOut().then(()=>{ location="index.html"; });
 }
-
 </script>
 
 </body>
