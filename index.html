@@ -10,127 +10,32 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
- margin:0;
- font-family:Segoe UI;
- background:linear-gradient(135deg,#e0f2f1,#f4f6f9);
-}
+body{margin:0;font-family:Segoe UI;background:#f4f6f9}
+header{background:#0f766e;color:white;padding:15px;text-align:center}
 
-header{
- background:#0f766e;
- color:white;
- padding:15px;
- text-align:center;
- font-size:22px;
- letter-spacing:1px;
-}
+.topbar{text-align:center;padding:10px}
+button{padding:10px;border:none;border-radius:8px;background:#0f766e;color:white;cursor:pointer}
 
-/* 🔥 3D BUTTON STYLE */
-button{
- padding:10px 16px;
- border:none;
- border-radius:10px;
- cursor:pointer;
- font-weight:bold;
- color:white;
- background:linear-gradient(145deg,#14b8a6,#0f766e);
- box-shadow:0 6px 0 #0b5e57, 0 8px 15px rgba(0,0,0,0.2);
- transition:all 0.2s ease;
-}
-
-button:hover{
- transform:translateY(-2px);
- box-shadow:0 8px 0 #0b5e57, 0 10px 20px rgba(0,0,0,0.3);
-}
-
-button:active{
- transform:translateY(4px);
- box-shadow:0 2px 0 #0b5e57;
-}
-
-/* Admin special */
-#adminBtn{
- background:linear-gradient(145deg,#000,#333);
- box-shadow:0 6px 0 #111,0 8px 15px rgba(0,0,0,0.3);
-}
-
-/* Layout */
-.topbar{
- text-align:center;
- padding:15px;
- display:flex;
- justify-content:center;
- gap:10px;
- flex-wrap:wrap;
-}
+#adminBtn{background:black;display:none}
 
 .grid{
- display:grid;
- grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
- gap:20px;
- padding:20px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+padding:20px;
 }
 
-/* Cards */
 .card{
- background:white;
- border-radius:16px;
- box-shadow:0 10px 25px rgba(0,0,0,0.1);
- overflow:hidden;
- cursor:pointer;
- transition:0.3s;
-}
-
-.card:hover{
- transform:translateY(-6px) scale(1.02);
+background:white;
+border-radius:14px;
+box-shadow:0 4px 15px rgba(0,0,0,0.1);
+cursor:pointer;
 }
 
 .card img{
- width:100%;
- height:260px;
- object-fit:cover;
-}
-
-.card-body{
- text-align:center;
- padding:12px;
-}
-
-.name{font-weight:bold;font-size:18px}
-.city{color:gray}
-
-.badge{margin-top:5px;font-size:13px}
-.premium{color:gold}
-.featured{color:red}
-
-/* Modal */
-.modal{
- position:fixed;
- top:0;
- left:0;
- width:100%;
- height:100%;
- background:rgba(0,0,0,0.6);
- display:none;
- justify-content:center;
- align-items:center;
-}
-
-.modal-content{
- background:white;
- width:95%;
- max-width:500px;
- border-radius:15px;
- padding:20px;
- position:relative;
-}
-
-.close{
- position:absolute;
- right:10px;
- top:10px;
- cursor:pointer;
- font-size:18px;
+width:100%;
+height:250px;
+object-fit:cover;
 }
 </style>
 </head>
@@ -141,25 +46,19 @@ button:active{
 <div class="topbar">
 <button id="loginBtn" onclick="handleAuth()">Login</button>
 <button onclick="goAdd()">रिश्ता जोड़ें</button>
-<button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
+<button id="adminBtn" onclick="goAdmin()">Admin Panel</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
 
-<div class="modal" id="profileModal">
-<div class="modal-content" id="modalContent"></div>
-</div>
-
 <script>
 
-// Firebase Config
+// Firebase
 firebase.initializeApp({
  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
  authDomain:"zara-muslim-nikah.firebaseapp.com",
  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
- projectId:"zara-muslim-nikah",
- storageBucket:"zara-muslim-nikah.appspot.com",
- appId:"1:690336186269:web:8215c1d313c4273c1f7974"
+ projectId:"zara-muslim-nikah"
 });
 
 const auth=firebase.auth();
@@ -167,9 +66,7 @@ const db=firebase.database();
 
 const ADMIN="ngogrant454@gmail.com";
 
-let profiles=[];
-
-// Login
+// LOGIN
 function handleAuth(){
  if(auth.currentUser){auth.signOut();}
  else{
@@ -178,83 +75,74 @@ function handleAuth(){
  }
 }
 
-// Auth State
+// AUTH CHECK
 auth.onAuthStateChanged(user=>{
  document.getElementById("loginBtn").innerText=user?"Logout":"Login";
 
- if(user && user.email && user.email.toLowerCase().trim()===ADMIN){
-   document.getElementById("adminBtn").style.display="inline-block";
+ if(user){
+   let email = user.email || (user.providerData[0] && user.providerData[0].email);
+
+   if(email && email.toLowerCase().trim() === ADMIN){
+     document.getElementById("adminBtn").style.display="inline-block";
+   }else{
+     document.getElementById("adminBtn").style.display="none";
+   }
+
  }else{
    document.getElementById("adminBtn").style.display="none";
  }
 });
 
-// Navigation
-function goAdd(){
- if(!auth.currentUser){alert("Login required");return;}
- location="poster.html";
-}
-
+// ADMIN CLICK (SECURE)
 function goAdmin(){
- location="admin.html";
+
+ const user = auth.currentUser;
+
+ if(!user){
+   alert("Login required");
+   return;
+ }
+
+ let email = user.email || (user.providerData[0] && user.providerData[0].email);
+
+ if(!email || email.toLowerCase().trim() !== ADMIN){
+   alert("Access denied (Not admin)");
+   return;
+ }
+
+ window.location="admin.html";
 }
 
-// Load Profiles
+// ADD PAGE
+function goAdd(){
+ if(!auth.currentUser){
+   alert("Login required");
+   return;
+ }
+ window.location="poster.html";
+}
+
+// LOAD PROFILES
 db.ref("users").on("value",snap=>{
- profiles=[];
- snap.forEach(c=>{
-   const d=c.val();
+ const grid=document.getElementById("profileGrid");
+ grid.innerHTML="";
+
+ snap.forEach(child=>{
+   const d=child.val();
+
    if(d.status==="approved"){
-     profiles.push({id:c.key,...d});
+     grid.innerHTML+=`
+     <div class="card">
+       <img src="${d.photo}">
+       <div style="padding:10px">
+         <b>${d.name}</b><br>
+         ${d.city}
+       </div>
+     </div>`;
    }
  });
- render();
+
 });
-
-// Render
-function render(){
- const g=document.getElementById("profileGrid");
- g.innerHTML="";
-
- profiles.forEach(p=>{
-   g.innerHTML+=`
-   <div class="card" onclick="openProfile('${p.id}')">
-   <img src="${p.photo}" onerror="this.src='https://via.placeholder.com/300'">
-   <div class="card-body">
-   <div class="name">${p.name}</div>
-   <div class="city">${p.city}</div>
-   ${p.premium?"<div class='premium'>🏆 Premium</div>":""}
-   ${p.featured?"<div class='featured'>🔥 Featured</div>":""}
-   </div></div>`;
- });
-}
-
-// Modal
-function openProfile(id){
- if(!auth.currentUser){alert("Login required");return;}
-
- db.ref("users/"+id).once("value").then(s=>{
-   const d=s.val();
-   document.getElementById("modalContent").innerHTML=`
-   <div class="close" onclick="closeModal()">✖</div>
-   <h3>${d.name}</h3>
-   <img src="${d.photo}" style="width:100%">
-   <p><b>Age:</b> ${d.age}</p>
-   <p><b>City:</b> ${d.city}</p>
-   <button onclick="startChat('${d.phone}')">💬 Chat</button>
-   `;
-   document.getElementById("profileModal").style.display="flex";
- });
-}
-
-function closeModal(){
- document.getElementById("profileModal").style.display="none";
-}
-
-// Chat
-function startChat(phone){
- window.open(`https://wa.me/${phone}`,"_blank");
-}
 
 </script>
 
