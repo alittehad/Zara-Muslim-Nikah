@@ -7,13 +7,64 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
-    body{font-family:Segoe UI;padding:20px;background:#f4f6f9;}
-    input, select, textarea, button{display:block;margin:10px 0;padding:8px;width:100%;max-width:400px;}
-    button{background:#0f766e;color:white;border:none;border-radius:6px;cursor:pointer;}
-    button:hover{background:#0b5e57;}
+    body{
+      font-family:Segoe UI;
+      padding:20px;
+      background:#f4f6f9;
+    }
+    /* 3D Home Button */
+    #homeBtn {
+      background: #0f766e;
+      color: white;
+      border-radius: 8px;
+      padding: 10px 18px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 5px #0a4f46;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+      font-size:16px;
+    }
+    #homeBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px #0a4f46;
+    }
+    #homeBtn:active {
+      transform: translateY(2px);
+      box-shadow: 0 3px #0a4f46;
+    }
+
+    input, select, textarea, button{
+      display:block;
+      margin:10px 0;
+      padding:8px;
+      width:100%;
+      max-width:400px;
+    }
+    button.submitBtn{
+      background:#0f766e;
+      color:white;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      box-shadow: 0 4px #0a4f46;
+      transition: all 0.2s;
+    }
+    button.submitBtn:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 6px #0a4f46;
+      background:#0b5e57;
+    }
+    button.submitBtn:active{
+      transform: translateY(2px);
+      box-shadow: 0 3px #0a4f46;
+    }
   </style>
 </head>
 <body>
+
+<!-- Home Button -->
+<button id="homeBtn" onclick="goHome()">🏠 Home</button>
 
 <h2>Create Profile</h2>
 
@@ -30,7 +81,7 @@
 <input id="phone" placeholder="Phone Number" type="tel">
 <textarea id="bio" placeholder="Short Bio"></textarea>
 <input type="file" id="photo" accept="image/*">
-<button onclick="saveProfile()">Submit</button>
+<button class="submitBtn" onclick="saveProfile()">Submit</button>
 
 <script>
 firebase.initializeApp({
@@ -42,6 +93,11 @@ firebase.initializeApp({
 
 const auth=firebase.auth();
 const db=firebase.database();
+
+// Redirect to Home
+function goHome(){
+  location="index.html";
+}
 
 // Check login
 auth.onAuthStateChanged(user=>{
@@ -75,7 +131,7 @@ async function saveProfile(){
     // Upload photo to Cloudinary
     const formData=new FormData();
     formData.append("file",file);
-    formData.append("upload_preset","profiles"); // Make sure your Cloudinary preset is correct
+    formData.append("upload_preset","profiles");
 
     const res=await fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{method:"POST",body:formData});
     const data=await res.json();
@@ -97,7 +153,7 @@ async function saveProfile(){
     });
 
     alert("Profile submitted successfully. Waiting for admin approval.");
-    location="index.html"; // Redirect after submission
+    location="index.html"; 
   }catch(err){
     console.error(err);
     alert("Error uploading profile. Try again.");
