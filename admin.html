@@ -2,276 +2,161 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard - Zara Muslim Nikah</title>
+<title>Admin Panel</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-margin:0;
-font-family:Segoe UI;
-display:flex;
-background:#f4f6f9;
-}
+body{font-family:Segoe UI;background:#f4f6f9;margin:0}
+header{background:#0f766e;color:white;padding:15px;text-align:center;font-size:22px}
 
-/* Sidebar */
-.sidebar{
-width:220px;
-background:#111827;
-color:white;
-min-height:100vh;
-padding:20px;
-}
-
-.sidebar h2{
-text-align:center;
-margin-bottom:30px;
-}
-
-.sidebar button{
-width:100%;
-margin:10px 0;
-padding:10px;
-background:#1f2937;
-border:none;
-color:white;
-border-radius:6px;
-cursor:pointer;
-}
-
-.sidebar button:hover{
-background:#374151;
-}
-
-/* Main */
-.main{
-flex:1;
-padding:20px;
-}
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:20px;
-}
-
-.cards{
+.grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
 gap:20px;
-margin-bottom:30px;
+padding:20px;
 }
 
 .card{
 background:white;
-padding:20px;
-border-radius:12px;
-box-shadow:0 4px 12px rgba(0,0,0,0.08);
-}
-
-.card h3{
-margin:0;
-font-size:18px;
-color:gray;
-}
-
-.card p{
-font-size:22px;
-font-weight:bold;
-margin:10px 0 0;
-}
-
-/* Tables */
-.section{
-background:white;
-padding:20px;
-border-radius:12px;
-margin-bottom:20px;
-box-shadow:0 4px 12px rgba(0,0,0,0.08);
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-}
-
-th,td{
 padding:10px;
-border-bottom:1px solid #eee;
-text-align:left;
+border-radius:12px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+text-align:center;
 }
 
-button.approve{
-background:green;
+img{width:100%;height:200px;object-fit:cover;border-radius:10px}
+
+button{
+margin:5px;
+padding:6px 10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
 }
 
-button.reject{
-background:red;
+.approve{background:green;color:white}
+.reject{background:red;color:white}
+.premium{background:gold;color:black}
+.featured{background:orange;color:white}
+
+#logout{
+position:absolute;
+top:10px;
+right:10px;
+background:black;
 }
 </style>
 </head>
 <body>
 
-<div class="sidebar">
-<h2>Admin Panel</h2>
-<button onclick="showSection('dashboard')">📊 Dashboard</button>
-<button onclick="showSection('pending')">⏳ Pending</button>
-<button onclick="showSection('premium')">🏆 Premium Users</button>
-<button onclick="showSection('payments')">💳 Payments</button>
-<button onclick="logout()">🚪 Logout</button>
-</div>
+<header>Admin Panel</header>
+<button id="logout" onclick="logout()">Logout</button>
 
-<div class="main">
-
-<div class="topbar">
-<h2>Dashboard Overview</h2>
-</div>
-
-<!-- Stats -->
-<div class="cards">
-<div class="card">
-<h3>Total Users</h3>
-<p id="totalUsers">0</p>
-</div>
-
-<div class="card">
-<h3>Approved Profiles</h3>
-<p id="approvedUsers">0</p>
-</div>
-
-<div class="card">
-<h3>Premium Users</h3>
-<p id="premiumUsers">0</p>
-</div>
-
-<div class="card">
-<h3>Total Revenue (₹)</h3>
-<p id="totalRevenue">0</p>
-</div>
-</div>
-
-<!-- Pending Section -->
-<div class="section" id="pendingSection">
-<h3>Pending Approvals</h3>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>City</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody id="pendingTable"></tbody>
-</table>
-</div>
-
-<!-- Premium Section -->
-<div class="section" id="premiumSection" style="display:none;">
-<h3>Premium Users</h3>
-<ul id="premiumList"></ul>
-</div>
-
-<!-- Payments Section -->
-<div class="section" id="paymentsSection" style="display:none;">
-<h3>Recent Payments</h3>
-<ul id="paymentsList"></ul>
-</div>
-
-</div>
+<div class="grid" id="list"></div>
 
 <script>
 
+// ✅ Firebase config
 firebase.initializeApp({
- apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
- authDomain:"zara-muslim-nikah.firebaseapp.com",
- databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
- projectId:"zara-muslim-nikah"
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah",
+  storageBucket: "zara-muslim-nikah.appspot.com",
+  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
 });
 
 const auth=firebase.auth();
 const db=firebase.database();
-const adminEmail="ngogrant454@gmail.com";
 
-/* AUTH CHECK */
+// 🔐 ADMIN EMAIL (yaha apna email daalo)
+const ADMIN_EMAIL="yourgmail@gmail.com";
+
+// ✅ LOGIN CHECK
 auth.onAuthStateChanged(user=>{
- if(!user || user.email!==adminEmail){
-   alert("Not Authorized");
-   window.location="index.html";
+ if(!user){
+   alert("Login required");
+   location="index.html";
+ } 
+ else if(user.email!==ADMIN_EMAIL){
+   alert("Access denied (Not admin)");
+   location="index.html";
+ } 
+ else{
+   loadProfiles();
  }
 });
 
-/* LOAD STATS */
-db.ref("users").on("value",snap=>{
- let total=0, approved=0, premium=0;
- snap.forEach(child=>{
-   total++;
-   const d=child.val();
-   if(d.status==="approved") approved++;
-   if(d.premium) premium++;
-   if(d.status==="pending"){
-     document.getElementById("pendingTable").innerHTML+=`
-     <tr>
-     <td>${d.name}</td>
-     <td>${d.city}</td>
-     <td>
-     <button class="approve" onclick="approve('${child.key}')">Approve</button>
-     <button class="reject" onclick="reject('${child.key}')">Reject</button>
-     </td>
-     </tr>`;
+// ✅ LOAD PROFILES
+function loadProfiles(){
+ db.ref("users").on("value",snap=>{
+   const list=document.getElementById("list");
+   list.innerHTML="";
+
+   let found=false;
+
+   snap.forEach(child=>{
+     const d=child.val();
+
+     if(d.status==="pending"){
+       found=true;
+
+       list.innerHTML+=`
+       <div class="card">
+         <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
+         <h3>${d.name}</h3>
+         <p>${d.city}</p>
+
+         <button class="approve" onclick="approve('${child.key}')">✅ Approve</button>
+         <button class="reject" onclick="reject('${child.key}')">❌ Reject</button>
+         <button class="premium" onclick="makePremium('${child.key}')">⭐ Premium</button>
+         <button class="featured" onclick="makeFeatured('${child.key}')">🔥 Featured</button>
+       </div>`;
+     }
+   });
+
+   if(!found){
+     list.innerHTML="<h3 style='text-align:center'>No Pending Profiles</h3>";
    }
-   if(d.premium){
-     document.getElementById("premiumList").innerHTML+=`<li>${d.name} (${d.city})</li>`;
-   }
+
  });
+}
 
- document.getElementById("totalUsers").innerText=total;
- document.getElementById("approvedUsers").innerText=approved;
- document.getElementById("premiumUsers").innerText=premium;
-});
-
-/* PAYMENTS */
-db.ref("payments").on("value",snap=>{
- let revenue=0;
- snap.forEach(child=>{
-   const d=child.val();
-   revenue+=d.amount || 0;
-   document.getElementById("paymentsList").innerHTML+=
-   `<li>${d.uid} - ₹${d.amount}</li>`;
- });
- document.getElementById("totalRevenue").innerText=revenue;
-});
-
-/* ACTIONS */
+// ✅ APPROVE
 function approve(id){
- db.ref("users/"+id).update({status:"approved"});
- alert("Approved");
- location.reload();
+ db.ref("users/"+id+"/status").set("approved");
 }
 
+// ❌ REJECT
 function reject(id){
- db.ref("users/"+id).remove();
- alert("Deleted");
- location.reload();
+ if(confirm("Delete profile?")){
+   db.ref("users/"+id).remove();
+ }
 }
 
+// ⭐ PREMIUM
+function makePremium(id){
+ db.ref("users/"+id+"/premium").set(true);
+ alert("Marked as Premium");
+}
+
+// 🔥 FEATURED
+function makeFeatured(id){
+ db.ref("users/"+id+"/featured").set(true);
+ alert("Marked as Featured");
+}
+
+// 🚪 LOGOUT
 function logout(){
- auth.signOut();
-}
-
-function showSection(sec){
- document.getElementById("pendingSection").style.display="none";
- document.getElementById("premiumSection").style.display="none";
- document.getElementById("paymentsSection").style.display="none";
-
- if(sec==="pending") document.getElementById("pendingSection").style.display="block";
- if(sec==="premium") document.getElementById("premiumSection").style.display="block";
- if(sec==="payments") document.getElementById("paymentsSection").style.display="block";
+ auth.signOut().then(()=>{
+   location="index.html";
+ });
 }
 
 </script>
+
 </body>
 </html>
