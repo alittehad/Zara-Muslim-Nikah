@@ -5,18 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Muslim Nikah</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
 body{margin:0;font-family:Segoe UI;background:#f4f6f9}
-header{background:#0f766e;color:white;padding:15px;text-align:center}
+header{background:#0f766e;color:white;padding:15px;text-align:center;font-size:22px}
 
 .topbar{text-align:center;padding:10px}
-button{padding:10px;border:none;border-radius:8px;background:#0f766e;color:white;cursor:pointer}
+button{
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+  background:#0f766e;
+  color:white;
+  cursor:pointer;
+  transition:all 0.2s;
+  box-shadow:0 6px #0b5e57;
+}
+button:hover{background:#0b5e57;transform:translateY(-2px);box-shadow:0 4px #0b5e57;}
+button:active{transform:translateY(2px);box-shadow:0 2px #0b5e57;}
 
-#adminBtn{background:black;display:none}
+#adminBtn{background:black;margin-left:8px}
 
 .grid{
 display:grid;
@@ -28,14 +40,54 @@ padding:20px;
 .card{
 background:white;
 border-radius:14px;
-box-shadow:0 4px 15px rgba(0,0,0,0.1);
+box-shadow:0 4px 15px rgba(0,0,0,0.08);
+overflow:hidden;
 cursor:pointer;
+transition:0.3s;
 }
+.card:hover{transform:translateY(-5px)}
 
 .card img{
 width:100%;
-height:250px;
-object-fit:cover;
+height:260px;
+object-fit:contain;
+background:#eee;
+}
+
+.card-body{text-align:center;padding:12px}
+.name{font-weight:bold;font-size:18px}
+.city{color:gray;font-size:14px}
+.badge{font-size:13px;margin-top:4px}
+.premium{color:gold}
+.featured{color:red}
+
+.modal{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.modal-content{
+background:white;
+width:95%;
+max-width:500px;
+max-height:90vh;
+overflow-y:auto;
+border-radius:12px;
+padding:20px;
+position:relative;
+}
+
+.close{
+position:absolute;
+top:10px;
+right:15px;
+font-size:18px;
+cursor:pointer;
 }
 </style>
 </head>
@@ -46,105 +98,214 @@ object-fit:cover;
 <div class="topbar">
 <button id="loginBtn" onclick="handleAuth()">Login</button>
 <button onclick="goAdd()">रिश्ता जोड़ें</button>
-<button id="adminBtn" onclick="goAdmin()">Admin Panel</button>
+<button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
 
+<div class="modal" id="profileModal">
+<div class="modal-content" id="modalContent"></div>
+</div>
+
 <script>
 
-// Firebase
-firebase.initializeApp({
- apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
- authDomain:"zara-muslim-nikah.firebaseapp.com",
- databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
- projectId:"zara-muslim-nikah"
-});
+// 🔥 Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah",
+  storageBucket: "zara-muslim-nikah.appspot.com",
+  messagingSenderId: "690336186269",
+  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
+};
+firebase.initializeApp(firebaseConfig);
 
-const auth=firebase.auth();
-const db=firebase.database();
+const auth = firebase.auth();
+const db = firebase.database();
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-const ADMIN="ngogrant454@gmail.com";
+let profiles = [];
+let currentUser = null;
 
-// LOGIN
+// ✅ LOGIN / LOGOUT
 function handleAuth(){
- if(auth.currentUser){auth.signOut();}
- else{
-  const provider=new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider);
+ if(currentUser){ 
+   auth.signOut(); 
+ } else {
+   const provider=new firebase.auth.GoogleAuthProvider();
+   auth.signInWithPopup(provider);
  }
 }
 
-// AUTH CHECK
+// ✅ AUTH STATE
 auth.onAuthStateChanged(user=>{
- document.getElementById("loginBtn").innerText=user?"Logout":"Login";
+ currentUser = user;
+ document.getElementById("loginBtn").innerText = user ? "Logout" : "Login";
 
  if(user){
-   let email = user.email || (user.providerData[0] && user.providerData[0].email);
-
-   if(email && email.toLowerCase().trim() === ADMIN){
-     document.getElementById("adminBtn").style.display="inline-block";
-   }else{
-     document.getElementById("adminBtn").style.display="none";
+   const email = (user.email || user.providerData[0].email || "").toLowerCase().trim();
+   if(email === ADMIN_EMAIL){
+     document.getElementById("adminBtn").style.display = "inline-block";
+   } else {
+     document.getElementById("adminBtn").style.display = "none";
    }
-
- }else{
-   document.getElementById("adminBtn").style.display="none";
+ } else {
+   document.getElementById("adminBtn").style.display = "none";
  }
 });
 
-// ADMIN CLICK (SECURE)
+// ✅ ADD PROFILE
+function goAdd(){
+ if(!currentUser){
+   alert("Login required to add profile");
+   return;
+ }
+ window.location.href="poster.html";
+}
+
+// ✅ ADMIN PANEL
 function goAdmin(){
-
- const user = auth.currentUser;
-
- if(!user){
+ if(!currentUser){
    alert("Login required");
    return;
  }
-
- let email = user.email || (user.providerData[0] && user.providerData[0].email);
-
- if(!email || email.toLowerCase().trim() !== ADMIN){
+ const email = (currentUser.email || currentUser.providerData[0].email || "").toLowerCase().trim();
+ if(email !== ADMIN_EMAIL){
    alert("Access denied (Not admin)");
    return;
  }
-
- window.location="admin.html";
+ window.location.href="admin.html";
 }
 
-// ADD PAGE
-function goAdd(){
- if(!auth.currentUser){
-   alert("Login required");
-   return;
- }
- window.location="poster.html";
-}
-
-// LOAD PROFILES
+// ✅ LOAD PROFILES
 db.ref("users").on("value",snap=>{
+ profiles=[];
+ snap.forEach(child=>{
+   const d = child.val();
+   if(d.status === "approved"){
+     profiles.push({id:child.key,...d});
+   }
+ });
+ sortProfiles();
+ renderProfiles();
+});
+
+// ✅ SORT PROFILES
+function sortProfiles(){
+ profiles.sort((a,b)=>{
+   if(a.featured && !b.featured) return -1;
+   if(!a.featured && b.featured) return 1;
+   return (b.createdAt||0) - (a.createdAt||0);
+ });
+}
+
+// ✅ RENDER PROFILES
+function renderProfiles(){
  const grid=document.getElementById("profileGrid");
  grid.innerHTML="";
 
- snap.forEach(child=>{
-   const d=child.val();
+ if(profiles.length===0){
+   grid.innerHTML="<p style='text-align:center'>No profiles found</p>";
+   return;
+ }
 
-   if(d.status==="approved"){
-     grid.innerHTML+=`
-     <div class="card">
-       <img src="${d.photo}">
-       <div style="padding:10px">
-         <b>${d.name}</b><br>
-         ${d.city}
-       </div>
-     </div>`;
+ profiles.forEach(p=>{
+   grid.innerHTML+=`
+   <div class="card" onclick="openProfile('${p.id}')">
+     <img src="${p.photo}" onerror="this.src='https://via.placeholder.com/300'">
+     <div class="card-body">
+       <div class="name">${p.name}</div>
+       <div class="city">${p.city}</div>
+       ${p.premium?"<div class='badge premium'>🏆 Premium</div>":""}
+       ${p.featured?"<div class='badge featured'>🔥 Featured</div>":""}
+       <div id="like-${p.id}">❤️ 0</div>
+     </div>
+   </div>`;
+
+   // Realtime likes
+   db.ref("likes/"+p.id).on("value",s=>{
+     const el=document.getElementById("like-"+p.id);
+     if(el) el.innerText="❤️ "+s.numChildren();
+   });
+ });
+}
+
+// ✅ OPEN PROFILE MODAL
+function openProfile(id){
+ db.ref("users/"+id).once("value").then(s=>{
+   const d=s.val();
+   document.getElementById("modalContent").innerHTML=`
+   <div class="close" onclick="closeModal()">✖</div>
+   <h3>${d.name}</h3>
+   <img src="${d.photo}" style="width:100%" onerror="this.src='https://via.placeholder.com/300'">
+   <p><b>Age:</b> ${d.age}</p>
+   <p><b>City:</b> ${d.city}</p>
+   <p><b>Education:</b> ${d.education || ""}</p>
+   <p><b>Profession:</b> ${d.profession || ""}</p>
+   <p><b>Bio:</b> ${d.bio || ""}</p>
+
+   <button onclick="toggleLike('${id}')">❤️ Like</button>
+   <button onclick="sendInterest('${id}')">🔔 Interest</button>
+   <button onclick="startChat('${d.phone || "918806940156"}')">💬 Chat</button>
+   `;
+   document.getElementById("profileModal").style.display="flex";
+ });
+}
+
+function closeModal(){
+ document.getElementById("profileModal").style.display="none";
+}
+
+// ✅ LIKE
+function toggleLike(id){
+ if(!currentUser){
+   alert("Login required to like");
+   return;
+ }
+ const uid = currentUser.uid;
+ const ref = db.ref("likes/"+id+"/"+uid);
+ ref.once("value").then(s=>{
+   if(s.exists()) ref.remove();
+   else ref.set(true);
+ });
+}
+
+// ✅ INTEREST
+function sendInterest(id){
+ if(!currentUser){
+   alert("Login required to send interest");
+   return;
+ }
+ const sender = currentUser;
+ db.ref("interests/"+id+"/"+sender.uid).set({
+   name: sender.displayName,
+   time: Date.now()
+ });
+ alert("Interest Sent");
+}
+
+// ✅ CHAT
+function startChat(phone){
+ if(!currentUser){
+   alert("Login required to chat");
+   return;
+ }
+ const uid = currentUser.uid;
+ db.ref("subscriptions/"+uid).once("value").then(s=>{
+   if(s.exists() && s.val().expiry>Date.now()){
+     window.open(`https://wa.me/${phone}`,"_blank");
+   } else {
+     alert("Premium required");
+     window.location.href="payment.html";
    }
  });
+}
 
-});
-
+// ✅ CLOSE MODAL CLICK OUTSIDE
+window.onclick = function(e){
+ if(e.target.id==="profileModal") closeModal();
+}
 </script>
-
 </body>
 </html>
