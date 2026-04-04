@@ -108,7 +108,6 @@ cursor:pointer;
 </div>
 
 <script>
-
 // 🔥 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
@@ -125,186 +124,48 @@ const auth = firebase.auth();
 const db = firebase.database();
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-let profiles = [];
 let currentUser = null;
 
 // ✅ LOGIN / LOGOUT
 function handleAuth(){
- if(currentUser){ 
-   auth.signOut(); 
- } else {
-   const provider=new firebase.auth.GoogleAuthProvider();
-   auth.signInWithPopup(provider);
- }
+  if(currentUser){ 
+    auth.signOut(); 
+  } else {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider);
+  }
 }
 
 // ✅ AUTH STATE
-auth.onAuthStateChanged(user=>{
- currentUser = user;
- document.getElementById("loginBtn").innerText = user ? "Logout" : "Login";
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  document.getElementById("loginBtn").innerText = user ? "Logout" : "Login";
 
- if(user){
-   const email = (user.email || user.providerData[0].email || "").toLowerCase().trim();
-   if(email === ADMIN_EMAIL){
-     document.getElementById("adminBtn").style.display = "inline-block";
-   } else {
-     document.getElementById("adminBtn").style.display = "none";
-   }
- } else {
-   document.getElementById("adminBtn").style.display = "none";
- }
+  if(user){
+    // सही email निकालो: auth.currentUser.email या providerData से fallback
+    const email = (user.email || (user.providerData[0] && user.providerData[0].email) || "").toLowerCase().trim();
+    if(email === ADMIN_EMAIL){
+      document.getElementById("adminBtn").style.display = "inline-block";
+    } else {
+      document.getElementById("adminBtn").style.display = "none";
+    }
+  } else {
+    document.getElementById("adminBtn").style.display = "none";
+  }
 });
-
-// ✅ ADD PROFILE
-function goAdd(){
- if(!currentUser){
-   alert("Login required to add profile");
-   return;
- }
- window.location.href="poster.html";
-}
 
 // ✅ ADMIN PANEL
 function goAdmin(){
- if(!currentUser){
-   alert("Login required");
-   return;
- }
- const email = (currentUser.email || currentUser.providerData[0].email || "").toLowerCase().trim();
- if(email !== ADMIN_EMAIL){
-   alert("Access denied (Not admin)");
-   return;
- }
- window.location.href="admin.html";
-}
-
-// ✅ LOAD PROFILES
-db.ref("users").on("value",snap=>{
- profiles=[];
- snap.forEach(child=>{
-   const d = child.val();
-   if(d.status === "approved"){
-     profiles.push({id:child.key,...d});
-   }
- });
- sortProfiles();
- renderProfiles();
-});
-
-// ✅ SORT PROFILES
-function sortProfiles(){
- profiles.sort((a,b)=>{
-   if(a.featured && !b.featured) return -1;
-   if(!a.featured && b.featured) return 1;
-   return (b.createdAt||0) - (a.createdAt||0);
- });
-}
-
-// ✅ RENDER PROFILES
-function renderProfiles(){
- const grid=document.getElementById("profileGrid");
- grid.innerHTML="";
-
- if(profiles.length===0){
-   grid.innerHTML="<p style='text-align:center'>No profiles found</p>";
-   return;
- }
-
- profiles.forEach(p=>{
-   grid.innerHTML+=`
-   <div class="card" onclick="openProfile('${p.id}')">
-     <img src="${p.photo}" onerror="this.src='https://via.placeholder.com/300'">
-     <div class="card-body">
-       <div class="name">${p.name}</div>
-       <div class="city">${p.city}</div>
-       ${p.premium?"<div class='badge premium'>🏆 Premium</div>":""}
-       ${p.featured?"<div class='badge featured'>🔥 Featured</div>":""}
-       <div id="like-${p.id}">❤️ 0</div>
-     </div>
-   </div>`;
-
-   // Realtime likes
-   db.ref("likes/"+p.id).on("value",s=>{
-     const el=document.getElementById("like-"+p.id);
-     if(el) el.innerText="❤️ "+s.numChildren();
-   });
- });
-}
-
-// ✅ OPEN PROFILE MODAL
-function openProfile(id){
- db.ref("users/"+id).once("value").then(s=>{
-   const d=s.val();
-   document.getElementById("modalContent").innerHTML=`
-   <div class="close" onclick="closeModal()">✖</div>
-   <h3>${d.name}</h3>
-   <img src="${d.photo}" style="width:100%" onerror="this.src='https://via.placeholder.com/300'">
-   <p><b>Age:</b> ${d.age}</p>
-   <p><b>City:</b> ${d.city}</p>
-   <p><b>Education:</b> ${d.education || ""}</p>
-   <p><b>Profession:</b> ${d.profession || ""}</p>
-   <p><b>Bio:</b> ${d.bio || ""}</p>
-
-   <button onclick="toggleLike('${id}')">❤️ Like</button>
-   <button onclick="sendInterest('${id}')">🔔 Interest</button>
-   <button onclick="startChat('${d.phone || "918806940156"}')">💬 Chat</button>
-   `;
-   document.getElementById("profileModal").style.display="flex";
- });
-}
-
-function closeModal(){
- document.getElementById("profileModal").style.display="none";
-}
-
-// ✅ LIKE
-function toggleLike(id){
- if(!currentUser){
-   alert("Login required to like");
-   return;
- }
- const uid = currentUser.uid;
- const ref = db.ref("likes/"+id+"/"+uid);
- ref.once("value").then(s=>{
-   if(s.exists()) ref.remove();
-   else ref.set(true);
- });
-}
-
-// ✅ INTEREST
-function sendInterest(id){
- if(!currentUser){
-   alert("Login required to send interest");
-   return;
- }
- const sender = currentUser;
- db.ref("interests/"+id+"/"+sender.uid).set({
-   name: sender.displayName,
-   time: Date.now()
- });
- alert("Interest Sent");
-}
-
-// ✅ CHAT
-function startChat(phone){
- if(!currentUser){
-   alert("Login required to chat");
-   return;
- }
- const uid = currentUser.uid;
- db.ref("subscriptions/"+uid).once("value").then(s=>{
-   if(s.exists() && s.val().expiry>Date.now()){
-     window.open(`https://wa.me/${phone}`,"_blank");
-   } else {
-     alert("Premium required");
-     window.location.href="payment.html";
-   }
- });
-}
-
-// ✅ CLOSE MODAL CLICK OUTSIDE
-window.onclick = function(e){
- if(e.target.id==="profileModal") closeModal();
+  if(!currentUser){
+    alert("Login required");
+    return;
+  }
+  const email = (currentUser.email || (currentUser.providerData[0] && currentUser.providerData[0].email) || "").toLowerCase().trim();
+  if(email !== ADMIN_EMAIL){
+    alert("Access denied (Not admin)");
+    return;
+  }
+  window.location.href="admin.html";
 }
 </script>
 </body>
