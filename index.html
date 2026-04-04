@@ -17,6 +17,8 @@ header{background:#0f766e;color:white;padding:15px;text-align:center;font-size:2
 button{padding:8px 14px;border:none;border-radius:6px;background:#0f766e;color:white;cursor:pointer}
 button:hover{background:#0b5e57}
 
+#adminBtn{background:black;margin-left:8px}
+
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -116,7 +118,7 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
 let profiles = [];
 
-// ✅ LOGIN / LOGOUT
+// ✅ LOGIN
 function handleAuth(){
  if(auth.currentUser){ 
    auth.signOut(); 
@@ -130,7 +132,6 @@ function handleAuth(){
 auth.onAuthStateChanged(user=>{
  document.getElementById("loginBtn").innerText = user ? "Logout" : "Login";
 
- // Admin button show
  if(user && user.email === ADMIN_EMAIL){
    document.getElementById("adminBtn").style.display = "inline-block";
  } else {
@@ -138,18 +139,18 @@ auth.onAuthStateChanged(user=>{
  }
 });
 
-// ✅ GO ADD
+// ✅ ADD PAGE
 function goAdd(){
- if(!auth.currentUser){ 
-   alert("Login required"); 
-   return; 
+ if(!auth.currentUser){
+   alert("Login required");
+   return;
  }
- window.location="poster.html";
+ window.location.href="poster.html";
 }
 
-// ✅ GO ADMIN
+// ✅ ADMIN PAGE
 function goAdmin(){
- window.location="admin.html";
+ window.location.href="admin.html";
 }
 
 // ✅ LOAD PROFILES
@@ -206,9 +207,9 @@ function renderProfiles(){
 
 // ✅ OPEN PROFILE
 function openProfile(id){
- if(!auth.currentUser){ 
-   alert("Login required"); 
-   return; 
+ if(!auth.currentUser){
+   alert("Login required");
+   return;
  }
 
  db.ref("users/"+id).once("value").then(s=>{
@@ -279,12 +280,12 @@ function startChat(phone){
      window.open(`https://wa.me/${phone}`,"_blank");
    }else{
      alert("Premium required");
-     window.location="payment.html";
+     window.location.href="payment.html";
    }
  });
 }
 
-// ✅ OUTSIDE CLICK CLOSE
+// ✅ CLOSE MODAL
 window.onclick=function(e){
  if(e.target.id==="profileModal"){
    closeModal();
