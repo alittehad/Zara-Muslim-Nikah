@@ -1,64 +1,107 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Create Profile</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <title>Create Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    body{font-family:Segoe UI;padding:20px;background:#f4f6f9;}
+    input, select, textarea, button{display:block;margin:10px 0;padding:8px;width:100%;max-width:400px;}
+    button{background:#0f766e;color:white;border:none;border-radius:6px;cursor:pointer;}
+    button:hover{background:#0b5e57;}
+  </style>
 </head>
 <body>
 
 <h2>Create Profile</h2>
 
-<input id="name" placeholder="Name"><br>
-<input id="age" placeholder="Age"><br>
-<input id="city" placeholder="City"><br>
-
+<input id="name" placeholder="Full Name" required>
+<input id="age" placeholder="Age" type="number" required>
+<input id="city" placeholder="City" required>
 <select id="gender">
-<option>Male</option>
-<option>Female</option>
-</select><br>
-
-<textarea id="bio" placeholder="Bio"></textarea><br>
-<input type="file" id="photo"><br>
+  <option value="">Select Gender</option>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
+</select>
+<input id="education" placeholder="Education">
+<input id="profession" placeholder="Profession">
+<input id="phone" placeholder="Phone Number" type="tel">
+<textarea id="bio" placeholder="Short Bio"></textarea>
+<input type="file" id="photo" accept="image/*">
 <button onclick="saveProfile()">Submit</button>
 
 <script>
 firebase.initializeApp({
- apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
- authDomain:"zara-muslim-nikah.firebaseapp.com",
- databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
- projectId:"zara-muslim-nikah"
+  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain:"zara-muslim-nikah.firebaseapp.com",
+  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId:"zara-muslim-nikah"
 });
 
 const auth=firebase.auth();
 const db=firebase.database();
 
+// Check login
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    alert("Please login first!");
+    location="index.html";
+  }
+});
+
 async function saveProfile(){
- const user=auth.currentUser;
- if(!user){alert("Login first");return;}
+  const user=auth.currentUser;
+  if(!user){ alert("Login first"); return; }
 
- const file=document.getElementById("photo").files[0];
- const formData=new FormData();
- formData.append("file",file);
- formData.append("upload_preset","profiles");
+  // Get values
+  const nameVal=document.getElementById("name").value.trim();
+  const ageVal=document.getElementById("age").value.trim();
+  const cityVal=document.getElementById("city").value.trim();
+  const genderVal=document.getElementById("gender").value;
+  const educationVal=document.getElementById("education").value.trim();
+  const professionVal=document.getElementById("profession").value.trim();
+  const phoneVal=document.getElementById("phone").value.trim();
+  const bioVal=document.getElementById("bio").value.trim();
+  const file=document.getElementById("photo").files[0];
 
- const res=await fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{method:"POST",body:formData});
- const data=await res.json();
+  if(!nameVal || !ageVal || !cityVal || !genderVal || !file){
+    alert("Please fill all required fields and select a photo.");
+    return;
+  }
 
- db.ref("users/"+user.uid).set({
-   name:name.value,
-   age:age.value,
-   city:city.value,
-   gender:gender.value,
-   bio:bio.value,
-   photo:data.secure_url,
-   status:"pending",
-   role:"user"
- });
+  try{
+    // Upload photo to Cloudinary
+    const formData=new FormData();
+    formData.append("file",file);
+    formData.append("upload_preset","profiles"); // Make sure your Cloudinary preset is correct
 
- alert("Submitted. Waiting for admin approval.");
+    const res=await fetch("https://api.cloudinary.com/v1_1/dlsqxs7zl/image/upload",{method:"POST",body:formData});
+    const data=await res.json();
+
+    // Save to Firebase
+    await db.ref("users/"+user.uid).set({
+      name:nameVal,
+      age:ageVal,
+      city:cityVal,
+      gender:genderVal,
+      education:educationVal,
+      profession:professionVal,
+      phone:phoneVal,
+      bio:bioVal,
+      photo:data.secure_url,
+      status:"pending",
+      role:"user",
+      createdAt: Date.now()
+    });
+
+    alert("Profile submitted successfully. Waiting for admin approval.");
+    location="index.html"; // Redirect after submission
+  }catch(err){
+    console.error(err);
+    alert("Error uploading profile. Try again.");
+  }
 }
 </script>
 
