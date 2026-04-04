@@ -10,73 +10,127 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#f4f6f9}
-header{background:#0f766e;color:white;padding:15px;text-align:center;font-size:22px}
+body{
+ margin:0;
+ font-family:Segoe UI;
+ background:linear-gradient(135deg,#e0f2f1,#f4f6f9);
+}
 
-.topbar{text-align:center;padding:10px}
-button{padding:8px 14px;border:none;border-radius:6px;background:#0f766e;color:white;cursor:pointer}
-button:hover{background:#0b5e57}
+header{
+ background:#0f766e;
+ color:white;
+ padding:15px;
+ text-align:center;
+ font-size:22px;
+ letter-spacing:1px;
+}
 
-#adminBtn{background:black;margin-left:8px}
+/* 🔥 3D BUTTON STYLE */
+button{
+ padding:10px 16px;
+ border:none;
+ border-radius:10px;
+ cursor:pointer;
+ font-weight:bold;
+ color:white;
+ background:linear-gradient(145deg,#14b8a6,#0f766e);
+ box-shadow:0 6px 0 #0b5e57, 0 8px 15px rgba(0,0,0,0.2);
+ transition:all 0.2s ease;
+}
+
+button:hover{
+ transform:translateY(-2px);
+ box-shadow:0 8px 0 #0b5e57, 0 10px 20px rgba(0,0,0,0.3);
+}
+
+button:active{
+ transform:translateY(4px);
+ box-shadow:0 2px 0 #0b5e57;
+}
+
+/* Admin special */
+#adminBtn{
+ background:linear-gradient(145deg,#000,#333);
+ box-shadow:0 6px 0 #111,0 8px 15px rgba(0,0,0,0.3);
+}
+
+/* Layout */
+.topbar{
+ text-align:center;
+ padding:15px;
+ display:flex;
+ justify-content:center;
+ gap:10px;
+ flex-wrap:wrap;
+}
 
 .grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:20px;
-padding:20px;
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+ gap:20px;
+ padding:20px;
 }
 
+/* Cards */
 .card{
-background:white;
-border-radius:14px;
-box-shadow:0 4px 15px rgba(0,0,0,0.08);
-overflow:hidden;
-cursor:pointer;
-transition:0.3s;
+ background:white;
+ border-radius:16px;
+ box-shadow:0 10px 25px rgba(0,0,0,0.1);
+ overflow:hidden;
+ cursor:pointer;
+ transition:0.3s;
 }
-.card:hover{transform:translateY(-5px)}
+
+.card:hover{
+ transform:translateY(-6px) scale(1.02);
+}
 
 .card img{
-width:100%;
-height:260px;
-object-fit:contain;
-background:#eee;
+ width:100%;
+ height:260px;
+ object-fit:cover;
 }
 
-.card-body{text-align:center;padding:12px}
+.card-body{
+ text-align:center;
+ padding:12px;
+}
+
 .name{font-weight:bold;font-size:18px}
-.city{color:gray;font-size:14px}
-.badge{font-size:13px;margin-top:4px}
+.city{color:gray}
+
+.badge{margin-top:5px;font-size:13px}
 .premium{color:gold}
 .featured{color:red}
 
+/* Modal */
 .modal{
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,0.6);
-display:none;
-justify-content:center;
-align-items:center;
+ position:fixed;
+ top:0;
+ left:0;
+ width:100%;
+ height:100%;
+ background:rgba(0,0,0,0.6);
+ display:none;
+ justify-content:center;
+ align-items:center;
 }
 
 .modal-content{
-background:white;
-width:95%;
-max-width:500px;
-max-height:90vh;
-overflow-y:auto;
-border-radius:12px;
-padding:20px;
-position:relative;
+ background:white;
+ width:95%;
+ max-width:500px;
+ border-radius:15px;
+ padding:20px;
+ position:relative;
 }
 
 .close{
-position:absolute;
-top:10px;
-right:15px;
-font-size:18px;
-cursor:pointer;
+ position:absolute;
+ right:10px;
+ top:10px;
+ cursor:pointer;
+ font-size:18px;
 }
 </style>
 </head>
@@ -98,138 +152,97 @@ cursor:pointer;
 
 <script>
 
-// 🔥 Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah",
-  storageBucket: "zara-muslim-nikah.appspot.com",
-  messagingSenderId: "690336186269",
-  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
-};
+// Firebase Config
+firebase.initializeApp({
+ apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+ authDomain:"zara-muslim-nikah.firebaseapp.com",
+ databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+ projectId:"zara-muslim-nikah",
+ storageBucket:"zara-muslim-nikah.appspot.com",
+ appId:"1:690336186269:web:8215c1d313c4273c1f7974"
+});
 
-firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.database();
 
-const auth = firebase.auth();
-const db = firebase.database();
+const ADMIN="ngogrant454@gmail.com";
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
+let profiles=[];
 
-let profiles = [];
-
-// ✅ LOGIN
+// Login
 function handleAuth(){
- if(auth.currentUser){ 
-   auth.signOut(); 
- } else {
-   const provider=new firebase.auth.GoogleAuthProvider();
-   auth.signInWithPopup(provider);
+ if(auth.currentUser){auth.signOut();}
+ else{
+  const provider=new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider);
  }
 }
 
-// ✅ AUTH STATE
+// Auth State
 auth.onAuthStateChanged(user=>{
- document.getElementById("loginBtn").innerText = user ? "Logout" : "Login";
+ document.getElementById("loginBtn").innerText=user?"Logout":"Login";
 
- if(user && user.email === ADMIN_EMAIL){
-   document.getElementById("adminBtn").style.display = "inline-block";
- } else {
-   document.getElementById("adminBtn").style.display = "none";
+ if(user && user.email && user.email.toLowerCase().trim()===ADMIN){
+   document.getElementById("adminBtn").style.display="inline-block";
+ }else{
+   document.getElementById("adminBtn").style.display="none";
  }
 });
 
-// ✅ ADD PAGE
+// Navigation
 function goAdd(){
- if(!auth.currentUser){
-   alert("Login required");
-   return;
- }
- window.location.href="poster.html";
+ if(!auth.currentUser){alert("Login required");return;}
+ location="poster.html";
 }
 
-// ✅ ADMIN PAGE
 function goAdmin(){
- window.location.href="admin.html";
+ location="admin.html";
 }
 
-// ✅ LOAD PROFILES
+// Load Profiles
 db.ref("users").on("value",snap=>{
  profiles=[];
- snap.forEach(child=>{
-   const d=child.val();
+ snap.forEach(c=>{
+   const d=c.val();
    if(d.status==="approved"){
-     profiles.push({id:child.key,...d});
+     profiles.push({id:c.key,...d});
    }
  });
- sortProfiles();
- renderProfiles();
+ render();
 });
 
-// ✅ SORT
-function sortProfiles(){
- profiles.sort((a,b)=>{
-   if(a.featured && !b.featured) return -1;
-   if(!a.featured && b.featured) return 1;
-   return (b.createdAt||0)-(a.createdAt||0);
- });
-}
-
-// ✅ RENDER
-function renderProfiles(){
- const grid=document.getElementById("profileGrid");
- grid.innerHTML="";
-
- if(profiles.length===0){
-   grid.innerHTML="<p style='text-align:center'>No profiles found</p>";
-   return;
- }
+// Render
+function render(){
+ const g=document.getElementById("profileGrid");
+ g.innerHTML="";
 
  profiles.forEach(p=>{
-   grid.innerHTML+=`
+   g.innerHTML+=`
    <div class="card" onclick="openProfile('${p.id}')">
-     <img src="${p.photo}" onerror="this.src='https://via.placeholder.com/300'">
-     <div class="card-body">
-       <div class="name">${p.name}</div>
-       <div class="city">${p.city}</div>
-       ${p.premium?"<div class='badge premium'>🏆 Premium</div>":""}
-       ${p.featured?"<div class='badge featured'>🔥 Featured</div>":""}
-       <div id="like-${p.id}">❤️ 0</div>
-     </div>
-   </div>`;
-
-   db.ref("likes/"+p.id).on("value",s=>{
-     const el=document.getElementById("like-"+p.id);
-     if(el) el.innerText="❤️ "+s.numChildren();
-   });
+   <img src="${p.photo}" onerror="this.src='https://via.placeholder.com/300'">
+   <div class="card-body">
+   <div class="name">${p.name}</div>
+   <div class="city">${p.city}</div>
+   ${p.premium?"<div class='premium'>🏆 Premium</div>":""}
+   ${p.featured?"<div class='featured'>🔥 Featured</div>":""}
+   </div></div>`;
  });
 }
 
-// ✅ OPEN PROFILE
+// Modal
 function openProfile(id){
- if(!auth.currentUser){
-   alert("Login required");
-   return;
- }
+ if(!auth.currentUser){alert("Login required");return;}
 
  db.ref("users/"+id).once("value").then(s=>{
    const d=s.val();
-
    document.getElementById("modalContent").innerHTML=`
    <div class="close" onclick="closeModal()">✖</div>
    <h3>${d.name}</h3>
-   <img src="${d.photo}" style="width:100%" onerror="this.src='https://via.placeholder.com/300'">
+   <img src="${d.photo}" style="width:100%">
    <p><b>Age:</b> ${d.age}</p>
    <p><b>City:</b> ${d.city}</p>
-   <p><b>Education:</b> ${d.education || ""}</p>
-   <p><b>Profession:</b> ${d.profession || ""}</p>
-   <p><b>Bio:</b> ${d.bio || ""}</p>
-
-   <button onclick="toggleLike('${id}')">❤️ Like</button>
-   <button onclick="sendInterest('${id}')">🔔 Interest</button>
-   <button onclick="startChat('${d.phone || "918806940156"}')">💬 Chat</button>
+   <button onclick="startChat('${d.phone}')">💬 Chat</button>
    `;
-
    document.getElementById("profileModal").style.display="flex";
  });
 }
@@ -238,60 +251,12 @@ function closeModal(){
  document.getElementById("profileModal").style.display="none";
 }
 
-// ✅ LIKE
-function toggleLike(id){
- if(!auth.currentUser){
-   alert("Login required");
-   return;
- }
-
- const uid=auth.currentUser.uid;
- const ref=db.ref("likes/"+id+"/"+uid);
-
- ref.once("value").then(s=>{
-   if(s.exists()) ref.remove();
-   else ref.set(true);
- });
-}
-
-// ✅ INTEREST
-function sendInterest(id){
- if(!auth.currentUser){
-   alert("Login required");
-   return;
- }
-
- const sender=auth.currentUser;
-
- db.ref("interests/"+id+"/"+sender.uid).set({
-   name:sender.displayName,
-   time:Date.now()
- });
-
- alert("Interest Sent");
-}
-
-// ✅ CHAT
+// Chat
 function startChat(phone){
- const uid=auth.currentUser.uid;
-
- db.ref("subscriptions/"+uid).once("value").then(s=>{
-   if(s.exists() && s.val().expiry>Date.now()){
-     window.open(`https://wa.me/${phone}`,"_blank");
-   }else{
-     alert("Premium required");
-     window.location.href="payment.html";
-   }
- });
-}
-
-// ✅ CLOSE MODAL
-window.onclick=function(e){
- if(e.target.id==="profileModal"){
-   closeModal();
- }
+ window.open(`https://wa.me/${phone}`,"_blank");
 }
 
 </script>
+
 </body>
 </html>
