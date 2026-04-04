@@ -3,65 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <title>Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{font-family:Segoe UI;background:#f4f6f9;margin:0}
-header{background:#0f766e;color:white;padding:15px;text-align:center;font-size:22px}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:20px;
-padding:20px;
+body{
+  font-family: 'Segoe UI', sans-serif;
+  background:#f4f6f9;
+  margin:0;
+  padding:0;
 }
 
-.card{
-background:white;
-padding:10px;
-border-radius:12px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
-text-align:center;
-transition:0.3s;
+/* Header */
+header{
+  background:#0f766e;
+  color:white;
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+  position: sticky;
+  top:0;
+  z-index:10;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.card:hover{transform:translateY(-5px) rotateX(5deg)}
 
-img{width:100%;height:200px;object-fit:cover;border-radius:10px}
-
-button{
-margin:5px;
-padding:6px 10px;
-border:none;
-border-radius:6px;
-cursor:pointer;
-box-shadow:0 4px 6px rgba(0,0,0,0.2);
-transition:0.2s;
+/* Home Button */
+#home{
+  background:#1e40af;
+  color:white;
+  padding:8px 12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+  box-shadow:0 4px 6px rgba(0,0,0,0.2);
+  transition:0.2s;
 }
-button:hover{transform:translateY(-2px) translateZ(2px); box-shadow:0 6px 10px rgba(0,0,0,0.3);}
+#home:hover{
+  transform:translateY(-2px) translateZ(2px);
+  box-shadow:0 6px 10px rgba(0,0,0,0.3);
+}
 
-.approve{background:green;color:white}
-.reject{background:red;color:white}
-.premium{background:gold;color:black}
-.featured{background:orange;color:white}
-
+/* Logout */
 #logout{
-position:absolute;
-top:10px;
-right:10px;
-background:black;
-color:white;
+  background:black;
+  color:white;
+  padding:8px 12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+  box-shadow:0 4px 6px rgba(0,0,0,0.2);
+  transition:0.2s;
+}
+#logout:hover{
+  transform:translateY(-2px) translateZ(2px);
+  box-shadow:0 6px 10px rgba(0,0,0,0.3);
+}
+
+/* Grid layout */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+  padding:20px;
+}
+
+/* Card style */
+.card{
+  background:white;
+  padding:10px;
+  border-radius:15px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.1);
+  text-align:center;
+  transition:0.3s;
+  cursor:pointer;
+}
+.card:hover{
+  transform: translateY(-5px) rotateX(5deg);
+  box-shadow:0 12px 25px rgba(0,0,0,0.25);
+}
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+  border-radius:10px;
+}
+
+/* Buttons inside cards */
+button.card-btn{
+  margin:5px;
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+  box-shadow:0 4px 6px rgba(0,0,0,0.2);
+  transition:0.2s;
+}
+button.card-btn:hover{
+  transform:translateY(-2px) translateZ(2px);
+  box-shadow:0 6px 10px rgba(0,0,0,0.3);
+}
+
+.approve{background:green;color:white;}
+.reject{background:red;color:white;}
+.premium{background:gold;color:black;}
+.featured{background:orange;color:white;}
+
+/* Modal */
+.modal{
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.6);
+  justify-content:center;
+  align-items:center;
+  z-index:100;
+}
+.modal-content{
+  background:white;
+  padding:20px;
+  border-radius:15px;
+  max-width:400px;
+  width:90%;
+  max-height:90%;
+  overflow-y:auto;
+  position:relative;
+}
+.modal-content img{
+  width:100%;
+  height:auto;
+  border-radius:10px;
+}
+.close-btn{
+  position:absolute;
+  top:10px;
+  right:15px;
+  font-size:22px;
+  font-weight:bold;
+  cursor:pointer;
+  color:#333;
+}
+@media(max-width:360px){
+  .card img{height:150px;}
 }
 </style>
 </head>
 <body>
 
-<header>Admin Panel</header>
-<button id="logout" onclick="logout()">Logout</button>
+<header>
+  <span>Admin Panel</span>
+  <div>
+    <button id="home" onclick="goHome()">🏠 Home</button>
+    <button id="logout" onclick="logout()">Logout</button>
+  </div>
+</header>
 
 <div class="grid" id="list"></div>
+
+<!-- Modal for full profile -->
+<div class="modal" id="profileModal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">×</span>
+    <div id="modalBody"></div>
+  </div>
+</div>
 
 <script>
 // Firebase Config
@@ -76,17 +190,16 @@ firebase.initializeApp({
 
 const auth=firebase.auth();
 const db=firebase.database();
+const ADMIN_EMAIL="ngogrant454@gmail.com"; // admin
 
-const ADMIN_EMAIL="ngogrant454@gmail.com"; // ✅ Correct admin email
-
-// LOGIN CHECK
+// Login check
 auth.onAuthStateChanged(user=>{
  if(!user){
    alert("Login required");
    location="index.html";
  } else {
-   const userEmail = (user.email || "").toLowerCase().trim();
-   if(userEmail !== ADMIN_EMAIL.toLowerCase().trim()){
+   const email = (user.email || "").toLowerCase().trim();
+   if(email!==ADMIN_EMAIL.toLowerCase()){
      alert("Access denied (Not admin)");
      location="index.html";
    } else {
@@ -95,67 +208,65 @@ auth.onAuthStateChanged(user=>{
  }
 });
 
-// LOAD PROFILES
+// Load all profiles
 function loadProfiles(){
  db.ref("users").on("value",snap=>{
    const list=document.getElementById("list");
    list.innerHTML="";
-
-   let found=false;
-
    snap.forEach(child=>{
      const d=child.val();
-
-     if(d.status==="pending"){
-       found=true;
-       list.innerHTML+=`
-       <div class="card">
-         <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
-         <h3>${d.name}</h3>
-         <p>${d.city}</p>
-
-         <button class="approve" onclick="approve('${child.key}')">✅ Approve</button>
-         <button class="reject" onclick="reject('${child.key}')">❌ Reject</button>
-         <button class="premium" onclick="makePremium('${child.key}')">⭐ Premium</button>
-         <button class="featured" onclick="makeFeatured('${child.key}')">🔥 Featured</button>
-       </div>`;
-     }
+     let statusText = d.status==="approved" ? "✅ Approved" : "⏳ Pending";
+     list.innerHTML+=`
+     <div class="card" onclick="openModal('${child.key}')">
+       <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
+       <h3>${d.name}</h3>
+       <p>${d.city}</p>
+       <p>${statusText}</p>
+       <div>
+         <button class="card-btn approve" onclick="event.stopPropagation(); approve('${child.key}')">✅ Approve</button>
+         <button class="card-btn reject" onclick="event.stopPropagation(); reject('${child.key}')">❌ Reject</button>
+         <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${child.key}')">⭐ Premium</button>
+         <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${child.key}')">🔥 Featured</button>
+       </div>
+     </div>`;
    });
-
-   if(!found){
-     list.innerHTML="<h3 style='text-align:center'>No Pending Profiles</h3>";
-   }
  });
 }
 
-// APPROVE
-function approve(id){
- db.ref("users/"+id+"/status").set("approved");
-}
+// Approve/Reject/Premium/Featured
+function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
+function reject(id){ if(confirm("Delete profile?")) db.ref("users/"+id).remove(); }
+function makePremium(id){ db.ref("users/"+id+"/premium").set(true); alert("Marked as Premium"); }
+function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); alert("Marked as Featured"); }
 
-// REJECT
-function reject(id){
- if(confirm("Delete profile?")){
-   db.ref("users/"+id).remove();
- }
-}
+// Logout
+function logout(){ auth.signOut().then(()=>{ location="index.html"; }); }
 
-// PREMIUM
-function makePremium(id){
- db.ref("users/"+id+"/premium").set(true);
- alert("Marked as Premium");
-}
+// Home button
+function goHome(){ location="index.html"; }
 
-// FEATURED
-function makeFeatured(id){
- db.ref("users/"+id+"/featured").set(true);
- alert("Marked as Featured");
+// Modal
+function openModal(id){
+  db.ref("users/"+id).once("value").then(snap=>{
+    const d = snap.val();
+    document.getElementById("modalBody").innerHTML = `
+      <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
+      <h2>${d.name}</h2>
+      <p><b>Age:</b> ${d.age || "-"}</p>
+      <p><b>City:</b> ${d.city || "-"}</p>
+      <p><b>Gender:</b> ${d.gender || "-"}</p>
+      <p><b>Education:</b> ${d.education || "-"}</p>
+      <p><b>Profession:</b> ${d.profession || "-"}</p>
+      <p><b>Phone:</b> ${d.phone || "-"}</p>
+      <p><b>Bio:</b> ${d.bio || "-"}</p>
+      <p><b>Status:</b> ${d.status}</p>
+      <p><b>Premium:</b> ${d.premium? "Yes":"No"}</p>
+      <p><b>Featured:</b> ${d.featured? "Yes":"No"}</p>
+    `;
+    document.getElementById("profileModal").style.display="flex";
+  });
 }
-
-// LOGOUT
-function logout(){
- auth.signOut().then(()=>{ location="index.html"; });
-}
+function closeModal(){ document.getElementById("profileModal").style.display="none"; }
 </script>
 
 </body>
