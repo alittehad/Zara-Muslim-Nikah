@@ -31,7 +31,6 @@ overflow:hidden;
 cursor:pointer;
 transition:0.3s;
 }
-
 .card:hover{transform:translateY(-5px)}
 
 .card img{
@@ -69,12 +68,6 @@ padding:20px;
 position:relative;
 }
 
-.modal-content img{
-width:100%;
-height:auto;
-object-fit:contain;
-}
-
 .close{
 position:absolute;
 top:10px;
@@ -101,6 +94,7 @@ cursor:pointer;
 
 <script>
 
+// ✅ Firebase Config Added
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -109,16 +103,19 @@ const firebaseConfig = {
   storageBucket: "zara-muslim-nikah.appspot.com",
   messagingSenderId: "690336186269",
   appId: "1:690336186269:web:8215c1d313c4273c1f7974"
-};    
+};
 
-const auth=firebase.auth();
-const db=firebase.database();
-let profiles=[];
+firebase.initializeApp(firebaseConfig);
 
-/* LOGIN */
+const auth = firebase.auth();
+const db = firebase.database();
+let profiles = [];
+
+// ✅ LOGIN
 function handleAuth(){
- if(auth.currentUser){ auth.signOut(); }
- else{
+ if(auth.currentUser){ 
+   auth.signOut(); 
+ } else {
    const provider=new firebase.auth.GoogleAuthProvider();
    auth.signInWithPopup(provider);
  }
@@ -128,13 +125,16 @@ auth.onAuthStateChanged(user=>{
  document.getElementById("loginBtn").innerText=user?"Logout":"Login";
 });
 
-/* ADD PAGE */
+// ✅ ADD PAGE
 function goAdd(){
- if(!auth.currentUser){ alert("Login required"); return; }
+ if(!auth.currentUser){ 
+   alert("Login required"); 
+   return; 
+ }
  window.location="poster.html";
 }
 
-/* LOAD PROFILES */
+// ✅ LOAD PROFILES
 db.ref("users").on("value",snap=>{
  profiles=[];
  snap.forEach(child=>{
@@ -147,7 +147,7 @@ db.ref("users").on("value",snap=>{
  renderProfiles();
 });
 
-/* SORT */
+// ✅ SORT
 function sortProfiles(){
  profiles.sort((a,b)=>{
    if(a.featured && !b.featured) return -1;
@@ -156,14 +156,20 @@ function sortProfiles(){
  });
 }
 
-/* RENDER */
+// ✅ RENDER
 function renderProfiles(){
  const grid=document.getElementById("profileGrid");
  grid.innerHTML="";
+
+ if(profiles.length===0){
+   grid.innerHTML="<p>No profiles found</p>";
+   return;
+ }
+
  profiles.forEach(p=>{
    grid.innerHTML+=`
    <div class="card" onclick="openProfile('${p.id}')">
-     <img src="${p.photo}">
+     <img src="${p.photo}" onerror="this.src='https://via.placeholder.com/300'">
      <div class="card-body">
        <div class="name">${p.name}</div>
        <div class="city">${p.city}</div>
@@ -173,21 +179,28 @@ function renderProfiles(){
      </div>
    </div>`;
 
-   db.ref("likes/"+p.id).once("value").then(s=>{
-     document.getElementById("like-"+p.id).innerText="❤️ "+s.numChildren();
+   // ✅ REALTIME LIKE
+   db.ref("likes/"+p.id).on("value",s=>{
+     const el=document.getElementById("like-"+p.id);
+     if(el) el.innerText="❤️ "+s.numChildren();
    });
  });
 }
 
-/* OPEN PROFILE */
+// ✅ OPEN PROFILE
 function openProfile(id){
- if(!auth.currentUser){ alert("Login required"); return; }
+ if(!auth.currentUser){ 
+   alert("Login required"); 
+   return; 
+ }
+
  db.ref("users/"+id).once("value").then(s=>{
    const d=s.val();
+
    document.getElementById("modalContent").innerHTML=`
    <div class="close" onclick="closeModal()">✖</div>
    <h3>${d.name}</h3>
-   <img src="${d.photo}">
+   <img src="${d.photo}" style="width:100%" onerror="this.src='https://via.placeholder.com/300'">
    <p><b>Age:</b> ${d.age}</p>
    <p><b>City:</b> ${d.city}</p>
    <p><b>Education:</b> ${d.education}</p>
@@ -196,8 +209,9 @@ function openProfile(id){
 
    <button onclick="toggleLike('${id}')">❤️ Like</button>
    <button onclick="sendInterest('${id}')">🔔 Interest</button>
-   <button onclick="startChat()">💬 Chat</button>
+   <button onclick="startChat('${d.phone || "918806940156"}')">💬 Chat</button>
    `;
+
    document.getElementById("profileModal").style.display="flex";
  });
 }
@@ -206,34 +220,58 @@ function closeModal(){
  document.getElementById("profileModal").style.display="none";
 }
 
+// ✅ LIKE
 function toggleLike(id){
+ if(!auth.currentUser){
+   alert("Login required");
+   return;
+ }
+
  const uid=auth.currentUser.uid;
  const ref=db.ref("likes/"+id+"/"+uid);
+
  ref.once("value").then(s=>{
    if(s.exists()) ref.remove();
    else ref.set(true);
  });
 }
 
+// ✅ INTEREST
 function sendInterest(id){
+ if(!auth.currentUser){
+   alert("Login required");
+   return;
+ }
+
  const sender=auth.currentUser;
+
  db.ref("interests/"+id+"/"+sender.uid).set({
    name:sender.displayName,
    time:Date.now()
  });
+
  alert("Interest Sent");
 }
 
-function startChat(){
+// ✅ CHAT
+function startChat(phone){
  const uid=auth.currentUser.uid;
+
  db.ref("subscriptions/"+uid).once("value").then(s=>{
    if(s.exists() && s.val().expiry>Date.now()){
-     window.open("https://wa.me/918806940156","_blank");
+     window.open(`https://wa.me/${phone}`,"_blank");
    }else{
      alert("Premium required");
      window.location="payment.html";
    }
  });
+}
+
+// ✅ OUTSIDE CLICK CLOSE
+window.onclick=function(e){
+ if(e.target.id==="profileModal"){
+   closeModal();
+ }
 }
 
 </script>
