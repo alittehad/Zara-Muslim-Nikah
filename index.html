@@ -96,9 +96,13 @@ cursor:pointer;
 <header>Zara Muslim Nikah</header>
 
 <div class="topbar">
-<button id="loginBtn" onclick="handleAuth()">Login</button>
-<button onclick="goAdd()">रिश्ता जोड़ें</button>
-<button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
+
+  
+  <div class="topbar">
+  <button id="loginBtn" onclick="handleAuth()">Login</button>
+  <!-- पुराना: <button onclick="goAdd()">रिश्ता जोड़ें</button> -->
+  <button onclick="location.href='profile-submit.html'">रिश्ता जोड़ें</button>
+  <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
