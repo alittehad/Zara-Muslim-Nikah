@@ -75,24 +75,6 @@ header{
 
 .interest-approve{background:#16a34a;color:white;}
 .interest-reject{background:#dc2626;color:white;}
-
-.modal{
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,0.6);
-  justify-content:center;
-  align-items:center;
-}
-
-.modal-content{
-  background:white;
-  padding:20px;
-  border-radius:15px;
-  width:90%;
-  max-width:420px;
-}
 </style>
 </head>
 
@@ -108,14 +90,6 @@ header{
 
 <div class="grid" id="list"></div>
 
-<!-- MODAL -->
-<div class="modal" id="profileModal">
-  <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
-    <div id="modalBody"></div>
-  </div>
-</div>
-
 <script>
 
 firebase.initializeApp({
@@ -130,7 +104,7 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-/* AUTH CHECK */
+/* AUTH */
 auth.onAuthStateChanged(user=>{
   if(!user){
     location="index.html";
@@ -138,130 +112,76 @@ auth.onAuthStateChanged(user=>{
     alert("Access denied");
     location="index.html";
   } else {
-    loadProfiles();
+    loadData();
   }
 });
 
-/* REALTIME LOAD USERS */
-function loadProfiles(){
-  db.ref("users").on("value",snap=>{
-    const list=document.getElementById("list");
-    list.innerHTML="";
+/* REAL TIME LOAD */
+function loadData(){
+  db.ref("interests").on("value",snap=>{
+    renderCards(snap);
+  });
+}
 
-    snap.forEach(child=>{
-      const userId = child.key;
-      const d = child.val() || {};
+/* RENDER */
+function renderCards(interestsSnap){
 
-      // 🔥 REALTIME INTEREST LISTENER
-      db.ref("interests/"+userId).on("value",intSnap=>{
+  const list = document.getElementById("list");
+  list.innerHTML = "";
 
-        let interestBtn = "";
+  interestsSnap.forEach(profileSnap=>{
 
-        if(intSnap.exists()){
-          const data = intSnap.val();
+    const profileId = profileSnap.key;
+    const users = profileSnap.val();
 
-          // ✔ APPROVED → SHOW REJECT BUTTON
-          if(data.status === "approved"){
-            interestBtn = `
-              <button class="card-btn interest-reject"
-              onclick="event.stopPropagation(); rejectInterest('${userId}')">
-              ❌ Reject Interest
-              </button>
-            `;
-          }
+    // show all users under interest node
+    Object.keys(users).forEach(userId=>{
 
-          // ✔ PENDING → SHOW APPROVE BUTTON
-          else if(!data.status || data.status === "pending"){
-            interestBtn = `
-              <button class="card-btn interest-approve"
-              onclick="event.stopPropagation(); approveInterest('${userId}')">
-              ❤️ Approve Interest
-              </button>
-            `;
-          }
+      const data = users[userId];
 
-          // ✔ REJECTED → HIDE BUTTON
-          else if(data.status === "rejected"){
-            interestBtn = "";
-          }
-        }
+      let btn = "";
 
-        const cardId = "card_"+userId;
-        let existing = document.getElementById(cardId);
+      if(data.status === "pending" || !data.status){
+        btn = `<button class="card-btn interest-approve"
+        onclick="updateStatus('${profileId}','${userId}','approved')">
+        ❤️ Approve Interest</button>`;
+      }
 
-        const cardHTML = `
-          <img src="${d.photo || 'https://via.placeholder.com/300'}">
-          <h3>${d.name || ''}</h3>
-          <p>${d.city || ''}</p>
+      else if(data.status === "approved"){
+        btn = `<button class="card-btn interest-reject"
+        onclick="updateStatus('${profileId}','${userId}','rejected')">
+        ❌ Reject Interest</button>`;
+      }
 
-          <div>
-            <button class="card-btn approve" onclick="event.stopPropagation(); approve('${userId}')">Approve</button>
-            <button class="card-btn reject" onclick="event.stopPropagation(); reject('${userId}')">Reject</button>
-            <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${userId}')">Premium</button>
-            <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${userId}')">Featured</button>
+      else if(data.status === "rejected"){
+        btn = ""; // hide button
+      }
 
-            ${interestBtn}
-          </div>
-        `;
+      list.innerHTML += `
+      <div class="card">
 
-        if(existing){
-          existing.innerHTML = cardHTML;
-        } else {
-          list.innerHTML += `
-            <div class="card" id="${cardId}" onclick="openModal('${userId}')">
-              ${cardHTML}
-            </div>
-          `;
-        }
+        <h3>Profile ID: ${profileId}</h3>
+        <p>User ID: ${userId}</p>
+        <p>Status: ${data.status || "pending"}</p>
 
-      });
+        ${btn}
 
+      </div>`;
     });
   });
 }
 
-/* USER ACTIONS */
-function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
-function reject(id){ db.ref("users/"+id).remove(); }
-function makePremium(id){ db.ref("users/"+id+"/premium").set(true); }
-function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); }
+/* UPDATE STATUS */
+function updateStatus(profileId,userId,status){
 
-/* INTEREST APPROVE */
-function approveInterest(id){
-  db.ref("interests/"+id).set({
-    status:"approved",
+  db.ref("interests/"+profileId+"/"+userId).update({
+    status:status,
     time:Date.now()
   });
+
 }
 
-/* INTEREST REJECT */
-function rejectInterest(id){
-  db.ref("interests/"+id).set({
-    status:"rejected",
-    time:Date.now()
-  });
-}
-
-/* MODAL */
-function openModal(id){
-  db.ref("users/"+id).once("value").then(snap=>{
-    const d=snap.val() || {};
-
-    document.getElementById("modalBody").innerHTML=`
-      <img src="${d.photo}" style="width:100%;border-radius:10px">
-      <h2>${d.name}</h2>
-      <p>${d.city}</p>
-      <p>${d.age||''}</p>
-    `;
-
-    document.getElementById("profileModal").style.display="flex";
-  });
-}
-
-function closeModal(){
-  document.getElementById("profileModal").style.display="none";
-}
-
+/* NAV */
 function logout(){ auth.signOut().then(()=>location="index.html"); }
 function goHome(){ location="index.html"; }
 
