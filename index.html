@@ -13,22 +13,19 @@
 <style>
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 
+/* Header */
 header{
   background:#0f766e;
   color:white;
   text-align:center;
   padding:15px;
   font-size:22px;
-  position:sticky;
-  top:0;
-  z-index:10;
 }
 
-/* Topbar */
+/* Topbar (after login only) */
 .topbar{
-  display:flex;
+  display:none;
   justify-content:center;
-  align-items:center;
   gap:10px;
   padding:10px;
 }
@@ -42,15 +39,9 @@ header{
   cursor:pointer;
 }
 
-#loginBtn{background:#0f766e;}
 #addPostBtn{background:#1d4ed8;}
 #adminBtn{background:#000;}
 #homeBtn{background:#dc2626;}
-
-#afterLoginBtns{
-  display:flex;
-  gap:10px;
-}
 
 /* Grid */
 .grid{
@@ -79,19 +70,24 @@ header{
   padding:10px;
 }
 
-/* Login Screen */
+/* 🔥 Full Screen Login Image */
 #loginScreen{
   display:none;
-  position:relative;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100vh;
+  z-index:999;
 }
 
 #loginScreen img{
   width:100%;
-  height:100vh;
+  height:100%;
   object-fit:cover;
 }
 
-/* Center Login Button */
+/* Center Button */
 .center-login{
   position:absolute;
   top:50%;
@@ -124,21 +120,21 @@ header{
 
 <header>🌙 Zara Nikah Service ⭐</header>
 
-<div class="topbar">
-  <button id="loginBtn" onclick="handleAuth()">Login</button>
-
-  <div id="afterLoginBtns" style="display:none;">
-    <button id="addPostBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
-    <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
-    <button id="homeBtn" onclick="loadPosts()">Home</button>
-  </div>
+<!-- 🔥 Topbar (login के बाद ही दिखेगा) -->
+<div class="topbar" id="topbar">
+  <button id="addPostBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
+  <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
+  <button id="homeBtn" onclick="loadPosts()">Home</button>
+  <button onclick="handleAuth()" style="background:#0f766e;">Logout</button>
 </div>
 
-<!-- 🔥 Login Image Screen -->
+<!-- 🔥 Full Screen Login -->
 <div id="loginScreen">
-<img src="https://i.ibb.co/B5wzJpm6/nikah-wall.png">
+  <img src="https://i.ibb.co/B5wzJpm6/nikah-wall.png">
+
   <div class="center-login">
-    <button onclick="handleAuth()" style="padding:15px 25px;font-size:18px;background:#0f766e;color:white;border:none;border-radius:8px;">
+    <button onclick="handleAuth()" 
+      style="padding:15px 25px;font-size:18px;background:#0f766e;color:white;border:none;border-radius:8px;">
       Login to Continue
     </button>
   </div>
@@ -172,7 +168,7 @@ const db = firebase.database();
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 
-// Login
+// Login / Logout
 function handleAuth(){
   if(currentUser){ auth.signOut(); }
   else{ auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
@@ -182,17 +178,14 @@ function handleAuth(){
 auth.onAuthStateChanged(user=>{
   currentUser = user;
 
-  const loginBtn = document.getElementById("loginBtn");
   const adminBtn = document.getElementById("adminBtn");
-  const afterBtns = document.getElementById("afterLoginBtns");
   const loginScreen = document.getElementById("loginScreen");
   const grid = document.getElementById("profileGrid");
-
-  loginBtn.innerText = user ? "Logout" : "Login";
+  const topbar = document.getElementById("topbar");
 
   if(user){
-    // Login state
-    afterBtns.style.display = "flex";
+    // ✅ Login
+    topbar.style.display = "flex";
     loginScreen.style.display = "none";
     grid.style.display = "grid";
 
@@ -205,8 +198,8 @@ auth.onAuthStateChanged(user=>{
     loadPosts();
 
   } else {
-    // Logout state
-    afterBtns.style.display = "none";
+    // ❌ Logout
+    topbar.style.display = "none";
     loginScreen.style.display = "block";
     grid.style.display = "none";
   }
