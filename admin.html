@@ -10,277 +10,228 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  font-family: 'Segoe UI', sans-serif;
-  background:#f4f6f9;
-  margin:0;
-  padding:0;
-}
+body{margin:0;font-family:sans-serif;background:#f4f6f9;}
 
-/* Header */
 header{
   background:#0f766e;
   color:white;
   padding:15px;
-  text-align:center;
-  font-size:22px;
-  position: sticky;
-  top:0;
-  z-index:10;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
   display:flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content:space-between;
 }
 
-/* Home Button */
-#home{
-  background:#1e40af;
-  color:white;
-  padding:8px 12px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:bold;
-  box-shadow:0 4px 6px rgba(0,0,0,0.2);
-  transition:0.2s;
-}
-#home:hover{
-  transform:translateY(-2px) translateZ(2px);
-  box-shadow:0 6px 10px rgba(0,0,0,0.3);
-}
-
-/* Logout */
-#logout{
-  background:black;
-  color:white;
-  padding:8px 12px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:bold;
-  box-shadow:0 4px 6px rgba(0,0,0,0.2);
-  transition:0.2s;
-}
-#logout:hover{
-  transform:translateY(-2px) translateZ(2px);
-  box-shadow:0 6px 10px rgba(0,0,0,0.3);
-}
-
-/* Grid layout */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:20px;
-  padding:20px;
+  gap:15px;
+  padding:15px;
 }
 
-/* Card style */
 .card{
   background:white;
-  padding:10px;
-  border-radius:15px;
-  box-shadow:0 8px 20px rgba(0,0,0,0.1);
-  text-align:center;
-  transition:0.3s;
-  cursor:pointer;
+  padding:12px;
+  border-radius:12px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
-.card:hover{
-  transform: translateY(-5px) rotateX(5deg);
-  box-shadow:0 12px 25px rgba(0,0,0,0.25);
-}
-.card img{
+
+img{
   width:100%;
-  height:200px;
+  height:180px;
   object-fit:cover;
   border-radius:10px;
 }
 
-/* Buttons inside cards */
-button.card-btn{
-  margin:5px;
-  padding:8px 12px;
+.btn{
+  padding:7px 10px;
   border:none;
-  border-radius:8px;
+  border-radius:6px;
   cursor:pointer;
+  margin:4px;
   font-weight:bold;
-  box-shadow:0 4px 6px rgba(0,0,0,0.2);
-  transition:0.2s;
-}
-button.card-btn:hover{
-  transform:translateY(-2px) translateZ(2px);
-  box-shadow:0 6px 10px rgba(0,0,0,0.3);
 }
 
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
-.premium{background:gold;color:black;}
-.featured{background:orange;color:white;}
+.interestA{background:#16a34a;color:white;}
+.interestR{background:#dc2626;color:white;}
 
-/* Modal */
 .modal{
   display:none;
   position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background: rgba(0,0,0,0.6);
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
   justify-content:center;
   align-items:center;
-  z-index:100;
 }
+
 .modal-content{
   background:white;
   padding:20px;
-  border-radius:15px;
-  max-width:400px;
+  border-radius:12px;
   width:90%;
-  max-height:90%;
-  overflow-y:auto;
-  position:relative;
-}
-.modal-content img{
-  width:100%;
-  height:auto;
-  border-radius:10px;
-}
-.close-btn{
-  position:absolute;
-  top:10px;
-  right:15px;
-  font-size:22px;
-  font-weight:bold;
-  cursor:pointer;
-  color:#333;
-}
-@media(max-width:360px){
-  .card img{height:150px;}
+  max-width:420px;
 }
 </style>
 </head>
+
 <body>
 
 <header>
-  <span>Admin Panel</span>
-  <div>
-    <button id="home" onclick="goHome()">🏠 Home</button>
-    <button id="logout" onclick="logout()">Logout</button>
-  </div>
+  <h3>🔥 Admin Panel</h3>
+  <button onclick="logout()">Logout</button>
 </header>
 
-<div class="grid" id="list"></div>
+<div class="grid">
 
-<!-- Modal for full profile -->
-<div class="modal" id="profileModal">
+<!-- USERS -->
+<div>
+<h3>👤 Users</h3>
+<div id="users"></div>
+</div>
+
+<!-- INTEREST -->
+<div>
+<h3>❤️ Interests</h3>
+<div id="interests"></div>
+</div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
   <div class="modal-content">
-    <span class="close-btn" onclick="closeModal()">×</span>
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
 
 <script>
-// Firebase Config
+
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah",
-  storageBucket: "zara-muslim-nikah.appspot.com",
-  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
 });
 
-const auth=firebase.auth();
-const db=firebase.database();
-const ADMIN_EMAIL="ngogrant454@gmail.com"; // admin
+const auth = firebase.auth();
+const db = firebase.database();
 
-// Login check
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
+
+/* AUTH */
 auth.onAuthStateChanged(user=>{
- if(!user){
-   alert("Login required");
-   location="index.html";
- } else {
-   const email = (user.email || "").toLowerCase().trim();
-   if(email!==ADMIN_EMAIL.toLowerCase()){
-     alert("Access denied (Not admin)");
-     location="index.html";
-   } else {
-     loadProfiles();
-   }
- }
+  if(!user || user.email !== ADMIN_EMAIL){
+    location="index.html";
+  } else {
+    loadUsers();
+    loadInterests();
+  }
 });
 
-// Load all profiles
-function loadProfiles(){
- db.ref("users").on("value",snap=>{
-   const list=document.getElementById("list");
-   list.innerHTML="";
-   snap.forEach(child=>{
-     const d=child.val();
-     let statusText = d.status==="approved" ? "✅ Approved" : "⏳ Pending";
-     list.innerHTML+=`
-     <div class="card" onclick="openModal('${child.key}')">
-       <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
-       <h3>${d.name}</h3>
-       <p>${d.city}</p>
-       <p>${statusText}</p>
-       <div>
-         <button class="card-btn approve" onclick="event.stopPropagation(); approve('${child.key}')">✅ Approve</button>
-         <button class="card-btn reject" onclick="event.stopPropagation(); reject('${child.key}')">❌ Reject</button>
-         <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${child.key}')">⭐ Premium</button>
-         <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${child.key}')">🔥 Featured</button>
-       </div>
-     </div>`;
-   });
- });
-}
+/* USERS */
+function loadUsers(){
+  db.ref("users").on("value",snap=>{
+    let html="";
 
-// Approve/Reject/Premium/Featured
-function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
-function reject(id){ if(confirm("Delete profile?")) db.ref("users/"+id).remove(); }
-function makePremium(id){ db.ref("users/"+id+"/premium").set(true); alert("Marked as Premium"); }
-function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); alert("Marked as Featured"); }
+    snap.forEach(s=>{
+      let d=s.val();
 
-// Logout
-function logout(){ auth.signOut().then(()=>{ location="index.html"; }); }
+      html+=`
+      <div class="card">
+        <h4>${d.name || ""}</h4>
+        <p>${d.city || ""}</p>
 
-// Home button
-function goHome(){ location="index.html"; }
+        <button class="btn approve" onclick="approveUser('${s.key}')">Approve</button>
+        <button class="btn reject" onclick="deleteUser('${s.key}')">Delete</button>
+      </div>
+      `;
+    });
 
-// Modal
-function openModal(id){
-  db.ref("users/"+id).once("value").then(snap=>{
-    const d = snap.val();
-    document.getElementById("modalBody").innerHTML = `
-      <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
-      <h2>${d.name}</h2>
-      <p><b>Age:</b> ${d.age || "-"}</p>
-      <p><b>City:</b> ${d.city || "-"}</p>
-      <p><b>Gender:</b> ${d.gender || "-"}</p>
-      <p><b>Education:</b> ${d.education || "-"}</p>
-      <p><b>Profession:</b> ${d.profession || "-"}</p>
-      <p><b>Phone:</b> ${d.phone || "-"}</p>
-      <p><b>Bio:</b> ${d.bio || "-"}</p>
-      <p><b>Status:</b> ${d.status}</p>
-      <p><b>Premium:</b> ${d.premium? "Yes":"No"}</p>
-      <p><b>Featured:</b> ${d.featured? "Yes":"No"}</p>
-    `;
-    document.getElementById("profileModal").style.display="flex";
+    document.getElementById("users").innerHTML=html;
   });
 }
-function closeModal(){ document.getElementById("profileModal").style.display="none"; }
 
-
-function approveInterest(profileId, userId){
-  firebase.database()
-  .ref("interests/"+profileId+"/"+userId+"/status")
-  .set("approved");
-
-  alert("Interest Approved ❤️");
+function approveUser(id){
+  db.ref("users/"+id+"/status").set("approved");
 }
 
+function deleteUser(id){
+  db.ref("users/"+id).remove();
+}
 
+/* INTEREST SYSTEM */
+function loadInterests(){
+  db.ref("interests").on("value",snap=>{
+    let html="";
 
-  
+    snap.forEach(profile=>{
+
+      let pid = profile.key;
+
+      profile.forEach(user=>{
+
+        let uid = user.key;
+        let d = user.val();
+
+        if(!d || !d.status) return;
+
+        let btn="";
+
+        // pending → approve
+        if(d.status==="pending"){
+          btn=`<button class="btn interestA" onclick="setInterest('${pid}','${uid}','approved')">Approve</button>`;
+        }
+
+        // approved → reject
+        else if(d.status==="approved"){
+          btn=`<button class="btn interestR" onclick="setInterest('${pid}','${uid}','rejected')">Reject</button>`;
+        }
+
+        html+=`
+        <div class="card">
+          <b>Profile:</b> ${pid}<br>
+          <b>User:</b> ${uid}<br>
+          <b>Status:</b> ${d.status}<br>
+          ${btn}
+        </div>
+        `;
+      });
+    });
+
+    document.getElementById("interests").innerHTML=html;
+  });
+}
+
+function setInterest(pid,uid,status){
+  db.ref("interests/"+pid+"/"+uid).update({
+    status:status,
+    time:Date.now()
+  });
+}
+
+/* MODAL */
+function openProfile(id){
+  db.ref("users/"+id).once("value").then(s=>{
+    let d=s.val();
+    document.getElementById("modalBody").innerHTML=`
+      <h3>${d.name}</h3>
+      <p>${d.city}</p>
+    `;
+    document.getElementById("modal").style.display="flex";
+  });
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+/* LOGOUT */
+function logout(){
+  auth.signOut().then(()=>location="index.html");
+}
+
 </script>
 
 </body>
-</html>  
+</html>
