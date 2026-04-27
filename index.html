@@ -5,84 +5,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f4f6f9;
+}
 
-/* ===== 3D HEADER ===== */
+/* ===== FIXED 3D HEADER ===== */
 .top-header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:14px 10px;
+
+  padding:12px 8px;
+  width:100%;
+  box-sizing:border-box;
 
   background: linear-gradient(145deg, #0f766e, #14b8a6);
 
   box-shadow:
     0 6px 0 #0b5c55,
-    0 15px 25px rgba(0,0,0,0.35);
+    0 12px 25px rgba(0,0,0,0.3);
 
   border-bottom:3px solid rgba(255,255,255,0.2);
 
-  transform: perspective(800px) rotateX(6deg);
+  transform: perspective(800px) rotateX(4deg);
 }
 
-/* side blocks */
+/* side */
 .side{
   display:flex;
   flex-direction:column;
   align-items:center;
   color:white;
-  font-size:11px;
+  font-size:10px;
   font-weight:600;
-  transition:0.3s;
 }
 
 .side img{
-  width:48px;
-  height:48px;
+  width:42px;
+  height:42px;
   border-radius:50%;
   object-fit:cover;
-
   border:2px solid white;
-
-  box-shadow:
-    0 4px 0 rgba(0,0,0,0.3),
-    0 10px 20px rgba(0,0,0,0.4);
-
+  box-shadow:0 4px 10px rgba(0,0,0,0.3);
   transition:0.3s;
 }
 
 .side:hover img{
-  transform:translateY(-3px) scale(1.05);
-  box-shadow:0 12px 25px rgba(0,0,0,0.5);
+  transform:translateY(-2px) scale(1.05);
 }
 
-/* title */
+/* ===== FIXED TITLE (FULL SCREEN SAFE) ===== */
 .title{
-  font-size:18px;
+  flex:1;
+  text-align:center;
+
+  font-size:clamp(13px, 3.8vw, 22px);
   font-weight:900;
   color:white;
+
   letter-spacing:1px;
 
   text-shadow:
     0 3px 0 #0b5c55,
     0 8px 15px rgba(0,0,0,0.4);
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 /* hover effect */
 .top-header:hover{
-  transform: perspective(800px) rotateX(0deg) translateY(-2px);
+  transform: perspective(800px) rotateX(0deg);
 }
 
-/* Header mobile */
+/* mobile */
 @media(max-width:500px){
-  .title{font-size:14px;}
-  .side img{width:38px;height:38px;}
+  .side img{width:35px;height:35px;}
 }
 
 /* Topbar */
@@ -182,7 +188,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 
 <body>
 
-<!-- 🔥 3D HEADER -->
+<!-- HEADER -->
 <header class="top-header">
 
   <div class="side">
@@ -228,7 +234,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 </div>
 
 <script>
-// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
