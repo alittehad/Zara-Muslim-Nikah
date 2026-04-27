@@ -10,81 +10,21 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  font-family: 'Segoe UI', sans-serif;
-  background:#f4f6f9;
-  margin:0;
-}
-
-/* HEADER */
-header{
-  background:#0f766e;
-  color:white;
-  padding:15px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-/* GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:20px;
-  padding:20px;
-}
-
-/* CARD */
-.card{
-  background:white;
-  padding:10px;
-  border-radius:15px;
-  box-shadow:0 8px 20px rgba(0,0,0,0.1);
-  cursor:pointer;
-}
-
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-  border-radius:10px;
-}
-
-/* BUTTONS */
-button.card-btn{
-  margin:5px;
-  padding:8px 12px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:bold;
-}
-
+body{font-family:'Segoe UI';background:#f4f6f9;margin:0;}
+header{background:#0f766e;color:white;padding:15px;display:flex;justify-content:space-between;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;padding:20px;}
+.card{background:white;padding:10px;border-radius:15px;box-shadow:0 8px 20px rgba(0,0,0,0.1);cursor:pointer;}
+.card img{width:100%;height:200px;object-fit:cover;border-radius:10px;}
+button{margin:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;}
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
-.premium{background:gold;color:black;}
+.premium{background:gold;}
 .featured{background:orange;color:white;}
 .iA{background:#16a34a;color:white;}
 .iR{background:#dc2626;color:white;}
 
-/* MODAL */
-.modal{
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,0.6);
-  justify-content:center;
-  align-items:center;
-}
-
-.modal-content{
-  background:white;
-  padding:20px;
-  border-radius:15px;
-  width:90%;
-  max-width:420px;
-}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;}
+.modal-content{background:white;padding:20px;border-radius:15px;width:90%;max-width:400px;}
 </style>
 </head>
 
@@ -97,7 +37,6 @@ button.card-btn{
 
 <div class="grid" id="list"></div>
 
-<!-- MODAL -->
 <div class="modal" id="profileModal" onclick="closeModal(event)">
   <div class="modal-content">
     <div id="modalBody"></div>
@@ -107,108 +46,98 @@ button.card-btn{
 <script>
 
 firebase.initializeApp({
-  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  apiKey:"AIzaSy...",
   authDomain:"zara-muslim-nikah.firebaseapp.com",
   databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com"
 });
 
 const auth = firebase.auth();
 const db = firebase.database();
+const ADMIN_EMAIL="ngogrant454@gmail.com";
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
-
-/* LOGIN CHECK */
+/* LOGIN */
 auth.onAuthStateChanged(user=>{
-  if(!user || user.email !== ADMIN_EMAIL){
+  if(!user || user.email!==ADMIN_EMAIL){
     location="index.html";
   } else {
-    loadProfiles();
+    loadData();
   }
 });
 
-/* LOAD USERS */
-function loadProfiles(){
-  db.ref("users").on("value",snap=>{
+/* ✅ LOAD USERS + INTERESTS TOGETHER */
+function loadData(){
+
+  db.ref().on("value",snap=>{
+
+    const users = snap.child("users").val() || {};
+    const interests = snap.child("interests").val() || {};
+
     const list = document.getElementById("list");
-    list.innerHTML = "";
+    list.innerHTML="";
 
-    snap.forEach(child=>{
-      const id = child.key;
-      const d = child.val() || {};
+    Object.keys(users).forEach(id=>{
 
-      /* 🔥 INTEREST REALTIME */
-      db.ref("interests/"+id).on("value",intSnap=>{
+      const d = users[id];
+      const intData = interests[id] || {};
+      const status = intData.status || "pending";
 
-        const intData = intSnap.val() || {};
-        const status = intData.status || "pending";
+      let interestBtn="";
 
-        let interestBtn = "";
+      if(status==="pending"){
+        interestBtn=`<button class="iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
+      }
+      else if(status==="approved"){
+        interestBtn=`<button class="iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`;
+      }
+      else{
+        interestBtn=`<button class="iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
+      }
 
-        if(status === "pending"){
-          interestBtn = `
-            <button class="card-btn iA"
-            onclick="event.stopPropagation(); setInterest('${id}','approved')">
-            Approve Interest</button>`;
-        }
+      list.innerHTML+=`
+      <div class="card" onclick="openModal('${id}')">
 
-        else if(status === "approved"){
-          interestBtn = `
-            <button class="card-btn iR"
-            onclick="event.stopPropagation(); setInterest('${id}','rejected')">
-            Reject Interest</button>`;
-        }
+        <img src="${d.photo || 'https://via.placeholder.com/300'}">
 
-        else if(status === "rejected"){
-          interestBtn = `
-            <button class="card-btn iA"
-            onclick="event.stopPropagation(); setInterest('${id}','approved')">
-            Approve Interest</button>`;
-        }
+        <h3>${d.name || ''}</h3>
+        <p>${d.city || ''}</p>
 
-        list.innerHTML += `
-        <div class="card" onclick="openModal('${id}')">
+        <div>
+          <button class="approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>
+          <button class="reject" onclick="event.stopPropagation(); reject('${id}')">Delete</button>
+          <button class="premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
+          <button class="featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
 
-          <img src="${d.photo || 'https://via.placeholder.com/300'}">
+          ${interestBtn}
+        </div>
 
-          <h3>${d.name || 'No Name'}</h3>
-          <p>${d.city || ''}</p>
-
-          <div>
-            <button class="card-btn approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>
-            <button class="card-btn reject" onclick="event.stopPropagation(); reject('${id}')">Reject</button>
-            <button class="card-btn premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
-            <button class="card-btn featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
-
-            ${interestBtn}
-          </div>
-
-        </div>`;
-      });
+      </div>`;
     });
+
   });
 }
 
-/* OPEN PROFILE */
+/* MODAL */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
-    const d = snap.val() || {};
-
-    document.getElementById("modalBody").innerHTML = `
-      <img src="${d.photo || ''}" style="width:100%;border-radius:10px">
-      <h2>${d.name || ''}</h2>
-      <p>Age: ${d.age || '-'}</p>
-      <p>City: ${d.city || '-'}</p>
-      <p>Gender: ${d.gender || '-'}</p>
-      <p>Phone: ${d.phone || '-'}</p>
-      <p>Bio: ${d.bio || '-'}</p>
-      <p>Status: ${d.status || 'pending'}</p>
+    const d=snap.val()||{};
+    document.getElementById("modalBody").innerHTML=`
+      <img src="${d.photo}" style="width:100%">
+      <h2>${d.name}</h2>
+      <p>Age: ${d.age||'-'}</p>
+      <p>City: ${d.city||'-'}</p>
+      <p>Phone: ${d.phone||'-'}</p>
     `;
-
     document.getElementById("profileModal").style.display="flex";
   });
 }
 
-/* INTEREST TOGGLE */
+function closeModal(e){
+  if(e.target.id==="profileModal"){
+    document.getElementById("profileModal").style.display="none";
+  }
+}
+
+/* ACTIONS */
 function setInterest(id,status){
   db.ref("interests/"+id).set({
     status:status,
@@ -216,33 +145,11 @@ function setInterest(id,status){
   });
 }
 
-/* USER ACTIONS */
-function approve(id){
-  db.ref("users/"+id+"/status").set("approved");
-}
+function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
+function reject(id){ if(confirm("Delete?")) db.ref("users/"+id).remove(); }
+function premium(id){ db.ref("users/"+id+"/premium").set(true); }
+function featured(id){ db.ref("users/"+id+"/featured").set(true); }
 
-function reject(id){
-  if(confirm("Delete profile?")){
-    db.ref("users/"+id).remove();
-  }
-}
-
-function premium(id){
-  db.ref("users/"+id+"/premium").set(true);
-}
-
-function featured(id){
-  db.ref("users/"+id+"/featured").set(true);
-}
-
-/* CLOSE MODAL */
-function closeModal(e){
-  if(!e || e.target.id==="profileModal"){
-    document.getElementById("profileModal").style.display="none";
-  }
-}
-
-/* LOGOUT */
 function logout(){
   auth.signOut().then(()=>location="index.html");
 }
