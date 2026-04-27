@@ -14,12 +14,31 @@
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 
 /* Header */
+
+
+
 header{
-  background:#0f766e;
+  width:100%;
+  box-sizing:border-box;
+
+  background: linear-gradient(90deg, #0f766e, #14b8a6);
   color:white;
+
   text-align:center;
-  padding:15px;
-  font-size:22px;
+
+  font-size:clamp(16px, 4.5vw, 32px);
+  font-weight:900;
+
+  padding:14px 10px;
+
+  letter-spacing:1px;
+
+  text-shadow:
+    0 3px 0 #0b5c55,
+    0 10px 20px rgba(0,0,0,0.35);
+
+  white-space:nowrap;
+  overflow:hidden;
 }
 
 /* Topbar */
@@ -127,20 +146,44 @@ header{
 
 /* ===== 3D LOGIN BUTTON ===== */
 .login-btn{
-  padding:10px 18px;
-  font-size:14px;
-  font-weight:bold;
+  padding:7px 9px;      /* छोटा button */
+  font-size:8px;
+  font-weight:700;
   color:white;
+
   background: linear-gradient(145deg, #0f766e, #14b8a6);
   border:none;
-  border-radius:12px;
+  border-radius:10px;
   cursor:pointer;
 
-  box-shadow: 0 6px 0 #0b5c55, 0 12px 25px rgba(0,0,0,0.4);
+  /* 3D effect */
+  box-shadow:
+    0 4px 0 #0b5c55,
+    0 8px 16px rgba(0,0,0,0.3);
 
-  transition: all 0.25s ease;
-  transform: perspective(500px);
+  transition: all 0.2s ease;
   animation: glow 2s infinite alternate;
+}
+
+/* glow animation */
+@keyframes glow{
+  from{
+    box-shadow:0 4px 0 #0b5c55, 0 6px 12px rgba(0,0,0,0.25);
+  }
+  to{
+    box-shadow:0 4px 0 #0b5c55, 0 0 18px rgba(20,184,166,0.7);
+  }
+}
+
+/* hover effect */
+.login-btn:hover{
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* click effect */
+.login-btn:active{
+  transform: translateY(1px) scale(0.98);
+  box-shadow:0 2px 0 #0b5c55;
 }
 
 @keyframes glow{
@@ -180,13 +223,13 @@ header{
 
 <body>
 
-<header>🌙 Zara Nikah Service ⭐</header>
+<header>🕋 Zara Nikah Service 🕌</header>
 
 <!-- Topbar -->
 <div class="topbar" id="topbar">
   <button id="addPostBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
   <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
-  <button id="homeBtn" onclick="loadPosts()">Home</button>
+
   <button onclick="handleAuth()" style="background:#0f766e;">Logout</button>
 </div>
 
