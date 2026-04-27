@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Admin Dashboard</title>
+<title>Admin Interest Panel</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -24,7 +24,7 @@ header{
   background:white;
   padding:12px;
   margin:10px;
-  border-radius:12px;
+  border-radius:10px;
   box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
@@ -36,23 +36,24 @@ img{
 }
 
 .btn{
-  padding:6px 10px;
+  padding:8px 12px;
   border:none;
   border-radius:6px;
-  margin:3px;
   cursor:pointer;
+  margin:5px;
   font-weight:bold;
 }
 
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
+.wait{background:orange;color:white;}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h3>🔥 Admin Dashboard</h3>
+  <h3>🔥 Interest Admin Panel</h3>
   <button onclick="logout()">Logout</button>
 </header>
 
@@ -63,8 +64,7 @@ img{
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
 });
 
 const auth = firebase.auth();
@@ -81,63 +81,62 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* 🔥 CLEAN + IMAGE + FULL DATA */
 function loadData(){
 
   db.ref("interests").on("value",snap=>{
 
-    let html="";
+    let html = "";
 
-    snap.forEach(profile=>{
+    snap.forEach(profileSnap=>{
 
-      const pid = profile.key;
-      const users = profile.val();
+      let profileId = profileSnap.key;
 
-      Object.keys(users || {}).forEach(uid=>{
+      let data = profileSnap.val();
 
-        const d = users[uid];
+      Object.keys(data).forEach(userId=>{
 
+        let d = data[userId];
+
+        // ❌ skip invalid keys
         if(!d || typeof d !== "object") return;
 
-        const status = d.status || "pending";
+        let status = d.status || "pending";
 
-        let btn="";
+        let btn = "";
 
-        if(status === "pending"){
-          btn = `<button class="btn approve"
-          onclick="update('${pid}','${uid}','approved')">Approve</button>`;
+        if(status === "pending" || status === "waiting_admin"){
+          btn = `<button class="btn approve" onclick="update('${profileId}','${userId}','approved')">Approve Interest</button>`;
         }
 
         if(status === "approved"){
-          btn = `<button class="btn reject"
-          onclick="update('${pid}','${uid}','rejected')">Reject</button>`;
+          btn = `<button class="btn reject" onclick="update('${profileId}','${userId}','rejected')">Reject Interest</button>`;
         }
 
-        if(status === "rejected") return;
+        if(status === "rejected"){
+          btn = "";
+        }
 
         html += `
         <div class="card">
 
-          <img src="${d.photo || 'https://via.placeholder.com/300'}">
+          <h4>Profile ID: ${profileId}</h4>
+          <p>User ID: ${userId}</p>
+          <p>Status: ${status}</p>
 
-          <h3>📌 Profile ID: ${pid}</h3>
-          <p>👤 User ID: ${uid}</p>
-          <p>📊 Status: ${status}</p>
-          <p>⏰ Time: ${d.time || '-'}</p>
+          ${d.time ? `<small>Time: ${new Date(d.time).toLocaleString()}</small><br>` : ""}
 
           ${btn}
 
         </div>
         `;
       });
-
     });
 
     document.getElementById("box").innerHTML = html;
   });
 }
 
-/* UPDATE STATUS */
+/* UPDATE */
 function update(pid,uid,status){
   db.ref("interests/"+pid+"/"+uid).update({
     status:status,
