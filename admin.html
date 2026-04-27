@@ -72,7 +72,8 @@ header{
 .reject{background:red;color:white;}
 .premium{background:gold;color:black;}
 .featured{background:orange;color:white;}
-.interest{background:#e11d48;color:white;}
+.interestA{background:#16a34a;color:white;}
+.interestR{background:#dc2626;color:white;}
 
 .modal{
   display:none;
@@ -106,7 +107,6 @@ header{
 
 <div class="grid" id="list"></div>
 
-<!-- MODAL -->
 <div class="modal" id="profileModal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
@@ -128,109 +128,109 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-/* LOGIN CHECK */
+/* AUTH */
 auth.onAuthStateChanged(user=>{
   if(!user){
     location="index.html";
-  } 
-  else if((user.email||"").toLowerCase()!==ADMIN_EMAIL){
+  } else if(user.email !== ADMIN_EMAIL){
     alert("Access denied");
     location="index.html";
-  } 
-  else {
+  } else {
     loadProfiles();
   }
 });
 
-/* LOAD PROFILES (FIXED + CLEAN) */
+/* LOAD USERS */
 function loadProfiles(){
   db.ref("users").on("value",snap=>{
     const list=document.getElementById("list");
     list.innerHTML="";
 
     snap.forEach(child=>{
+      const userId = child.key;
       const d = child.val();
 
-      // interest status check (SAFE)
-      db.ref("interests/"+child.key).once("value").then(intSnap=>{
+      db.ref("interests/"+userId).once("value").then(intSnap=>{
 
-        let hasInterest = intSnap.exists();
+        let interestUI = "";
 
-        let interestBtn = "";
+        if(intSnap.exists()){
 
-        if(hasInterest){
-          interestBtn = `
-            <button class="card-btn interest"
-              onclick="event.stopPropagation(); approveInterest('${child.key}')">
+          const status = intSnap.val().status || "pending";
+
+          if(status === "approved"){
+            interestUI = `
+              <button class="card-btn interestR"
+              onclick="event.stopPropagation(); rejectInterest('${userId}')">
+              ❌ Reject Interest
+              </button>`;
+          }
+          else{
+            interestUI = `
+              <button class="card-btn interestA"
+              onclick="event.stopPropagation(); approveInterest('${userId}')">
               ❤️ Approve Interest
-            </button>
-          `;
+              </button>`;
+          }
         }
 
         list.innerHTML += `
-        <div class="card" onclick="openModal('${child.key}')">
+        <div class="card" onclick="openModal('${userId}')">
 
-          <img src="${d.photo || 'https://via.placeholder.com/300'}">
+          <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
 
-          <h3>${d.name || '-'}</h3>
-          <p>${d.city || '-'}</p>
+          <h3>${d.name}</h3>
+          <p>${d.city}</p>
 
           <div>
+            <button class="card-btn approve" onclick="event.stopPropagation(); approve('${userId}')">Approve</button>
+            <button class="card-btn reject" onclick="event.stopPropagation(); reject('${userId}')">Reject</button>
+            <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${userId}')">Premium</button>
+            <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${userId}')">Featured</button>
 
-            <button class="card-btn approve" onclick="event.stopPropagation(); approve('${child.key}')">Approve</button>
-
-            <button class="card-btn reject" onclick="event.stopPropagation(); reject('${child.key}')">Reject</button>
-
-            <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${child.key}')">Premium</button>
-
-            <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${child.key}')">Featured</button>
-
-            ${interestBtn}
-
+            ${interestUI}
           </div>
 
         </div>`;
       });
-
     });
   });
 }
 
-/* ACTIONS */
+/* USER ACTIONS */
 function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
 function reject(id){ db.ref("users/"+id).remove(); }
 function makePremium(id){ db.ref("users/"+id+"/premium").set(true); }
 function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); }
 
-/* INTEREST APPROVE (FIXED) */
-function approveInterest(profileId){
-
-  db.ref("interests/"+profileId).once("value").then(snap=>{
-
-    snap.forEach(u=>{
-      db.ref("interests/"+profileId+"/"+u.key+"/status").set("approved");
-    });
-
+/* INTEREST APPROVE */
+function approveInterest(id){
+  db.ref("interests/"+id).set({
+    status:"approved",
+    time:Date.now()
   });
+  alert("Interest Approved");
+}
 
-  alert("❤️ Interest Approved");
+/* INTEREST REJECT */
+function rejectInterest(id){
+  db.ref("interests/"+id).set({
+    status:"rejected",
+    time:Date.now()
+  });
+  alert("Interest Rejected");
 }
 
 /* MODAL */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
-    const d = snap.val();
+    const d=snap.val();
 
     document.getElementById("modalBody").innerHTML=`
       <img src="${d.photo}" style="width:100%;border-radius:10px">
       <h2>${d.name}</h2>
-      <p><b>Age:</b> ${d.age||"-"}</p>
-      <p><b>City:</b> ${d.city||"-"}</p>
-      <p><b>Gender:</b> ${d.gender||"-"}</p>
-      <p><b>Education:</b> ${d.education||"-"}</p>
-      <p><b>Profession:</b> ${d.profession||"-"}</p>
-      <p><b>Phone:</b> ${d.phone||"-"}</p>
-      <p><b>Bio:</b> ${d.bio||"-"}</p>
+      <p>${d.city}</p>
+      <p>${d.age||""}</p>
     `;
 
     document.getElementById("profileModal").style.display="flex";
@@ -241,7 +241,6 @@ function closeModal(){
   document.getElementById("profileModal").style.display="none";
 }
 
-/* NAV */
 function logout(){ auth.signOut().then(()=>location="index.html"); }
 function goHome(){ location="index.html"; }
 
