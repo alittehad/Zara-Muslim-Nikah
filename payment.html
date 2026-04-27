@@ -8,20 +8,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<script>
-firebase.initializeApp({
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
-});
-
-const db = firebase.database();
-const auth = firebase.auth();
-
-/* FIX: profile id correct */
-const pid = new URLSearchParams(location.search).get("profile");
-</script>
-
 <style>
 body{
   text-align:center;
@@ -34,7 +20,7 @@ body{
   background:white;
   padding:20px;
   border-radius:12px;
-  max-width:400px;
+  max-width:420px;
   margin:auto;
   box-shadow:0 4px 15px rgba(0,0,0,0.1);
 }
@@ -57,6 +43,19 @@ button{
 }
 </style>
 
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
+});
+
+const db = firebase.database();
+const auth = firebase.auth();
+
+const pid = new URLSearchParams(location.search).get("profile");
+</script>
+
 </head>
 
 <body>
@@ -65,7 +64,7 @@ button{
 
 <h2>💳 UPI Payment</h2>
 
-<!-- 🔥 UPI IMAGE (DEFAULT + ADMIN OVERRIDE) -->
+<!-- 🔥 Admin changeable UPI image -->
 <img id="upiImg" src="https://i.ibb.co/fzQ1WgbN/upi.png">
 
 <h3>UPI ID: zara@upi</h3>
@@ -77,7 +76,7 @@ button{
 
 <script>
 
-// 🔥 Admin can change UPI image from Firebase
+/* 🔥 ADMIN UPI IMAGE CONTROL */
 db.ref("settings/upiImage").on("value",snap=>{
   const img = snap.val();
   if(img){
@@ -85,6 +84,7 @@ db.ref("settings/upiImage").on("value",snap=>{
   }
 });
 
+/* ✅ PAYMENT FUNCTION (FULL FIXED SYSTEM) */
 function paid(){
 
   const user = auth.currentUser;
@@ -99,12 +99,24 @@ function paid(){
     return;
   }
 
-  db.ref("interests/"+pid+"/"+user.uid).set({
-    status:"paid",
-    time:Date.now()
+  /* 🔥 1. ADMIN TRACKING (WHO → WHOM) */
+  db.ref("payments").push({
+    fromUid: user.uid,
+    fromEmail: user.email || "",
+    toProfile: pid,
+    status: "paid",
+    time: Date.now()
   });
 
-  alert("Payment submitted!");
+  /* 🔥 2. LOCK INTEREST BUTTON UNTIL ADMIN DECISION */
+  db.ref("interests/"+pid+"/"+user.uid).set({
+    status: "waiting_admin",
+    paid: true,
+    time: Date.now()
+  });
+
+  alert("Payment submitted! Waiting admin approval");
+
   window.location.href = "index.html";
 }
 
