@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Admin Panel</title>
+<title>Admin Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -10,85 +10,52 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  font-family:'Segoe UI',sans-serif;
-  background:#f4f6f9;
-  margin:0;
-}
+body{margin:0;font-family:sans-serif;background:#f4f6f9;}
 
 header{
   background:#0f766e;
   color:white;
   padding:15px;
-  text-align:center;
-  font-size:22px;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
-#home,#logout{
-  padding:8px 12px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:bold;
-}
-#home{background:#1e40af;color:white;}
-#logout{background:black;color:white;}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:20px;
-  padding:20px;
-}
+.section{padding:15px;}
 
 .card{
   background:white;
-  padding:10px;
-  border-radius:15px;
-  box-shadow:0 8px 20px rgba(0,0,0,0.1);
-  text-align:center;
-}
-
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
+  padding:12px;
+  margin:10px 0;
   border-radius:10px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
-.card-btn{
-  margin:5px;
-  padding:8px 12px;
+.btn{
+  padding:7px 10px;
   border:none;
-  border-radius:8px;
+  border-radius:6px;
   cursor:pointer;
+  margin:3px;
   font-weight:bold;
 }
 
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
-.premium{background:gold;color:black;}
-.featured{background:orange;color:white;}
-
-.interest-approve{background:#16a34a;color:white;}
-.interest-reject{background:#dc2626;color:white;}
 </style>
 </head>
 
 <body>
 
 <header>
-  <span>Admin Panel</span>
-  <div>
-    <button id="home" onclick="goHome()">🏠 Home</button>
-    <button id="logout" onclick="logout()">Logout</button>
-  </div>
+  <h3>🔥 Admin Dashboard</h3>
+  <button onclick="logout()">Logout</button>
 </header>
 
-<div class="grid" id="list"></div>
+<div class="section">
+<h2>❤️ Interest Requests (Live)</h2>
+<div id="box"></div>
+</div>
 
 <script>
 
@@ -106,84 +73,73 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
 /* AUTH */
 auth.onAuthStateChanged(user=>{
-  if(!user){
-    location="index.html";
-  } else if(user.email !== ADMIN_EMAIL){
-    alert("Access denied");
+  if(!user || user.email !== ADMIN_EMAIL){
     location="index.html";
   } else {
-    loadData();
+    listenInterests();
   }
 });
 
-/* REAL TIME LOAD */
-function loadData(){
+/* 🔥 REALTIME LISTENER (OPTIMIZED) */
+function listenInterests(){
+
   db.ref("interests").on("value",snap=>{
-    renderCards(snap);
-  });
-}
 
-/* RENDER */
-function renderCards(interestsSnap){
+    let html = "";
 
-  const list = document.getElementById("list");
-  list.innerHTML = "";
+    snap.forEach(profile=>{
 
-  interestsSnap.forEach(profileSnap=>{
+      const pid = profile.key;
 
-    const profileId = profileSnap.key;
-    const users = profileSnap.val();
+      profile.forEach(userSnap=>{
 
-    // show all users under interest node
-    Object.keys(users).forEach(userId=>{
+        const uid = userSnap.key;
+        const d = userSnap.val();
 
-      const data = users[userId];
+        const status = d.status || "pending";
 
-      let btn = "";
+        let btn = "";
 
-      if(data.status === "pending" || !data.status){
-        btn = `<button class="card-btn interest-approve"
-        onclick="updateStatus('${profileId}','${userId}','approved')">
-        ❤️ Approve Interest</button>`;
-      }
+        // 🔴 PENDING → APPROVE BUTTON
+        if(status === "pending"){
+          btn = `<button class="btn approve" onclick="setStatus('${pid}','${uid}','approved')">Approve</button>`;
+        }
 
-      else if(data.status === "approved"){
-        btn = `<button class="card-btn interest-reject"
-        onclick="updateStatus('${profileId}','${userId}','rejected')">
-        ❌ Reject Interest</button>`;
-      }
+        // 🟢 APPROVED → REJECT BUTTON
+        if(status === "approved"){
+          btn = `<button class="btn reject" onclick="setStatus('${pid}','${uid}','rejected')">Reject</button>`;
+        }
 
-      else if(data.status === "rejected"){
-        btn = ""; // hide button
-      }
+        // ❌ REJECTED → REMOVE FROM UI
+        if(status === "rejected") return;
 
-      list.innerHTML += `
-      <div class="card">
-
-        <h3>Profile ID: ${profileId}</h3>
-        <p>User ID: ${userId}</p>
-        <p>Status: ${data.status || "pending"}</p>
-
-        ${btn}
-
-      </div>`;
+        html += `
+        <div class="card">
+          <b>Profile:</b> ${pid}<br>
+          <b>User:</b> ${uid}<br>
+          <b>Status:</b> ${status}<br>
+          ${btn}
+        </div>
+        `;
+      });
     });
+
+    document.getElementById("box").innerHTML = html;
   });
 }
 
-/* UPDATE STATUS */
-function updateStatus(profileId,userId,status){
-
-  db.ref("interests/"+profileId+"/"+userId).update({
+/* 🔥 UPDATE STATUS */
+function setStatus(pid,uid,status){
+  db.ref("interests/"+pid+"/"+uid).update({
     status:status,
     time:Date.now()
   });
-
 }
 
-/* NAV */
-function logout(){ auth.signOut().then(()=>location="index.html"); }
-function goHome(){ location="index.html"; }
+/* LOGOUT */
+function logout(){
+  auth.signOut().then(()=>location="index.html");
+}
 
 </script>
 
