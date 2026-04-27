@@ -108,6 +108,7 @@ header{
 
 <div class="grid" id="list"></div>
 
+<!-- MODAL -->
 <div class="modal" id="profileModal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
@@ -116,6 +117,32 @@ header{
 </div>
 
 <script>
+
+firebase.initializeApp({
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah"
+});
+
+const auth = firebase.auth();
+const db = firebase.database();
+
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
+
+/* AUTH CHECK */
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    location="index.html";
+  } else if(user.email !== ADMIN_EMAIL){
+    alert("Access denied");
+    location="index.html";
+  } else {
+    loadProfiles();
+  }
+});
+
+/* REALTIME LOAD USERS */
 function loadProfiles(){
   db.ref("users").on("value",snap=>{
     const list=document.getElementById("list");
@@ -125,24 +152,16 @@ function loadProfiles(){
       const userId = child.key;
       const d = child.val() || {};
 
-      db.ref("interests/"+userId).once("value").then(intSnap=>{
+      // 🔥 REALTIME INTEREST LISTENER
+      db.ref("interests/"+userId).on("value",intSnap=>{
 
         let interestBtn = "";
 
         if(intSnap.exists()){
+          const data = intSnap.val();
 
-          let hasApproved = false;
-          let hasPending = false;
-
-          intSnap.forEach(senderSnap=>{
-            const data = senderSnap.val();
-
-            if(data.status === "approved") hasApproved = true;
-            if(!data.status || data.status === "pending") hasPending = true;
-          });
-
-          // ✔ IF ANY APPROVED → show REJECT
-          if(hasApproved){
+          // ✔ APPROVED → SHOW REJECT BUTTON
+          if(data.status === "approved"){
             interestBtn = `
               <button class="card-btn interest-reject"
               onclick="event.stopPropagation(); rejectInterest('${userId}')">
@@ -151,8 +170,8 @@ function loadProfiles(){
             `;
           }
 
-          // ✔ IF PENDING → show APPROVE
-          else if(hasPending){
+          // ✔ PENDING → SHOW APPROVE BUTTON
+          else if(!data.status || data.status === "pending"){
             interestBtn = `
               <button class="card-btn interest-approve"
               onclick="event.stopPropagation(); approveInterest('${userId}')">
@@ -160,13 +179,18 @@ function loadProfiles(){
               </button>
             `;
           }
+
+          // ✔ REJECTED → HIDE BUTTON
+          else if(data.status === "rejected"){
+            interestBtn = "";
+          }
         }
 
-        list.innerHTML += `
-        <div class="card" onclick="openModal('${userId}')">
+        const cardId = "card_"+userId;
+        let existing = document.getElementById(cardId);
 
+        const cardHTML = `
           <img src="${d.photo || 'https://via.placeholder.com/300'}">
-
           <h3>${d.name || ''}</h3>
           <p>${d.city || ''}</p>
 
@@ -178,30 +202,69 @@ function loadProfiles(){
 
             ${interestBtn}
           </div>
+        `;
 
-        </div>`;
+        if(existing){
+          existing.innerHTML = cardHTML;
+        } else {
+          list.innerHTML += `
+            <div class="card" id="${cardId}" onclick="openModal('${userId}')">
+              ${cardHTML}
+            </div>
+          `;
+        }
+
       });
+
     });
   });
 }
 
-/* APPROVE ALL SENDERS */
-function approveInterest(profileId){
-  db.ref("interests/"+profileId).once("value").then(snap=>{
-    snap.forEach(s=>{
-      db.ref("interests/"+profileId+"/"+s.key+"/status").set("approved");
-    });
+/* USER ACTIONS */
+function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
+function reject(id){ db.ref("users/"+id).remove(); }
+function makePremium(id){ db.ref("users/"+id+"/premium").set(true); }
+function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); }
+
+/* INTEREST APPROVE */
+function approveInterest(id){
+  db.ref("interests/"+id).set({
+    status:"approved",
+    time:Date.now()
   });
 }
 
-/* REJECT ALL SENDERS */
-function rejectInterest(profileId){
-  db.ref("interests/"+profileId).once("value").then(snap=>{
-    snap.forEach(s=>{
-      db.ref("interests/"+profileId+"/"+s.key+"/status").set("rejected");
-    });
+/* INTEREST REJECT */
+function rejectInterest(id){
+  db.ref("interests/"+id).set({
+    status:"rejected",
+    time:Date.now()
   });
 }
+
+/* MODAL */
+function openModal(id){
+  db.ref("users/"+id).once("value").then(snap=>{
+    const d=snap.val() || {};
+
+    document.getElementById("modalBody").innerHTML=`
+      <img src="${d.photo}" style="width:100%;border-radius:10px">
+      <h2>${d.name}</h2>
+      <p>${d.city}</p>
+      <p>${d.age||''}</p>
+    `;
+
+    document.getElementById("profileModal").style.display="flex";
+  });
+}
+
+function closeModal(){
+  document.getElementById("profileModal").style.display="none";
+}
+
+function logout(){ auth.signOut().then(()=>location="index.html"); }
+function goHome(){ location="index.html"; }
+
 </script>
 
 </body>
