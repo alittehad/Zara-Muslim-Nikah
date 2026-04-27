@@ -1,54 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>UPI Payment</title>
+<title>Payment</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="text-align:center;font-family:sans-serif;background:#f4f6f9;">
-
-<h2>Pay ₹199 to Unlock Chat</h2>
-
-<p>Scan QR & Pay</p>
-
-<img src="your-qr.png" width="250"><br><br>
-
-<p>UPI ID: yourupi@upi</p>
-
-<button onclick="confirmPayment()" 
-style="padding:10px 20px;background:#008080;color:white;border:none;border-radius:5px;">
-I Have Paid
-</button>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
 firebase.initializeApp({
- apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
- authDomain:"zara-muslim-nikah.firebaseapp.com",
- databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
- projectId:"zara-muslim-nikah"
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
 });
 
-const db=firebase.database();
-const auth=firebase.auth();
+const db = firebase.database();
+const auth = firebase.auth();
 
-function confirmPayment(){
- const user=auth.currentUser;
+const pid = new URLSearchParams(location.search).get("pid");
+</script>
 
- if(!user){
-   alert("Login first");
-   return;
- }
+</head>
 
- db.ref("payments/"+user.uid).set({
-   paid:true,
-   time:Date.now()
- }).then(()=>{
-   alert("Payment verified! Chat unlocked.");
-   window.location="index.html";
- });
+<body style="text-align:center;font-family:sans-serif;padding:20px">
+
+<h2>💳 UPI Payment</h2>
+
+<h3>UPI ID: zara@upi</h3>
+
+<p>Pay ₹99 to continue</p>
+
+<button onclick="paid()" style="
+background:green;
+color:white;
+padding:12px;
+border:none;
+border-radius:8px;
+font-size:16px;
+">
+I Have Paid
+</button>
+
+<script>
+function paid(){
+  const user = auth.currentUser;
+
+  db.ref("interests/"+pid+"/"+user.uid+"/status")
+  .set("paid");
+
+  alert("Payment submitted!");
+
+  window.location.href = "index.html";
 }
 </script>
 
