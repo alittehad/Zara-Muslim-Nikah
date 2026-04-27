@@ -11,41 +11,21 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f4f6f9;
+}
 
 header{
   width:100%;
-  box-sizing:border-box;
   background: linear-gradient(90deg, #0f766e, #14b8a6);
   color:white;
   text-align:center;
-  font-size:clamp(16px, 4.5vw, 32px);
+  font-size:22px;
   font-weight:900;
-  padding:14px 10px;
-  letter-spacing:1px;
-  text-shadow:0 3px 0 #0b5c55,0 10px 20px rgba(0,0,0,0.35);
-  white-space:nowrap;
-  overflow:hidden;
+  padding:14px;
 }
-
-.topbar{
-  display:none;
-  justify-content:center;
-  gap:10px;
-  padding:10px;
-}
-
-.topbar button{
-  padding:10px 18px;
-  border:none;
-  border-radius:8px;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-#addPostBtn{background:#1d4ed8;}
-#adminBtn{background:#000;}
 
 .grid{
   display:grid;
@@ -60,7 +40,9 @@ header{
   overflow:hidden;
   cursor:pointer;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  transition:0.3s;
 }
+.card:hover{transform:translateY(-4px);}
 
 .card img{
   width:100%;
@@ -71,28 +53,6 @@ header{
 .card-body{
   text-align:center;
   padding:10px;
-}
-
-/* LOGIN */
-#loginScreen{
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;
-  height:100vh;
-  background:black;
-  justify-content:center;
-  align-items:center;
-  color:white;
-}
-
-.login-btn{
-  padding:10px;
-  background:#0f766e;
-  border:none;
-  color:white;
-  border-radius:8px;
-  cursor:pointer;
 }
 
 /* MODAL */
@@ -108,10 +68,26 @@ header{
 
 .modal-content{
   background:white;
-  width:90%;
-  max-width:400px;
   padding:20px;
   border-radius:10px;
+  width:90%;
+  max-width:420px;
+}
+
+/* BUTTON */
+.interest{
+  background:#e11d48;
+  color:white;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  width:100%;
+  margin-top:10px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.interest:hover{
+  background:#be123c;
 }
 </style>
 </head>
@@ -120,100 +96,53 @@ header{
 
 <header>🕋 Zara Nikah Service 🕌</header>
 
-<!-- Topbar -->
-<div class="topbar" id="topbar">
-  <button id="addPostBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
-  <button onclick="handleAuth()" style="background:#0f766e;">Logout</button>
-</div>
-
-<!-- Login -->
-<div id="loginScreen">
-  <button class="login-btn" onclick="handleAuth()">Login</button>
-</div>
-
-<!-- Profiles -->
 <div class="grid" id="profileGrid"></div>
 
-<!-- Modal -->
-<div class="modal" id="profileModal">
+<!-- MODAL -->
+<div class="modal" id="profileModal" onclick="closeModal(event)">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
 
 <script>
 
-const firebaseConfig = {
+// Firebase init
+firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
   projectId: "zara-muslim-nikah"
-};
-
-firebase.initializeApp(firebaseConfig);
+});
 
 const auth = firebase.auth();
 const db = firebase.database();
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 
-/* LOGIN */
-function handleAuth(){
-  if(currentUser){
-    auth.signOut();
-  } else {
-    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-  }
-}
-
-/* AUTH STATE */
+/* LOGIN SAFE */
 auth.onAuthStateChanged(user=>{
-  currentUser = user;
-
-  const topbar = document.getElementById("topbar");
-  const loginScreen = document.getElementById("loginScreen");
-  const grid = document.getElementById("profileGrid");
-  const adminBtn = document.getElementById("adminBtn");
-
-  if(user){
-    topbar.style.display="flex";
-    loginScreen.style.display="none";
-    grid.style.display="grid";
-
-    if((user.email||"").toLowerCase()===ADMIN_EMAIL){
-      adminBtn.style.display="inline-block";
-    } else {
-      adminBtn.style.display="none";
-    }
-
-    loadPosts();
-
-  } else {
-    topbar.style.display="none";
-    loginScreen.style.display="flex";
-    grid.style.display="none";
-  }
+  currentUser = user || null;
+  loadPosts();
 });
 
 /* LOAD PROFILES */
 function loadPosts(){
   db.ref("users").once("value").then(snap=>{
-    const grid=document.getElementById("profileGrid");
-    grid.innerHTML="";
+    const grid = document.getElementById("profileGrid");
+    grid.innerHTML = "";
 
     snap.forEach(child=>{
-      const d=child.val();
+      const d = child.val() || {};
 
-      if(d && d.status==="approved"){
-        grid.innerHTML+=`
+      if(d.status === "approved"){
+        grid.innerHTML += `
         <div class="card" onclick="openModal('${child.key}')">
-          <img src="${d.photo||'https://via.placeholder.com/300'}">
+          <img src="${d.photo || 'https://via.placeholder.com/300'}">
           <div class="card-body">
-            <h3>${d.name||'Unknown'}</h3>
-            <p>${d.city||'-'}</p>
+            <h3>${d.name || 'Unknown'}</h3>
+            <p>${d.city || '-'}</p>
           </div>
         </div>`;
       }
@@ -221,63 +150,43 @@ function loadPosts(){
   });
 }
 
-/* OPEN MODAL + INTEREST BUTTON */
+/* OPEN MODAL */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
-    const d=snap.val();
+    const d = snap.val() || {};
 
-    document.getElementById("modalBody").innerHTML=`
-      <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%">
-      <p>City: ${d.city}</p>
-      <p>Age: ${d.age}</p>
+    document.getElementById("modalBody").innerHTML = `
+      <img src="${d.photo || 'https://via.placeholder.com/300'}"
+           style="width:100%;border-radius:10px">
+      <h2>${d.name || ''}</h2>
+      <p>City: ${d.city || ''}</p>
+      <p>Age: ${d.age || ''}</p>
 
-      <button onclick="sendInterest('${id}')"
-      style="
-      width:100%;
-      margin-top:10px;
-      padding:10px;
-      background:#e11d48;
-      color:white;
-      border:none;
-      border-radius:8px;
-      font-weight:bold;
-      cursor:pointer;
-      ">
-      ❤️ I’m Interested
+      <button class="interest" onclick="goPayment('${id}')">
+        ❤️ Send Interest & Pay
       </button>
     `;
 
-    document.getElementById("profileModal").style.display="flex";
+    document.getElementById("profileModal").style.display = "flex";
   });
 }
 
-/* SEND INTEREST */
-function sendInterest(profileId){
-
+/* PAYMENT REDIRECT */
+function goPayment(id){
   if(!currentUser){
-    alert("Login required");
+    alert("Please login first");
     return;
   }
 
-  db.ref("interests/"+profileId+"/"+currentUser.uid).set({
-    name: currentUser.displayName || "User",
-    email: currentUser.email || "",
-    status: "pending",
-    time: Date.now()
-  });
-
-  alert("❤️ Interest Sent");
+  window.location.href = "payment.html?profile=" + id;
 }
 
-/* CLOSE MODAL */
-function closeModal(){
-  document.getElementById("profileModal").style.display="none";
+/* CLOSE MODAL FIX */
+function closeModal(e){
+  if(!e || e.target.id === "profileModal"){
+    document.getElementById("profileModal").style.display = "none";
+  }
 }
-
-/* NAV */
-function goAdmin(){ window.location.href="admin.html"; }
-function goAdd(){ window.location.href="profile-submit.html"; }
 
 </script>
 
