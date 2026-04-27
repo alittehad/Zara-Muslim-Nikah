@@ -14,25 +14,19 @@ body{
   font-family:'Segoe UI',sans-serif;
   background:#f4f6f9;
   margin:0;
-  padding:0;
 }
 
-/* Header */
 header{
   background:#0f766e;
   color:white;
   padding:15px;
   text-align:center;
   font-size:22px;
-  position:sticky;
-  top:0;
-  z-index:10;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
-/* Buttons */
 #home,#logout{
   padding:8px 12px;
   border:none;
@@ -43,7 +37,6 @@ header{
 #home{background:#1e40af;color:white;}
 #logout{background:black;color:white;}
 
-/* Grid */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -51,7 +44,6 @@ header{
   padding:20px;
 }
 
-/* Card */
 .card{
   background:white;
   padding:10px;
@@ -59,10 +51,6 @@ header{
   box-shadow:0 8px 20px rgba(0,0,0,0.1);
   text-align:center;
   cursor:pointer;
-  transition:0.3s;
-}
-.card:hover{
-  transform:translateY(-5px);
 }
 
 .card img{
@@ -72,7 +60,6 @@ header{
   border-radius:10px;
 }
 
-/* Buttons */
 .card-btn{
   margin:5px;
   padding:8px 12px;
@@ -88,7 +75,6 @@ header{
 .featured{background:orange;color:white;}
 .interest{background:#e11d48;color:white;}
 
-/* Modal */
 .modal{
   display:none;
   position:fixed;
@@ -98,17 +84,13 @@ header{
   justify-content:center;
   align-items:center;
 }
+
 .modal-content{
   background:white;
   padding:20px;
   border-radius:15px;
   width:90%;
-  max-width:400px;
-}
-.close-btn{
-  float:right;
-  cursor:pointer;
-  font-size:20px;
+  max-width:420px;
 }
 </style>
 </head>
@@ -125,16 +107,16 @@ header{
 
 <div class="grid" id="list"></div>
 
-<!-- Modal -->
+<!-- MODAL -->
 <div class="modal" id="profileModal">
   <div class="modal-content">
-    <span class="close-btn" onclick="closeModal()">×</span>
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
 
 <script>
-// Firebase
+
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -151,17 +133,15 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 auth.onAuthStateChanged(user=>{
   if(!user){
     location="index.html";
+  } else if((user.email||"").toLowerCase()!==ADMIN_EMAIL){
+    alert("Access denied");
+    location="index.html";
   } else {
-    if((user.email||"").toLowerCase()!==ADMIN_EMAIL){
-      alert("Access denied");
-      location="index.html";
-    } else {
-      loadProfiles();
-    }
+    loadProfiles();
   }
 });
 
-/* LOAD USERS */
+/* LOAD PROFILES */
 function loadProfiles(){
   db.ref("users").on("value",snap=>{
     const list=document.getElementById("list");
@@ -182,9 +162,8 @@ function loadProfiles(){
           <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${child.key}')">Premium</button>
           <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${child.key}')">Featured</button>
 
-          <!-- ❤️ INTEREST BUTTON (NEW FIX) -->
           <button class="card-btn interest"
-            onclick="event.stopPropagation(); approveInterest('${child.key}','${child.key}')">
+            onclick="event.stopPropagation(); approveInterest('${child.key}')">
             ❤️ Approve Interest
           </button>
         </div>
@@ -195,33 +174,45 @@ function loadProfiles(){
 
 /* ACTIONS */
 function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
-function reject(id){ if(confirm("Delete?")) db.ref("users/"+id).remove(); }
+function reject(id){ db.ref("users/"+id).remove(); }
 function makePremium(id){ db.ref("users/"+id+"/premium").set(true); }
 function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); }
 
-/* ❤️ INTEREST SYSTEM FIXED */
-function approveInterest(profileId, userId){
-  db.ref("interests/"+profileId+"/"+userId).set({
-    status:"approved",
-    time:Date.now()
+/* ❤️ INTEREST APPROVE */
+function approveInterest(profileId){
+  db.ref("interests/"+profileId).once("value").then(snap=>{
+    snap.forEach(u=>{
+      db.ref("interests/"+profileId+"/"+u.key+"/status").set("approved");
+    });
   });
+
   alert("❤️ Interest Approved");
 }
 
-/* MODAL */
+/* MODAL FULL PROFILE */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
     const d=snap.val();
+
     document.getElementById("modalBody").innerHTML=`
-      <img src="${d.photo}" style="width:100%">
+      <img src="${d.photo}" style="width:100%;border-radius:10px">
       <h2>${d.name}</h2>
-      <p>${d.city}</p>
-      <p>${d.phone||""}</p>
+      <p><b>Age:</b> ${d.age||"-"}</p>
+      <p><b>City:</b> ${d.city||"-"}</p>
+      <p><b>Gender:</b> ${d.gender||"-"}</p>
+      <p><b>Education:</b> ${d.education||"-"}</p>
+      <p><b>Profession:</b> ${d.profession||"-"}</p>
+      <p><b>Phone:</b> ${d.phone||"-"}</p>
+      <p><b>Bio:</b> ${d.bio||"-"}</p>
     `;
+
     document.getElementById("profileModal").style.display="flex";
   });
 }
-function closeModal(){ document.getElementById("profileModal").style.display="none"; }
+
+function closeModal(){
+  document.getElementById("profileModal").style.display="none";
+}
 
 /* NAV */
 function logout(){ auth.signOut().then(()=>location="index.html"); }
