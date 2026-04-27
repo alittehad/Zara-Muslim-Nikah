@@ -10,11 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  font-family:Segoe UI;
-  background:#f4f6f9;
-  margin:0;
-}
+body{font-family:Segoe UI;background:#f4f6f9;margin:0;}
 
 header{
   background:#0f766e;
@@ -22,7 +18,6 @@ header{
   padding:15px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
 }
 
 .grid{
@@ -58,8 +53,6 @@ header{
 
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
-.premium{background:gold;color:black;}
-.featured{background:orange;color:white;}
 .iA{background:#16a34a;color:white;}
 .iR{background:#dc2626;color:white;}
 
@@ -93,7 +86,6 @@ header{
 
 <div class="grid" id="list"></div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
@@ -135,7 +127,8 @@ function loadUsers(){
       const id = child.key;
       const d = child.val();
 
-      db.ref("interests/"+id).once("value").then(intSnap=>{
+      /* 🔥 FIXED: proper interest node */
+      db.ref("interests/"+id).on("value",intSnap=>{
 
         const data = intSnap.val() || {};
         const status = data.status || "pending";
@@ -146,7 +139,7 @@ function loadUsers(){
           btn = `<button class="btn iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
         }
 
-        else if(status === "approved"){
+        if(status === "approved"){
           btn = `<button class="btn iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`;
         }
 
@@ -159,10 +152,8 @@ function loadUsers(){
           <p>${d.city || ''}</p>
 
           <div>
-            <button class="btn approve" onclick="event.stopPropagation(); approveUser('${id}')">Approve</button>
+            <button class="btn approve" onclick="event.stopPropagation(); approveUser('${id}')">Approve User</button>
             <button class="btn reject" onclick="event.stopPropagation(); deleteUser('${id}')">Delete</button>
-            <button class="btn premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
-            <button class="btn featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
 
             ${btn}
           </div>
@@ -173,7 +164,7 @@ function loadUsers(){
   });
 }
 
-/* OPEN PROFILE */
+/* PROFILE MODAL */
 function openProfile(id){
   db.ref("users/"+id).once("value").then(snap=>{
     const d = snap.val();
@@ -191,14 +182,11 @@ function openProfile(id){
   });
 }
 
-/* INTEREST FIXED STRUCTURE */
+/* INTEREST APPROVE/REJECT */
 function setInterest(profileId,status){
-
-  if(!currentUser) return;
-
-  db.ref("interests/"+profileId+"/"+currentUser.uid).set({
-    status: status,
-    time: Date.now()
+  db.ref("interests/"+profileId).set({
+    status:status,
+    time:Date.now()
   });
 }
 
@@ -211,14 +199,6 @@ function deleteUser(id){
   if(confirm("Delete user?")){
     db.ref("users/"+id).remove();
   }
-}
-
-function premium(id){
-  db.ref("users/"+id+"/premium").set(true);
-}
-
-function featured(id){
-  db.ref("users/"+id+"/featured").set(true);
 }
 
 /* CLOSE MODAL */
