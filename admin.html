@@ -1,111 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Admin Panel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<style>
-body{margin:0;font-family:sans-serif;background:#f4f6f9;}
-
-header{
-  background:#0f766e;
-  color:white;
-  padding:15px;
-  display:flex;
-  justify-content:space-between;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:15px;
-  padding:15px;
-}
-
-.card{
-  background:white;
-  padding:12px;
-  border-radius:12px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.1);
-}
-
-img{
-  width:100%;
-  height:180px;
-  object-fit:cover;
-  border-radius:10px;
-}
-
-.btn{
-  padding:7px 10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  margin:4px;
-  font-weight:bold;
-}
-
-.approve{background:green;color:white;}
-.reject{background:red;color:white;}
-.interestA{background:#16a34a;color:white;}
-.interestR{background:#dc2626;color:white;}
-
-.modal{
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,0.6);
-  justify-content:center;
-  align-items:center;
-}
-
-.modal-content{
-  background:white;
-  padding:20px;
-  border-radius:12px;
-  width:90%;
-  max-width:420px;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-  <h3>🔥 Admin Panel</h3>
-  <button onclick="logout()">Logout</button>
-</header>
-
-<div class="grid">
-
-<!-- USERS -->
-<div>
-<h3>👤 Users</h3>
-<div id="users"></div>
-</div>
-
-<!-- INTEREST -->
-<div>
-<h3>❤️ Interests</h3>
-<div id="interests"></div>
-</div>
-
-</div>
-
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
-    <div id="modalBody"></div>
-  </div>
-</div>
-
 <script>
 
 firebase.initializeApp({
@@ -124,114 +16,157 @@ auth.onAuthStateChanged(user=>{
   if(!user || user.email !== ADMIN_EMAIL){
     location="index.html";
   } else {
-    loadUsers();
-    loadInterests();
+    loadProfiles();
   }
 });
 
-/* USERS */
-function loadUsers(){
-  db.ref("users").on("value",snap=>{
-    let html="";
+/* USERS (UNCHANGED UI) */
+function loadProfiles(){
+ db.ref("users").on("value",snap=>{
+   const list=document.getElementById("list");
+   list.innerHTML="";
 
-    snap.forEach(s=>{
-      let d=s.val();
+   snap.forEach(child=>{
+     const d=child.val();
 
-      html+=`
-      <div class="card">
-        <h4>${d.name || ""}</h4>
-        <p>${d.city || ""}</p>
+     list.innerHTML+=`
+     <div class="card" onclick="openModal('${child.key}')">
+       <img src="${d.photo || 'https://via.placeholder.com/300'}">
+       <h3>${d.name || ''}</h3>
+       <p>${d.city || ''}</p>
 
-        <button class="btn approve" onclick="approveUser('${s.key}')">Approve</button>
-        <button class="btn reject" onclick="deleteUser('${s.key}')">Delete</button>
-      </div>
-      `;
-    });
+       <div>
+         <button class="card-btn approve" onclick="event.stopPropagation(); approve('${child.key}')">Approve</button>
+         <button class="card-btn reject" onclick="event.stopPropagation(); reject('${child.key}')">Reject</button>
+         <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${child.key}')">Premium</button>
+         <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${child.key}')">Featured</button>
 
-    document.getElementById("users").innerHTML=html;
-  });
+         ${getInterestButton(child.key)}
+       </div>
+     </div>`;
+   });
+ });
 }
 
-function approveUser(id){
+/* 🔥 FIXED INTEREST BUTTON LOGIC */
+function getInterestButton(profileId){
+
+  let html = "";
+
+  db.ref("interests/"+profileId).on("value",snap=>{
+
+    let data = snap.val();
+
+    if(!data) return html = "";
+
+    let keys = Object.keys(data);
+
+    let foundPending = false;
+    let foundApproved = false;
+
+    keys.forEach(uid=>{
+      let d = data[uid];
+      if(!d || !d.status) return;
+
+      if(d.status === "pending") foundPending = true;
+      if(d.status === "approved") foundApproved = true;
+    });
+
+    if(foundPending){
+      html = `
+      <button class="card-btn approve"
+      onclick="approveInterest('${profileId}')">
+      ❤️ Approve Interest
+      </button>`;
+    }
+
+    if(foundApproved){
+      html = `
+      <button class="card-btn reject"
+      onclick="rejectInterest('${profileId}')">
+      ❌ Reject Interest
+      </button>`;
+    }
+
+  });
+
+  return html;
+}
+
+/* APPROVE USER */
+function approve(id){
   db.ref("users/"+id+"/status").set("approved");
 }
 
-function deleteUser(id){
+/* REJECT USER */
+function reject(id){
   db.ref("users/"+id).remove();
 }
 
-/* INTEREST SYSTEM */
-function loadInterests(){
-  db.ref("interests").on("value",snap=>{
-    let html="";
-
-    snap.forEach(profile=>{
-
-      let pid = profile.key;
-
-      profile.forEach(user=>{
-
-        let uid = user.key;
-        let d = user.val();
-
-        if(!d || !d.status) return;
-
-        let btn="";
-
-        // pending → approve
-        if(d.status==="pending"){
-          btn=`<button class="btn interestA" onclick="setInterest('${pid}','${uid}','approved')">Approve</button>`;
-        }
-
-        // approved → reject
-        else if(d.status==="approved"){
-          btn=`<button class="btn interestR" onclick="setInterest('${pid}','${uid}','rejected')">Reject</button>`;
-        }
-
-        html+=`
-        <div class="card">
-          <b>Profile:</b> ${pid}<br>
-          <b>User:</b> ${uid}<br>
-          <b>Status:</b> ${d.status}<br>
-          ${btn}
-        </div>
-        `;
-      });
-    });
-
-    document.getElementById("interests").innerHTML=html;
-  });
+/* PREMIUM */
+function makePremium(id){
+  db.ref("users/"+id+"/premium").set(true);
 }
 
-function setInterest(pid,uid,status){
-  db.ref("interests/"+pid+"/"+uid).update({
-    status:status,
-    time:Date.now()
+/* FEATURED */
+function makeFeatured(id){
+  db.ref("users/"+id+"/featured").set(true);
+}
+
+/* 🔥 INTEREST APPROVE */
+function approveInterest(profileId){
+
+  db.ref("interests/"+profileId).once("value").then(snap=>{
+    snap.forEach(user=>{
+      db.ref("interests/"+profileId+"/"+user.key).update({
+        status:"approved",
+        time:Date.now()
+      });
+    });
   });
+
+}
+
+/* 🔥 INTEREST REJECT */
+function rejectInterest(profileId){
+
+  db.ref("interests/"+profileId).once("value").then(snap=>{
+    snap.forEach(user=>{
+      db.ref("interests/"+profileId+"/"+user.key).update({
+        status:"rejected",
+        time:Date.now()
+      });
+    });
+  });
+
 }
 
 /* MODAL */
-function openProfile(id){
-  db.ref("users/"+id).once("value").then(s=>{
-    let d=s.val();
+function openModal(id){
+  db.ref("users/"+id).once("value").then(snap=>{
+    const d=snap.val();
+
     document.getElementById("modalBody").innerHTML=`
-      <h3>${d.name}</h3>
+      <img src="${d.photo}">
+      <h2>${d.name}</h2>
       <p>${d.city}</p>
     `;
-    document.getElementById("modal").style.display="flex";
+
+    document.getElementById("profileModal").style.display="flex";
   });
 }
 
 function closeModal(){
-  document.getElementById("modal").style.display="none";
+  document.getElementById("profileModal").style.display="none";
 }
 
-/* LOGOUT */
+/* NAV */
 function logout(){
   auth.signOut().then(()=>location="index.html");
 }
 
-</script>
+function goHome(){
+  location="index.html";
+}
 
-</body>
-</html>
+</script>
