@@ -2,123 +2,59 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<title>Admin Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zara Nikah Service</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
+body{margin:0;font-family:sans-serif;background:#f4f6f9;}
 
 header{
-  width:100%;
-  background: linear-gradient(90deg, #0f766e, #14b8a6);
+  background:#0f766e;
   color:white;
-  text-align:center;
-  font-size:22px;
-  font-weight:900;
-  padding:14px;
-}
-
-.topbar{
-  display:none;
-  justify-content:center;
-  gap:10px;
-  padding:10px;
-}
-
-.topbar button{
-  padding:10px 16px;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-  color:white;
-}
-
-#adminBtn{background:#1e40af;}
-#addBtn{background:#dc2626;}
-#logoutBtn{background:black;}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:15px;
   padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
+
+.section{padding:15px;}
 
 .card{
   background:white;
-  border-radius:12px;
-  overflow:hidden;
-  cursor:pointer;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-}
-
-.card-body{
-  text-align:center;
-  padding:10px;
-}
-
-/* MODAL */
-.modal{
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  background:rgba(0,0,0,0.6);
-}
-
-.modal-content{
-  background:white;
-  padding:20px;
+  padding:12px;
+  margin:10px 0;
   border-radius:10px;
-  width:90%;
-  max-width:420px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
 .btn{
-  padding:10px;
+  padding:7px 10px;
   border:none;
-  border-radius:8px;
-  width:100%;
-  margin-top:8px;
-  font-weight:bold;
+  border-radius:6px;
   cursor:pointer;
+  margin:3px;
+  font-weight:bold;
 }
 
-.interest{background:#e11d48;color:white;}
+.approve{background:green;color:white;}
+.reject{background:red;color:white;}
 </style>
 </head>
 
 <body>
 
-<header>🕋 Zara Nikah Service 🕌</header>
+<header>
+  <h3>🔥 Admin Dashboard</h3>
+  <button onclick="logout()">Logout</button>
+</header>
 
-<div class="topbar" id="topbar">
-  <button id="addBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin</button>
-  <button id="logoutBtn" onclick="logout()">Logout</button>
-</div>
-
-<div class="grid" id="profileGrid"></div>
-
-<!-- MODAL -->
-<div class="modal" id="profileModal" onclick="closeModal(event)">
-  <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
-    <div id="modalBody"></div>
-  </div>
+<div class="section">
+<h2>❤️ Interest Requests (Live)</h2>
+<div id="box"></div>
 </div>
 
 <script>
@@ -134,143 +70,76 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
-let currentUser = null;
 
 /* AUTH */
 auth.onAuthStateChanged(user=>{
-  currentUser = user || null;
-
-  const topbar = document.getElementById("topbar");
-  const adminBtn = document.getElementById("adminBtn");
-
-  if(user){
-    topbar.style.display = "flex";
-
-    adminBtn.style.display =
-      (user.email||"").toLowerCase() === ADMIN_EMAIL.toLowerCase()
-      ? "inline-block" : "none";
-
-    loadPosts();
+  if(!user || user.email !== ADMIN_EMAIL){
+    location="index.html";
   } else {
-    topbar.style.display = "none";
-    document.getElementById("profileGrid").innerHTML = "";
+    listenInterests();
   }
 });
 
-/* LOAD POSTS */
-function loadPosts(){
-  db.ref("users").on("value",snap=>{
-    const grid = document.getElementById("profileGrid");
-    grid.innerHTML = "";
+/* 🔥 REALTIME LISTENER (OPTIMIZED) */
+function listenInterests(){
 
-    snap.forEach(child=>{
-      const d = child.val() || {};
+  db.ref("interests").on("value",snap=>{
 
-      if(d.status === "approved"){
-        grid.innerHTML += `
-        <div class="card" onclick="openModal('${child.key}')">
-          <img src="${d.photo || 'https://via.placeholder.com/300'}">
-          <div class="card-body">
-            <h3>${d.name || ''}</h3>
-            <p>${d.city || ''}</p>
-          </div>
-        </div>`;
-      }
+    let html = "";
+
+    snap.forEach(profile=>{
+
+      const pid = profile.key;
+
+      profile.forEach(userSnap=>{
+
+        const uid = userSnap.key;
+        const d = userSnap.val();
+
+        const status = d.status || "pending";
+
+        let btn = "";
+
+        // 🔴 PENDING → APPROVE BUTTON
+        if(status === "pending"){
+          btn = `<button class="btn approve" onclick="setStatus('${pid}','${uid}','approved')">Approve</button>`;
+        }
+
+        // 🟢 APPROVED → REJECT BUTTON
+        if(status === "approved"){
+          btn = `<button class="btn reject" onclick="setStatus('${pid}','${uid}','rejected')">Reject</button>`;
+        }
+
+        // ❌ REJECTED → REMOVE FROM UI
+        if(status === "rejected") return;
+
+        html += `
+        <div class="card">
+          <b>Profile:</b> ${pid}<br>
+          <b>User:</b> ${uid}<br>
+          <b>Status:</b> ${status}<br>
+          ${btn}
+        </div>
+        `;
+      });
     });
+
+    document.getElementById("box").innerHTML = html;
   });
 }
 
-/* OPEN MODAL */
-function openModal(id){
-
-  db.ref("users/"+id).once("value").then(snap=>{
-    const d = snap.val() || {};
-
-    document.getElementById("modalBody").innerHTML = `
-      <img src="${d.photo || 'https://via.placeholder.com/300'}"
-           style="width:100%;border-radius:10px">
-
-      <h2>${d.name || ''}</h2>
-      <p>${d.city || ''}</p>
-      <p>${d.age || ''}</p>
-
-      <button id="interestBtn" class="btn interest"
-        onclick="goPayment('${id}')">
-        ❤️ Send Interest & Pay
-      </button>
-    `;
-
-    document.getElementById("profileModal").style.display = "flex";
-
-    const btn = document.getElementById("interestBtn");
-    checkInterestStatus(id, btn);
-  });
-}
-
-/* PAYMENT */
-function goPayment(id){
-  if(!currentUser){
-    alert("Login required");
-    return;
-  }
-
-  firebase.database()
-  .ref("interests/"+id+"/"+currentUser.uid)
-  .set({
-    status:"pending",
+/* 🔥 UPDATE STATUS */
+function setStatus(pid,uid,status){
+  db.ref("interests/"+pid+"/"+uid).update({
+    status:status,
     time:Date.now()
   });
-
-  window.location.href = "payment.html?profile=" + id;
 }
 
-/* STATUS CONTROL */
-function checkInterestStatus(profileId, btn){
-
-  if(!currentUser) return;
-
-  firebase.database()
-  .ref("interests/"+profileId+"/"+currentUser.uid)
-  .on("value",snap=>{
-
-    const d = snap.val();
-
-    if(!d){
-      btn.style.display = "block";
-      btn.innerText = "❤️ Send Interest & Pay";
-      btn.disabled = false;
-      return;
-    }
-
-    if(d.status === "pending" || d.status === "waiting_admin"){
-      btn.style.display = "block";
-      btn.innerText = "⏳ Waiting Approval";
-      btn.disabled = true;
-    }
-
-    if(d.status === "approved"){
-      btn.style.display = "none";
-    }
-
-    if(d.status === "rejected"){
-      btn.style.display = "block";
-      btn.innerText = "❤️ Send Interest Again";
-      btn.disabled = false;
-    }
-  });
+/* LOGOUT */
+function logout(){
+  auth.signOut().then(()=>location="index.html");
 }
-
-/* CLOSE MODAL */
-function closeModal(e){
-  if(!e || e.target.id === "profileModal"){
-    document.getElementById("profileModal").style.display = "none";
-  }
-}
-
-/* NAV */
-function logout(){ auth.signOut(); }
-function goAdmin(){ location="admin.html"; }
-function goAdd(){ location="profile-submit.html"; }
 
 </script>
 
