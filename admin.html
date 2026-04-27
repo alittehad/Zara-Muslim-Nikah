@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Admin Interest Panel</title>
+<title>Admin Panel</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -10,53 +10,119 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f4f6f9;}
+body{
+  font-family:'Segoe UI',sans-serif;
+  background:#f4f6f9;
+  margin:0;
+}
 
 header{
   background:#0f766e;
   color:white;
   padding:15px;
+  text-align:center;
+  font-size:22px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
 }
 
-.card{
-  background:white;
-  padding:12px;
-  margin:10px;
-  border-radius:10px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.1);
-}
-
-.btn{
+#home,#logout{
   padding:8px 12px;
   border:none;
   border-radius:6px;
   cursor:pointer;
+  font-weight:bold;
+}
+#home{background:#1e40af;color:white;}
+#logout{background:black;color:white;}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+  padding:20px;
+}
+
+.card{
+  background:white;
+  padding:10px;
+  border-radius:15px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.1);
+  text-align:center;
+}
+
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+  border-radius:10px;
+}
+
+.card-btn{
   margin:5px;
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
   font-weight:bold;
 }
 
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
+.premium{background:gold;color:black;}
+.featured{background:orange;color:white;}
+
+.interest-approve{background:#16a34a;color:white;}
+.interest-reject{background:#dc2626;color:white;}
+
+.modal{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content{
+  background:white;
+  padding:20px;
+  border-radius:15px;
+  width:90%;
+  max-width:420px;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h3>🔥 Interest Admin Panel</h3>
-  <button onclick="logout()">Logout</button>
+  <span>Admin Panel</span>
+  <div>
+    <button id="home" onclick="goHome()">🏠 Home</button>
+    <button id="logout" onclick="logout()">Logout</button>
+  </div>
 </header>
 
-<div id="box"></div>
+<div class="grid" id="list"></div>
+
+<!-- MODAL -->
+<div class="modal" id="profileModal">
+  <div class="modal-content">
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
+    <div id="modalBody"></div>
+  </div>
+</div>
 
 <script>
 
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah"
 });
 
 const auth = firebase.auth();
@@ -64,82 +130,140 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-/* AUTH */
+/* AUTH CHECK */
 auth.onAuthStateChanged(user=>{
-  if(!user || user.email !== ADMIN_EMAIL){
+  if(!user){
+    location="index.html";
+  } else if(user.email !== ADMIN_EMAIL){
+    alert("Access denied");
     location="index.html";
   } else {
-    loadData();
+    loadProfiles();
   }
 });
 
-function loadData(){
+/* REALTIME LOAD USERS */
+function loadProfiles(){
+  db.ref("users").on("value",snap=>{
+    const list=document.getElementById("list");
+    list.innerHTML="";
 
-  db.ref("interests").on("value",snap=>{
+    snap.forEach(child=>{
+      const userId = child.key;
+      const d = child.val() || {};
 
-    let html = "";
+      // 🔥 REALTIME INTEREST LISTENER
+      db.ref("interests/"+userId).on("value",intSnap=>{
 
-    snap.forEach(profileSnap=>{
+        let interestBtn = "";
 
-      let profileId = profileSnap.key;
-      let data = profileSnap.val();
+        if(intSnap.exists()){
+          const data = intSnap.val();
 
-      // 🔴 FIX: skip invalid structure
-      if(!data || typeof data !== "object") return;
+          // ✔ APPROVED → SHOW REJECT BUTTON
+          if(data.status === "approved"){
+            interestBtn = `
+              <button class="card-btn interest-reject"
+              onclick="event.stopPropagation(); rejectInterest('${userId}')">
+              ❌ Reject Interest
+              </button>
+            `;
+          }
 
-      Object.entries(data).forEach(([userId,d])=>{
+          // ✔ PENDING → SHOW APPROVE BUTTON
+          else if(!data.status || data.status === "pending"){
+            interestBtn = `
+              <button class="card-btn interest-approve"
+              onclick="event.stopPropagation(); approveInterest('${userId}')">
+              ❤️ Approve Interest
+              </button>
+            `;
+          }
 
-        // 🔴 FIX: ignore junk nodes
-        if(!d || typeof d !== "object" || !d.status) return;
-
-        let status = d.status;
-
-        let btn = "";
-
-        // pending → approve
-        if(status === "pending" || status === "waiting_admin"){
-          btn = `<button class="btn approve" onclick="update('${profileId}','${userId}','approved')">Approve Interest</button>`;
+          // ✔ REJECTED → HIDE BUTTON
+          else if(data.status === "rejected"){
+            interestBtn = "";
+          }
         }
 
-        // approved → reject
-        else if(status === "approved"){
-          btn = `<button class="btn reject" onclick="update('${profileId}','${userId}','rejected')">Reject Interest</button>`;
-        }
+        const cardId = "card_"+userId;
+        let existing = document.getElementById(cardId);
 
-        // rejected → no button
-        else {
-          btn = "";
-        }
+        const cardHTML = `
+          <img src="${d.photo || 'https://via.placeholder.com/300'}">
+          <h3>${d.name || ''}</h3>
+          <p>${d.city || ''}</p>
 
-        html += `
-        <div class="card">
-          <b>Profile:</b> ${profileId}<br>
-          <b>User:</b> ${userId}<br>
-          <b>Status:</b> ${status}<br>
-          <small>${d.time ? new Date(d.time).toLocaleString() : ""}</small><br>
-          ${btn}
-        </div>
+          <div>
+            <button class="card-btn approve" onclick="event.stopPropagation(); approve('${userId}')">Approve</button>
+            <button class="card-btn reject" onclick="event.stopPropagation(); reject('${userId}')">Reject</button>
+            <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${userId}')">Premium</button>
+            <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${userId}')">Featured</button>
+
+            ${interestBtn}
+          </div>
         `;
+
+        if(existing){
+          existing.innerHTML = cardHTML;
+        } else {
+          list.innerHTML += `
+            <div class="card" id="${cardId}" onclick="openModal('${userId}')">
+              ${cardHTML}
+            </div>
+          `;
+        }
+
       });
 
     });
-
-    document.getElementById("box").innerHTML = html;
   });
 }
 
-/* UPDATE STATUS */
-function update(pid,uid,status){
-  db.ref("interests/"+pid+"/"+uid).update({
-    status:status,
+/* USER ACTIONS */
+function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
+function reject(id){ db.ref("users/"+id).remove(); }
+function makePremium(id){ db.ref("users/"+id+"/premium").set(true); }
+function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); }
+
+/* INTEREST APPROVE */
+function approveInterest(id){
+  db.ref("interests/"+id).set({
+    status:"approved",
     time:Date.now()
   });
 }
 
-/* LOGOUT */
-function logout(){
-  auth.signOut().then(()=>location="index.html");
+/* INTEREST REJECT */
+function rejectInterest(id){
+  db.ref("interests/"+id).set({
+    status:"rejected",
+    time:Date.now()
+  });
 }
+
+/* MODAL */
+function openModal(id){
+  db.ref("users/"+id).once("value").then(snap=>{
+    const d=snap.val() || {};
+
+    document.getElementById("modalBody").innerHTML=`
+      <img src="${d.photo}" style="width:100%;border-radius:10px">
+      <h2>${d.name}</h2>
+      <p>${d.city}</p>
+      <p>${d.age||''}</p>
+    `;
+
+    document.getElementById("profileModal").style.display="flex";
+  });
+}
+
+function closeModal(){
+  document.getElementById("profileModal").style.display="none";
+}
+
+function logout(){ auth.signOut().then(()=>location="index.html"); }
+function goHome(){ location="index.html"; }
 
 </script>
 
