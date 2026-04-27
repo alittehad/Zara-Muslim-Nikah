@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -39,10 +38,9 @@ header{
   color:white;
 }
 
-#loginBtn{background:#0f766e;}
-#logoutBtn{background:black;}
 #adminBtn{background:#1e40af;}
 #addBtn{background:#dc2626;}
+#logoutBtn{background:black;}
 
 .grid{
   display:grid;
@@ -57,9 +55,7 @@ header{
   overflow:hidden;
   cursor:pointer;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  transition:0.3s;
 }
-.card:hover{transform:translateY(-4px);}
 
 .card img{
   width:100%;
@@ -109,14 +105,12 @@ header{
 
 <header>🕋 Zara Nikah Service 🕌</header>
 
-<!-- TOPBAR -->
 <div class="topbar" id="topbar">
   <button id="addBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
   <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin</button>
   <button id="logoutBtn" onclick="logout()">Logout</button>
 </div>
 
-<!-- GRID -->
 <div class="grid" id="profileGrid"></div>
 
 <!-- MODAL -->
@@ -129,7 +123,6 @@ header{
 
 <script>
 
-// Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -143,12 +136,7 @@ const db = firebase.database();
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 
-/* LOGIN (GOOGLE) */
-function login(){
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-}
-
-/* AUTH STATE */
+/* AUTH */
 auth.onAuthStateChanged(user=>{
   currentUser = user || null;
 
@@ -158,11 +146,9 @@ auth.onAuthStateChanged(user=>{
   if(user){
     topbar.style.display = "flex";
 
-    if((user.email||"").toLowerCase() === ADMIN_EMAIL.toLowerCase()){
-      adminBtn.style.display = "inline-block";
-    } else {
-      adminBtn.style.display = "none";
-    }
+    adminBtn.style.display =
+      (user.email||"").toLowerCase() === ADMIN_EMAIL.toLowerCase()
+      ? "inline-block" : "none";
 
     loadPosts();
   } else {
@@ -171,7 +157,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* LOAD PROFILES */
+/* LOAD POSTS */
 function loadPosts(){
   db.ref("users").on("value",snap=>{
     const grid = document.getElementById("profileGrid");
@@ -185,8 +171,8 @@ function loadPosts(){
         <div class="card" onclick="openModal('${child.key}')">
           <img src="${d.photo || 'https://via.placeholder.com/300'}">
           <div class="card-body">
-            <h3>${d.name || 'Unknown'}</h3>
-            <p>${d.city || '-'}</p>
+            <h3>${d.name || ''}</h3>
+            <p>${d.city || ''}</p>
           </div>
         </div>`;
       }
@@ -194,8 +180,9 @@ function loadPosts(){
   });
 }
 
-/* OPEN PROFILE */
+/* OPEN MODAL */
 function openModal(id){
+
   db.ref("users/"+id).once("value").then(snap=>{
     const d = snap.val() || {};
 
@@ -207,12 +194,16 @@ function openModal(id){
       <p>${d.city || ''}</p>
       <p>${d.age || ''}</p>
 
-      <button class="btn interest" onclick="goPayment('${id}')">
+      <button id="interestBtn" class="btn interest"
+        onclick="goPayment('${id}')">
         ❤️ Send Interest & Pay
       </button>
     `;
 
     document.getElementById("profileModal").style.display = "flex";
+
+    const btn = document.getElementById("interestBtn");
+    checkInterestStatus(id, btn);
   });
 }
 
@@ -222,7 +213,51 @@ function goPayment(id){
     alert("Login required");
     return;
   }
+
+  firebase.database()
+  .ref("interests/"+id+"/"+currentUser.uid)
+  .set({
+    status:"pending",
+    time:Date.now()
+  });
+
   window.location.href = "payment.html?profile=" + id;
+}
+
+/* STATUS CONTROL */
+function checkInterestStatus(profileId, btn){
+
+  if(!currentUser) return;
+
+  firebase.database()
+  .ref("interests/"+profileId+"/"+currentUser.uid)
+  .on("value",snap=>{
+
+    const d = snap.val();
+
+    if(!d){
+      btn.style.display = "block";
+      btn.innerText = "❤️ Send Interest & Pay";
+      btn.disabled = false;
+      return;
+    }
+
+    if(d.status === "pending" || d.status === "waiting_admin"){
+      btn.style.display = "block";
+      btn.innerText = "⏳ Waiting Approval";
+      btn.disabled = true;
+    }
+
+    if(d.status === "approved"){
+      btn.style.display = "none";
+    }
+
+    if(d.status === "rejected"){
+      btn.style.display = "block";
+      btn.innerText = "❤️ Send Interest Again";
+      btn.disabled = false;
+    }
+  });
 }
 
 /* CLOSE MODAL */
@@ -234,8 +269,8 @@ function closeModal(e){
 
 /* NAV */
 function logout(){ auth.signOut(); }
-function goAdmin(){ window.location.href="admin.html"; }
-function goAdd(){ window.location.href="profile-submit.html"; }
+function goAdmin(){ location="admin.html"; }
+function goAdd(){ location="profile-submit.html"; }
 
 </script>
 
