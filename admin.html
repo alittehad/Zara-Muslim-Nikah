@@ -28,13 +28,6 @@ header{
   box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
-img{
-  width:100%;
-  max-height:200px;
-  object-fit:cover;
-  border-radius:10px;
-}
-
 .btn{
   padding:8px 12px;
   border:none;
@@ -46,7 +39,6 @@ img{
 
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
-.wait{background:orange;color:white;}
 </style>
 </head>
 
@@ -90,53 +82,53 @@ function loadData(){
     snap.forEach(profileSnap=>{
 
       let profileId = profileSnap.key;
-
       let data = profileSnap.val();
 
-      Object.keys(data).forEach(userId=>{
+      // 🔴 FIX: skip invalid structure
+      if(!data || typeof data !== "object") return;
 
-        let d = data[userId];
+      Object.entries(data).forEach(([userId,d])=>{
 
-        // ❌ skip invalid keys
-        if(!d || typeof d !== "object") return;
+        // 🔴 FIX: ignore junk nodes
+        if(!d || typeof d !== "object" || !d.status) return;
 
-        let status = d.status || "pending";
+        let status = d.status;
 
         let btn = "";
 
+        // pending → approve
         if(status === "pending" || status === "waiting_admin"){
           btn = `<button class="btn approve" onclick="update('${profileId}','${userId}','approved')">Approve Interest</button>`;
         }
 
-        if(status === "approved"){
+        // approved → reject
+        else if(status === "approved"){
           btn = `<button class="btn reject" onclick="update('${profileId}','${userId}','rejected')">Reject Interest</button>`;
         }
 
-        if(status === "rejected"){
+        // rejected → no button
+        else {
           btn = "";
         }
 
         html += `
         <div class="card">
-
-          <h4>Profile ID: ${profileId}</h4>
-          <p>User ID: ${userId}</p>
-          <p>Status: ${status}</p>
-
-          ${d.time ? `<small>Time: ${new Date(d.time).toLocaleString()}</small><br>` : ""}
-
+          <b>Profile:</b> ${profileId}<br>
+          <b>User:</b> ${userId}<br>
+          <b>Status:</b> ${status}<br>
+          <small>${d.time ? new Date(d.time).toLocaleString() : ""}</small><br>
           ${btn}
-
         </div>
         `;
       });
+
     });
 
     document.getElementById("box").innerHTML = html;
   });
 }
 
-/* UPDATE */
+/* UPDATE STATUS */
 function update(pid,uid,status){
   db.ref("interests/"+pid+"/"+uid).update({
     status:status,
