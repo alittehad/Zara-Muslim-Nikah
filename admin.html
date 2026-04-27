@@ -11,12 +11,11 @@
 
 <style>
 body{
-  font-family: 'Segoe UI', sans-serif;
+  font-family:Segoe UI;
   background:#f4f6f9;
   margin:0;
 }
 
-/* HEADER */
 header{
   background:#0f766e;
   color:white;
@@ -26,7 +25,6 @@ header{
   align-items:center;
 }
 
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -34,28 +32,55 @@ header{
   padding:15px;
 }
 
-/* CARD */
 .card{
   background:white;
-  padding:10px;
   border-radius:12px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  padding:10px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.1);
+  cursor:pointer;
 }
 
-/* BUTTONS */
-.card-btn{
-  padding:8px 10px;
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+  border-radius:10px;
+}
+
+.btn{
+  padding:6px 10px;
   border:none;
   border-radius:6px;
-  margin:4px;
   cursor:pointer;
   font-weight:bold;
+  margin:3px;
 }
 
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
 .premium{background:gold;color:black;}
 .featured{background:orange;color:white;}
+.iA{background:#16a34a;color:white;}
+.iR{background:#dc2626;color:white;}
+
+/* MODAL */
+.modal{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  width:90%;
+  max-width:400px;
+}
 </style>
 </head>
 
@@ -68,13 +93,20 @@ header{
 
 <div class="grid" id="list"></div>
 
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
 <script>
 
 firebase.initializeApp({
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
+  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain:"zara-muslim-nikah.firebaseapp.com",
+  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com"
 });
 
 const auth = firebase.auth();
@@ -82,62 +114,95 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-/* ================= AUTH ================= */
+/* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(!user || user.email !== ADMIN_EMAIL){
     location="index.html";
   } else {
-    loadProfiles();
-    loadInterests();
+    loadUsers();
   }
 });
 
-/* ================= USERS ================= */
-function loadProfiles(){
+/* LOAD USERS */
+function loadUsers(){
   db.ref("users").on("value",snap=>{
-    const list=document.getElementById("list");
+    const list = document.getElementById("list");
     list.innerHTML="";
 
     snap.forEach(child=>{
-      const d=child.val();
+      const id = child.key;
+      const d = child.val();
 
-      list.innerHTML += `
-      <div class="card">
+      // FIX: interest listener per card
+      db.ref("interests/"+id).on("value",intSnap=>{
 
-        <img src="${d.photo || 'https://via.placeholder.com/300'}"
-         style="width:100%;border-radius:10px">
+        const data = intSnap.val() || {};
+        const status = data.status || "pending";
 
-        <h3>${d.name || ''}</h3>
-        <p>${d.city || ''}</p>
-        <p>Status: ${d.status || 'pending'}</p>
+        let btn = "";
 
-        <button class="card-btn approve"
-          onclick="approveUser('${child.key}')">
-          Approve
-        </button>
+        if(status === "pending"){
+          btn = `<button class="btn iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
+        }
 
-        <button class="card-btn reject"
-          onclick="deleteUser('${child.key}')">
-          Delete
-        </button>
+        if(status === "approved"){
+          btn = `<button class="btn iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`;
+        }
 
-        <button class="card-btn premium"
-          onclick="premium('${child.key}')">
-          Premium
-        </button>
+        if(status === "rejected"){
+          btn = "";
+        }
 
-        <button class="card-btn featured"
-          onclick="featured('${child.key}')">
-          Featured
-        </button>
+        list.innerHTML += `
+        <div class="card" onclick="openProfile('${id}')">
 
-      </div>
-      `;
+          <img src="${d.photo || 'https://via.placeholder.com/300'}">
+
+          <h3>${d.name || ''}</h3>
+          <p>${d.city || ''}</p>
+
+          <div>
+            <button class="btn approve" onclick="event.stopPropagation(); approveUser('${id}')">Approve</button>
+            <button class="btn reject" onclick="event.stopPropagation(); deleteUser('${id}')">Delete</button>
+            <button class="btn premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
+            <button class="btn featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
+
+            ${btn}
+          </div>
+
+        </div>`;
+      });
     });
   });
 }
 
-/* ================= USER ACTIONS ================= */
+/* OPEN PROFILE */
+function openProfile(id){
+  db.ref("users/"+id).once("value").then(snap=>{
+    const d = snap.val();
+
+    document.getElementById("modalBody").innerHTML = `
+      <img src="${d.photo}" style="width:100%;border-radius:10px">
+      <h2>${d.name}</h2>
+      <p>Age: ${d.age || "-"}</p>
+      <p>City: ${d.city || "-"}</p>
+      <p>Phone: ${d.phone || "-"}</p>
+      <p>Bio: ${d.bio || "-"}</p>
+    `;
+
+    document.getElementById("modal").style.display="flex";
+  });
+}
+
+/* INTEREST UPDATE */
+function setInterest(id,status){
+  db.ref("interests/"+id).set({
+    status:status,
+    time:Date.now()
+  });
+}
+
+/* USER ACTIONS */
 function approveUser(id){
   db.ref("users/"+id+"/status").set("approved");
 }
@@ -156,86 +221,12 @@ function featured(id){
   db.ref("users/"+id+"/featured").set(true);
 }
 
-/* ================= INTEREST SYSTEM (FIXED) ================= */
-function loadInterests(){
-
-  db.ref("interests").on("value",snap=>{
-
-    const list = document.getElementById("list");
-
-    snap.forEach(profileSnap=>{
-
-      const pid = profileSnap.key;
-      const users = profileSnap.val();
-
-      if(!users) return;
-
-      Object.keys(users).forEach(uid=>{
-
-        const d = users[uid];
-
-        if(typeof d !== "object") return;
-
-        const status = d.status || "pending";
-
-        if(status === "rejected") return;
-
-        let btn = "";
-
-        // pending → approve button
-        if(status === "pending" || status === "waiting_admin"){
-          btn = `
-          <button class="card-btn approve"
-            onclick="approveInterest('${pid}','${uid}')">
-            Approve Interest
-          </button>`;
-        }
-
-        // approved → reject button
-        if(status === "approved"){
-          btn = `
-          <button class="card-btn reject"
-            onclick="rejectInterest('${pid}','${uid}')">
-            Reject Interest
-          </button>`;
-        }
-
-        list.innerHTML += `
-        <div class="card">
-
-          <h4>📌 Profile: ${pid}</h4>
-          <p>👤 User: ${uid}</p>
-          <p>Status: ${status}</p>
-
-          ${d.time ? `<small>${new Date(d.time).toLocaleString()}</small>` : ""}
-
-          ${btn}
-
-        </div>
-        `;
-      });
-
-    });
-
-  });
+/* MODAL CLOSE */
+function closeModal(){
+  document.getElementById("modal").style.display="none";
 }
 
-/* ================= INTEREST ACTIONS ================= */
-function approveInterest(pid, uid){
-  db.ref("interests/"+pid+"/"+uid).update({
-    status:"approved",
-    time:Date.now()
-  });
-}
-
-function rejectInterest(pid, uid){
-  db.ref("interests/"+pid+"/"+uid).update({
-    status:"rejected",
-    time:Date.now()
-  });
-}
-
-/* ================= LOGOUT ================= */
+/* LOGOUT */
 function logout(){
   auth.signOut().then(()=>location="index.html");
 }
