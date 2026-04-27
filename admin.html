@@ -41,6 +41,11 @@ header{
   border-radius:15px;
   box-shadow:0 8px 20px rgba(0,0,0,0.1);
   cursor:pointer;
+  transition:0.2s;
+}
+
+.card:hover{
+  transform:translateY(-3px);
 }
 
 .card img{
@@ -64,6 +69,8 @@ button.card-btn{
 .reject{background:red;color:white;}
 .premium{background:gold;color:black;}
 .featured{background:orange;color:white;}
+.iA{background:#16a34a;color:white;}
+.iR{background:#dc2626;color:white;}
 
 /* MODAL */
 .modal{
@@ -81,7 +88,8 @@ button.card-btn{
   padding:20px;
   border-radius:15px;
   width:90%;
-  max-width:400px;
+  max-width:420px;
+  position:relative;
 }
 </style>
 </head>
@@ -96,9 +104,8 @@ button.card-btn{
 <div class="grid" id="list"></div>
 
 <!-- MODAL -->
-<div class="modal" id="profileModal">
+<div class="modal" id="profileModal" onclick="closeModal(event)">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
@@ -125,7 +132,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* LOAD PROFILES */
+/* LOAD USERS */
 function loadProfiles(){
   db.ref("users").on("value",snap=>{
     const list = document.getElementById("list");
@@ -135,27 +142,45 @@ function loadProfiles(){
       const id = child.key;
       const d = child.val() || {};
 
-      list.innerHTML += `
-      <div class="card" onclick="openModal('${id}')">
+      db.ref("interests/"+id).once("value").then(intSnap=>{
 
-        <img src="${d.photo || 'https://via.placeholder.com/300'}">
+        const intData = intSnap.val() || {};
+        const status = intData.status || "pending";
 
-        <h3>${d.name || 'No Name'}</h3>
-        <p>${d.city || ''}</p>
+        let interestBtn = "";
 
-        <div>
-          <button class="card-btn approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>
-          <button class="card-btn reject" onclick="event.stopPropagation(); reject('${id}')">Reject</button>
-          <button class="card-btn premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
-          <button class="card-btn featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
-        </div>
+        if(status === "pending"){
+          interestBtn = `<button class="card-btn iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
+        }
 
-      </div>`;
+        if(status === "approved"){
+          interestBtn = `<button class="card-btn iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`;
+        }
+
+        list.innerHTML += `
+        <div class="card" onclick="openModal('${id}')">
+
+          <img src="${d.photo || 'https://via.placeholder.com/300'}">
+
+          <h3>${d.name || 'No Name'}</h3>
+          <p>${d.city || ''}</p>
+
+          <div>
+            <button class="card-btn approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>
+            <button class="card-btn reject" onclick="event.stopPropagation(); reject('${id}')">Reject</button>
+            <button class="card-btn premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
+            <button class="card-btn featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
+
+            ${interestBtn}
+          </div>
+
+        </div>`;
+      });
     });
   });
 }
 
-/* OPEN PROFILE (FULL DETAILS) */
+/* MODAL OPEN */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
     const d = snap.val() || {};
@@ -163,19 +188,27 @@ function openModal(id){
     document.getElementById("modalBody").innerHTML = `
       <img src="${d.photo || ''}" style="width:100%;border-radius:10px">
       <h2>${d.name || ''}</h2>
-      <p><b>Age:</b> ${d.age || "-"}</p>
-      <p><b>City:</b> ${d.city || "-"}</p>
-      <p><b>Gender:</b> ${d.gender || "-"}</p>
-      <p><b>Phone:</b> ${d.phone || "-"}</p>
-      <p><b>Bio:</b> ${d.bio || "-"}</p>
-      <p><b>Status:</b> ${d.status || "pending"}</p>
+      <p>Age: ${d.age || '-'}</p>
+      <p>City: ${d.city || '-'}</p>
+      <p>Gender: ${d.gender || '-'}</p>
+      <p>Phone: ${d.phone || '-'}</p>
+      <p>Bio: ${d.bio || '-'}</p>
+      <p>Status: ${d.status || 'pending'}</p>
     `;
 
     document.getElementById("profileModal").style.display="flex";
   });
 }
 
-/* ACTIONS */
+/* INTEREST SYSTEM */
+function setInterest(profileId,status){
+  db.ref("interests/"+profileId).set({
+    status:status,
+    time:Date.now()
+  });
+}
+
+/* USER ACTIONS */
 function approve(id){
   db.ref("users/"+id+"/status").set("approved");
 }
@@ -195,8 +228,10 @@ function featured(id){
 }
 
 /* CLOSE MODAL */
-function closeModal(){
-  document.getElementById("profileModal").style.display="none";
+function closeModal(e){
+  if(!e || e.target.id==="profileModal"){
+    document.getElementById("profileModal").style.display="none";
+  }
 }
 
 /* LOGOUT */
