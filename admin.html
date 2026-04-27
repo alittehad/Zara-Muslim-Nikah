@@ -45,7 +45,7 @@ button{margin:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;font-
 
 <script>
 
-// ✅ FULL CONFIG (अपनी original डालो)
+// ✅ CORRECT Firebase Config
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -55,10 +55,6 @@ firebase.initializeApp({
   messagingSenderId: "690336186269",
   appId: "1:690336186269:web:8215c1d313c4273c1f7974"
 });
-",
-  authDomain:"zara-muslim-nikah.firebaseapp.com",
-  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com"
-});
 
 const auth = firebase.auth();
 const db = firebase.database();
@@ -66,23 +62,22 @@ const ADMIN_EMAIL="ngogrant454@gmail.com";
 
 /* LOGIN */
 auth.onAuthStateChanged(user=>{
-  if(!user || user.email!==ADMIN_EMAIL){
+  if(!user || (user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
     location="index.html";
   } else {
     loadData();
   }
 });
 
-/* LOAD USERS + INTEREST */
+/* LOAD DATA */
 function loadData(){
-
   db.ref().on("value",snap=>{
 
     const users = snap.child("users").val() || {};
     const interests = snap.child("interests").val() || {};
 
     const list = document.getElementById("list");
-    list.innerHTML=""; // ✅ duplicate fix
+    list.innerHTML="";
 
     Object.keys(users).forEach(id=>{
 
@@ -90,16 +85,10 @@ function loadData(){
       const intData = interests[id] || {};
       const status = intData.status || "pending";
 
-      /* 🔥 INTEREST BUTTON */
-      let interestBtn="";
+      let interestBtn = status==="approved"
+        ? `<button class="iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`
+        : `<button class="iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
 
-      if(status==="pending"){
-        interestBtn=`<button class="iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
-      } else {
-        interestBtn=`<button class="iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`;
-      }
-
-      /* 🔥 APPROVE BUTTON TOGGLE */
       let approveBtn = (d.status==="approved")
         ? `<button class="reject" onclick="event.stopPropagation(); unapprove('${id}')">Reject</button>`
         : `<button class="approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>`;
@@ -117,7 +106,6 @@ function loadData(){
           <button class="reject" onclick="event.stopPropagation(); deleteUser('${id}')">Delete</button>
           <button class="premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
           <button class="featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
-
           ${interestBtn}
         </div>
 
@@ -157,13 +145,8 @@ function setInterest(id,status){
   });
 }
 
-function approve(id){
-  db.ref("users/"+id+"/status").set("approved");
-}
-
-function unapprove(id){
-  db.ref("users/"+id+"/status").set("pending");
-}
+function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
+function unapprove(id){ db.ref("users/"+id+"/status").set("pending"); }
 
 function deleteUser(id){
   if(confirm("Delete?")){
@@ -171,13 +154,8 @@ function deleteUser(id){
   }
 }
 
-function premium(id){
-  db.ref("users/"+id+"/premium").set(true);
-}
-
-function featured(id){
-  db.ref("users/"+id+"/featured").set(true);
-}
+function premium(id){ db.ref("users/"+id+"/premium").set(true); }
+function featured(id){ db.ref("users/"+id+"/featured").set(true); }
 
 function logout(){
   auth.signOut().then(()=>location="index.html");
