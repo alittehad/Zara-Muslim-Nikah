@@ -11,32 +11,63 @@
 
 <style>
 body{
-  font-family:'Segoe UI',sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   background:#f4f6f9;
   margin:0;
+  padding:0;
 }
 
+/* Header */
 header{
   background:#0f766e;
   color:white;
   padding:15px;
   text-align:center;
   font-size:22px;
+  position: sticky;
+  top:0;
+  z-index:10;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
   display:flex;
-  justify-content:space-between;
-  align-items:center;
+  justify-content: space-between;
+  align-items: center;
 }
 
-#home,#logout{
+/* Home Button */
+#home{
+  background:#1e40af;
+  color:white;
   padding:8px 12px;
   border:none;
   border-radius:6px;
   cursor:pointer;
   font-weight:bold;
+  box-shadow:0 4px 6px rgba(0,0,0,0.2);
+  transition:0.2s;
 }
-#home{background:#1e40af;color:white;}
-#logout{background:black;color:white;}
+#home:hover{
+  transform:translateY(-2px) translateZ(2px);
+  box-shadow:0 6px 10px rgba(0,0,0,0.3);
+}
 
+/* Logout */
+#logout{
+  background:black;
+  color:white;
+  padding:8px 12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+  box-shadow:0 4px 6px rgba(0,0,0,0.2);
+  transition:0.2s;
+}
+#logout:hover{
+  transform:translateY(-2px) translateZ(2px);
+  box-shadow:0 6px 10px rgba(0,0,0,0.3);
+}
+
+/* Grid layout */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -44,14 +75,20 @@ header{
   padding:20px;
 }
 
+/* Card style */
 .card{
   background:white;
   padding:10px;
   border-radius:15px;
   box-shadow:0 8px 20px rgba(0,0,0,0.1);
   text-align:center;
+  transition:0.3s;
+  cursor:pointer;
 }
-
+.card:hover{
+  transform: translateY(-5px) rotateX(5deg);
+  box-shadow:0 12px 25px rgba(0,0,0,0.25);
+}
 .card img{
   width:100%;
   height:200px;
@@ -59,13 +96,20 @@ header{
   border-radius:10px;
 }
 
-.card-btn{
+/* Buttons inside cards */
+button.card-btn{
   margin:5px;
   padding:8px 12px;
   border:none;
   border-radius:8px;
   cursor:pointer;
   font-weight:bold;
+  box-shadow:0 4px 6px rgba(0,0,0,0.2);
+  transition:0.2s;
+}
+button.card-btn:hover{
+  transform:translateY(-2px) translateZ(2px);
+  box-shadow:0 6px 10px rgba(0,0,0,0.3);
 }
 
 .approve{background:green;color:white;}
@@ -73,29 +117,46 @@ header{
 .premium{background:gold;color:black;}
 .featured{background:orange;color:white;}
 
-.interest-approve{background:#16a34a;color:white;}
-.interest-reject{background:#dc2626;color:white;}
-
+/* Modal */
 .modal{
   display:none;
   position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,0.6);
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.6);
   justify-content:center;
   align-items:center;
+  z-index:100;
 }
-
 .modal-content{
   background:white;
   padding:20px;
   border-radius:15px;
+  max-width:400px;
   width:90%;
-  max-width:420px;
+  max-height:90%;
+  overflow-y:auto;
+  position:relative;
+}
+.modal-content img{
+  width:100%;
+  height:auto;
+  border-radius:10px;
+}
+.close-btn{
+  position:absolute;
+  top:10px;
+  right:15px;
+  font-size:22px;
+  font-weight:bold;
+  cursor:pointer;
+  color:#333;
+}
+@media(max-width:360px){
+  .card img{height:150px;}
 }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -108,146 +169,118 @@ header{
 
 <div class="grid" id="list"></div>
 
+<!-- Modal for full profile -->
 <div class="modal" id="profileModal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
+    <span class="close-btn" onclick="closeModal()">×</span>
     <div id="modalBody"></div>
   </div>
 </div>
 
 <script>
-
+// Firebase Config
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
+  projectId: "zara-muslim-nikah",
+  storageBucket: "zara-muslim-nikah.appspot.com",
+  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
 });
 
-const auth = firebase.auth();
-const db = firebase.database();
+const auth=firebase.auth();
+const db=firebase.database();
+const ADMIN_EMAIL="ngogrant454@gmail.com"; // admin
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
-
-/* AUTH */
+// Login check
 auth.onAuthStateChanged(user=>{
-  if(!user){
-    location="index.html";
-  } else if(user.email !== ADMIN_EMAIL){
-    alert("Access denied");
-    location="index.html";
-  } else {
-    loadProfiles();
-  }
+ if(!user){
+   alert("Login required");
+   location="index.html";
+ } else {
+   const email = (user.email || "").toLowerCase().trim();
+   if(email!==ADMIN_EMAIL.toLowerCase()){
+     alert("Access denied (Not admin)");
+     location="index.html";
+   } else {
+     loadProfiles();
+   }
+ }
 });
 
-/* LOAD USERS */
+// Load all profiles
 function loadProfiles(){
-  db.ref("users").on("value",snap=>{
-    const list=document.getElementById("list");
-    list.innerHTML="";
-
-    snap.forEach(child=>{
-      const userId = child.key;
-      const d = child.val() || {};
-
-      db.ref("interests/"+userId).once("value").then(intSnap=>{
-
-        let interestBtn = "";
-
-        if(intSnap.exists()){
-          const status = intSnap.val().status;
-
-          // ❌ NOT APPROVED OR REJECTED → SHOW APPROVE
-          if(status !== "approved"){
-            interestBtn = `
-              <button class="card-btn interest-approve"
-              onclick="event.stopPropagation(); approveInterest('${userId}')">
-              ❤️ Approve Interest
-              </button>
-            `;
-          }
-
-          // ✔ APPROVED → SHOW REJECT
-          if(status === "approved"){
-            interestBtn = `
-              <button class="card-btn interest-reject"
-              onclick="event.stopPropagation(); rejectInterest('${userId}')">
-              ❌ Reject Interest
-              </button>
-            `;
-          }
-        }
-
-        list.innerHTML += `
-        <div class="card" onclick="openModal('${userId}')">
-
-          <img src="${d.photo || 'https://via.placeholder.com/300'}">
-
-          <h3>${d.name || ''}</h3>
-          <p>${d.city || ''}</p>
-
-          <div>
-            <button class="card-btn approve" onclick="event.stopPropagation(); approve('${userId}')">Approve</button>
-            <button class="card-btn reject" onclick="event.stopPropagation(); reject('${userId}')">Reject</button>
-            <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${userId}')">Premium</button>
-            <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${userId}')">Featured</button>
-
-            ${interestBtn}
-          </div>
-
-        </div>`;
-      });
-    });
-  });
+ db.ref("users").on("value",snap=>{
+   const list=document.getElementById("list");
+   list.innerHTML="";
+   snap.forEach(child=>{
+     const d=child.val();
+     let statusText = d.status==="approved" ? "✅ Approved" : "⏳ Pending";
+     list.innerHTML+=`
+     <div class="card" onclick="openModal('${child.key}')">
+       <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
+       <h3>${d.name}</h3>
+       <p>${d.city}</p>
+       <p>${statusText}</p>
+       <div>
+         <button class="card-btn approve" onclick="event.stopPropagation(); approve('${child.key}')">✅ Approve</button>
+         <button class="card-btn reject" onclick="event.stopPropagation(); reject('${child.key}')">❌ Reject</button>
+         <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${child.key}')">⭐ Premium</button>
+         <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${child.key}')">🔥 Featured</button>
+       </div>
+     </div>`;
+   });
+ });
 }
 
-/* USER ACTIONS */
+// Approve/Reject/Premium/Featured
 function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
-function reject(id){ db.ref("users/"+id).remove(); }
-function makePremium(id){ db.ref("users/"+id+"/premium").set(true); }
-function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); }
+function reject(id){ if(confirm("Delete profile?")) db.ref("users/"+id).remove(); }
+function makePremium(id){ db.ref("users/"+id+"/premium").set(true); alert("Marked as Premium"); }
+function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); alert("Marked as Featured"); }
 
-/* INTEREST APPROVE */
-function approveInterest(id){
-  db.ref("interests/"+id).set({
-    status:"approved",
-    time:Date.now()
-  });
-}
+// Logout
+function logout(){ auth.signOut().then(()=>{ location="index.html"; }); }
 
-/* INTEREST REJECT */
-function rejectInterest(id){
-  db.ref("interests/"+id).set({
-    status:"rejected",
-    time:Date.now()
-  });
-}
+// Home button
+function goHome(){ location="index.html"; }
 
-/* MODAL */
+// Modal
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
-    const d=snap.val() || {};
-
-    document.getElementById("modalBody").innerHTML=`
-      <img src="${d.photo}" style="width:100%;border-radius:10px">
+    const d = snap.val();
+    document.getElementById("modalBody").innerHTML = `
+      <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
       <h2>${d.name}</h2>
-      <p>${d.city}</p>
-      <p>${d.age||''}</p>
+      <p><b>Age:</b> ${d.age || "-"}</p>
+      <p><b>City:</b> ${d.city || "-"}</p>
+      <p><b>Gender:</b> ${d.gender || "-"}</p>
+      <p><b>Education:</b> ${d.education || "-"}</p>
+      <p><b>Profession:</b> ${d.profession || "-"}</p>
+      <p><b>Phone:</b> ${d.phone || "-"}</p>
+      <p><b>Bio:</b> ${d.bio || "-"}</p>
+      <p><b>Status:</b> ${d.status}</p>
+      <p><b>Premium:</b> ${d.premium? "Yes":"No"}</p>
+      <p><b>Featured:</b> ${d.featured? "Yes":"No"}</p>
     `;
-
     document.getElementById("profileModal").style.display="flex";
   });
 }
+function closeModal(){ document.getElementById("profileModal").style.display="none"; }
 
-function closeModal(){
-  document.getElementById("profileModal").style.display="none";
+
+function approveInterest(profileId, userId){
+  firebase.database()
+  .ref("interests/"+profileId+"/"+userId+"/status")
+  .set("approved");
+
+  alert("Interest Approved ❤️");
 }
 
-function logout(){ auth.signOut().then(()=>location="index.html"); }
-function goHome(){ location="index.html"; }
 
+
+  
 </script>
 
 </body>
-</html>
+</html>  
