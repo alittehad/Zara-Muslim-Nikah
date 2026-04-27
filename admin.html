@@ -10,28 +10,36 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{font-family:Segoe UI;background:#f4f6f9;margin:0;}
+body{
+  font-family: 'Segoe UI', sans-serif;
+  background:#f4f6f9;
+  margin:0;
+}
 
+/* HEADER */
 header{
   background:#0f766e;
   color:white;
   padding:15px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
 }
 
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:15px;
-  padding:15px;
+  gap:20px;
+  padding:20px;
 }
 
+/* CARD */
 .card{
   background:white;
   padding:10px;
-  border-radius:12px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.1);
+  border-radius:15px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.1);
   cursor:pointer;
 }
 
@@ -42,19 +50,20 @@ header{
   border-radius:10px;
 }
 
-.btn{
-  padding:6px 10px;
+/* BUTTONS */
+button.card-btn{
+  margin:5px;
+  padding:8px 12px;
   border:none;
-  border-radius:6px;
+  border-radius:8px;
   cursor:pointer;
   font-weight:bold;
-  margin:3px;
 }
 
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
-.iA{background:#16a34a;color:white;}
-.iR{background:#dc2626;color:white;}
+.premium{background:gold;color:black;}
+.featured{background:orange;color:white;}
 
 /* MODAL */
 .modal{
@@ -70,7 +79,7 @@ header{
 .modal-content{
   background:white;
   padding:20px;
-  border-radius:12px;
+  border-radius:15px;
   width:90%;
   max-width:400px;
 }
@@ -80,15 +89,16 @@ header{
 <body>
 
 <header>
-  <h3>🔥 Admin Panel</h3>
+  <span>Admin Panel</span>
   <button onclick="logout()">Logout</button>
 </header>
 
 <div class="grid" id="list"></div>
 
-<div class="modal" id="modal">
+<!-- MODAL -->
+<div class="modal" id="profileModal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
@@ -105,105 +115,88 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
-let currentUser = null;
 
-/* LOGIN */
+/* LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
   if(!user || user.email !== ADMIN_EMAIL){
     location="index.html";
   } else {
-    currentUser = user;
-    loadUsers();
+    loadProfiles();
   }
 });
 
-/* LOAD USERS */
-function loadUsers(){
+/* LOAD PROFILES */
+function loadProfiles(){
   db.ref("users").on("value",snap=>{
     const list = document.getElementById("list");
     list.innerHTML = "";
 
     snap.forEach(child=>{
       const id = child.key;
-      const d = child.val();
+      const d = child.val() || {};
 
-      /* 🔥 FIXED: proper interest node */
-      db.ref("interests/"+id).on("value",intSnap=>{
+      list.innerHTML += `
+      <div class="card" onclick="openModal('${id}')">
 
-        const data = intSnap.val() || {};
-        const status = data.status || "pending";
+        <img src="${d.photo || 'https://via.placeholder.com/300'}">
 
-        let btn = "";
+        <h3>${d.name || 'No Name'}</h3>
+        <p>${d.city || ''}</p>
 
-        if(status === "pending"){
-          btn = `<button class="btn iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
-        }
+        <div>
+          <button class="card-btn approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>
+          <button class="card-btn reject" onclick="event.stopPropagation(); reject('${id}')">Reject</button>
+          <button class="card-btn premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
+          <button class="card-btn featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
+        </div>
 
-        if(status === "approved"){
-          btn = `<button class="btn iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`;
-        }
-
-        list.innerHTML += `
-        <div class="card" onclick="openProfile('${id}')">
-
-          <img src="${d.photo || 'https://via.placeholder.com/300'}">
-
-          <h3>${d.name || ''}</h3>
-          <p>${d.city || ''}</p>
-
-          <div>
-            <button class="btn approve" onclick="event.stopPropagation(); approveUser('${id}')">Approve User</button>
-            <button class="btn reject" onclick="event.stopPropagation(); deleteUser('${id}')">Delete</button>
-
-            ${btn}
-          </div>
-
-        </div>`;
-      });
+      </div>`;
     });
   });
 }
 
-/* PROFILE MODAL */
-function openProfile(id){
+/* OPEN PROFILE (FULL DETAILS) */
+function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
-    const d = snap.val();
+    const d = snap.val() || {};
 
     document.getElementById("modalBody").innerHTML = `
-      <img src="${d.photo}" style="width:100%;border-radius:10px">
-      <h2>${d.name}</h2>
-      <p>Age: ${d.age || "-"}</p>
-      <p>City: ${d.city || "-"}</p>
-      <p>Phone: ${d.phone || "-"}</p>
-      <p>Bio: ${d.bio || "-"}</p>
+      <img src="${d.photo || ''}" style="width:100%;border-radius:10px">
+      <h2>${d.name || ''}</h2>
+      <p><b>Age:</b> ${d.age || "-"}</p>
+      <p><b>City:</b> ${d.city || "-"}</p>
+      <p><b>Gender:</b> ${d.gender || "-"}</p>
+      <p><b>Phone:</b> ${d.phone || "-"}</p>
+      <p><b>Bio:</b> ${d.bio || "-"}</p>
+      <p><b>Status:</b> ${d.status || "pending"}</p>
     `;
 
-    document.getElementById("modal").style.display="flex";
+    document.getElementById("profileModal").style.display="flex";
   });
 }
 
-/* INTEREST APPROVE/REJECT */
-function setInterest(profileId,status){
-  db.ref("interests/"+profileId).set({
-    status:status,
-    time:Date.now()
-  });
-}
-
-/* USER ACTIONS */
-function approveUser(id){
+/* ACTIONS */
+function approve(id){
   db.ref("users/"+id+"/status").set("approved");
 }
 
-function deleteUser(id){
-  if(confirm("Delete user?")){
+function reject(id){
+  if(confirm("Delete profile?")){
     db.ref("users/"+id).remove();
   }
 }
 
+function premium(id){
+  db.ref("users/"+id+"/premium").set(true);
+}
+
+function featured(id){
+  db.ref("users/"+id+"/featured").set(true);
+}
+
 /* CLOSE MODAL */
 function closeModal(){
-  document.getElementById("modal").style.display="none";
+  document.getElementById("profileModal").style.display="none";
 }
 
 /* LOGOUT */
