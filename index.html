@@ -5,90 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f4f6f9;
-}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 
-/* ===== FIXED 3D HEADER ===== */
-.top-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-
-  padding:12px 8px;
-  width:100%;
-  box-sizing:border-box;
-
-  background: linear-gradient(145deg, #0f766e, #14b8a6);
-
-  box-shadow:
-    0 6px 0 #0b5c55,
-    0 12px 25px rgba(0,0,0,0.3);
-
-  border-bottom:3px solid rgba(255,255,255,0.2);
-
-  transform: perspective(800px) rotateX(4deg);
-}
-
-/* side */
-.side{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+/* Header */
+header{
+  background:#0f766e;
   color:white;
-  font-size:10px;
-  font-weight:600;
-}
-
-.side img{
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  object-fit:cover;
-  border:2px solid white;
-  box-shadow:0 4px 10px rgba(0,0,0,0.3);
-  transition:0.3s;
-}
-
-.side:hover img{
-  transform:translateY(-2px) scale(1.05);
-}
-
-/* ===== FIXED TITLE (FULL SCREEN SAFE) ===== */
-.title{
-  flex:1;
   text-align:center;
-
-  font-size:clamp(13px, 3.8vw, 22px);
-  font-weight:900;
-  color:white;
-
-  letter-spacing:1px;
-
-  text-shadow:
-    0 3px 0 #0b5c55,
-    0 8px 15px rgba(0,0,0,0.4);
-
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-/* hover effect */
-.top-header:hover{
-  transform: perspective(800px) rotateX(0deg);
-}
-
-/* mobile */
-@media(max-width:500px){
-  .side img{width:35px;height:35px;}
+  padding:15px;
+  font-size:22px;
 }
 
 /* Topbar */
@@ -139,30 +70,91 @@ body{
   padding:10px;
 }
 
-/* LOGIN SCREEN */
+/* ===== LOGIN SCREEN ===== */
 #loginScreen{
   display:none;
   position:fixed;
-  top:0;
-  left:0;
+  top:0;left:0;
   width:100%;
   height:100vh;
   background:url('https://i.ibb.co/B5wzJpm6/nikah-wall.png') no-repeat center center;
   background-size:contain;
   background-color:black;
+  overflow:hidden;
 }
 
-/* login button */
+/* Animated background glow */
+#loginScreen::before{
+  content:"";
+  position:absolute;
+  width:100%;
+  height:100%;
+  background: radial-gradient(circle at 20% 20%, rgba(20,184,166,0.25), transparent 40%),
+              radial-gradient(circle at 80% 80%, rgba(15,118,110,0.25), transparent 40%);
+  animation: bgMove 6s infinite alternate;
+}
+
+@keyframes bgMove{
+  from{transform:scale(1);}
+  to{transform:scale(1.1);}
+}
+
+/* Floating particles */
+#loginScreen::after{
+  content:"";
+  position:absolute;
+  width:100%;
+  height:100%;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.4) 2px, transparent 3px);
+  background-size: 50px 50px;
+  animation: floatParticles 10s linear infinite;
+  opacity:0.25;
+}
+
+@keyframes floatParticles{
+  from{transform:translateY(0);}
+  to{transform:translateY(-100px);}
+}
+
+/* Center login */
+.center-login{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  z-index:2;
+}
+
+/* ===== 3D LOGIN BUTTON ===== */
 .login-btn{
-  padding:7px 14px;
-  font-size:12px;
-  font-weight:600;
+  padding:10px 18px;
+  font-size:14px;
+  font-weight:bold;
   color:white;
   background: linear-gradient(145deg, #0f766e, #14b8a6);
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   cursor:pointer;
-  box-shadow:0 4px 0 #0b5c55, 0 8px 18px rgba(0,0,0,0.35);
+
+  box-shadow: 0 6px 0 #0b5c55, 0 12px 25px rgba(0,0,0,0.4);
+
+  transition: all 0.25s ease;
+  transform: perspective(500px);
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow{
+  from{box-shadow:0 6px 0 #0b5c55, 0 10px 20px rgba(0,0,0,0.3);}
+  to{box-shadow:0 6px 0 #0b5c55, 0 0 25px rgba(20,184,166,0.8);}
+}
+
+.login-btn:hover{
+  transform: translateY(-4px) scale(1.05);
+}
+
+.login-btn:active{
+  transform: translateY(2px) scale(0.98);
+  box-shadow:0 3px 0 #0b5c55;
 }
 
 /* Modal */
@@ -188,24 +180,7 @@ body{
 
 <body>
 
-<!-- HEADER -->
-<header class="top-header">
-
-  <div class="side">
-    <img src="https://i.ibb.co/pvSSXdY6/images-kaba-removebg-preview-200.png">
-    <span>Makkah</span>
-  </div>
-
-  <div class="title">
-    Zara Nikah Service
-  </div>
-
-  <div class="side">
-    <img src="https://i.ibb.co/XkZNtNw9/madina-removebg-preview-100.png">
-    <span>Madinah</span>
-  </div>
-
-</header>
+<header>🌙 Zara Nikah Service ⭐</header>
 
 <!-- Topbar -->
 <div class="topbar" id="topbar">
@@ -215,14 +190,16 @@ body{
   <button onclick="handleAuth()" style="background:#0f766e;">Logout</button>
 </div>
 
-<!-- Login -->
+<!-- Login Screen -->
 <div id="loginScreen">
-  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">
-    <button class="login-btn" onclick="handleAuth()">🔐 Login</button>
+  <div class="center-login">
+    <button class="login-btn" onclick="handleAuth()">
+      🔐 Login to Continue
+    </button>
   </div>
 </div>
 
-<!-- Grid -->
+<!-- Profiles -->
 <div class="grid" id="profileGrid"></div>
 
 <!-- Modal -->
@@ -234,6 +211,7 @@ body{
 </div>
 
 <script>
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -257,6 +235,7 @@ function handleAuth(){
 auth.onAuthStateChanged(user=>{
   currentUser = user;
 
+  const adminBtn = document.getElementById("adminBtn");
   const loginScreen = document.getElementById("loginScreen");
   const grid = document.getElementById("profileGrid");
   const topbar = document.getElementById("topbar");
@@ -265,7 +244,15 @@ auth.onAuthStateChanged(user=>{
     topbar.style.display = "flex";
     loginScreen.style.display = "none";
     grid.style.display = "grid";
+
+    if((user.email||"").toLowerCase() === ADMIN_EMAIL){
+      adminBtn.style.display = "inline-block";
+    } else {
+      adminBtn.style.display = "none";
+    }
+
     loadPosts();
+
   } else {
     topbar.style.display = "none";
     loginScreen.style.display = "block";
