@@ -14,12 +14,31 @@
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 
 /* Header */
+
+
+
 header{
-  background:#0f766e;
+  width:100%;
+  box-sizing:border-box;
+
+  background: linear-gradient(90deg, #0f766e, #14b8a6);
   color:white;
+
   text-align:center;
-  padding:15px;
-  font-size:22px;
+
+  font-size:clamp(16px, 4.5vw, 32px);
+  font-weight:900;
+
+  padding:14px 10px;
+
+  letter-spacing:1px;
+
+  text-shadow:
+    0 3px 0 #0b5c55,
+    0 10px 20px rgba(0,0,0,0.35);
+
+  white-space:nowrap;
+  overflow:hidden;
 }
 
 /* Topbar */
