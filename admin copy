@@ -102,17 +102,50 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* LOAD USERS */
+/* LOAD USERS + INTEREST */
 function loadData(){
-  db.ref("users").on("value",snap=>{
+  db.ref().on("value",snap=>{
+
+    const users = snap.child("users").val() || {};
+    const interests = snap.child("interests").val() || {};
 
     const list=document.getElementById("list");
     list.innerHTML="";
 
-    snap.forEach(child=>{
-      const id=child.key;
-      const d=child.val()||{};
+    Object.keys(users).forEach(id=>{
 
+      const d = users[id];
+
+      /* 🔥 INTEREST CHECK */
+      let interestBtn = "";
+      let profileInterests = interests[id] || {};
+
+      let hasInterest = false;
+      let currentStatus = "pending";
+      let interestUserId = null;
+
+      for(let uid in profileInterests){
+        hasInterest = true;
+        currentStatus = profileInterests[uid].status || "pending";
+        interestUserId = uid;
+        break;
+      }
+
+      if(hasInterest){
+        if(currentStatus === "approved"){
+          interestBtn = `
+          <button class="iR"
+          onclick="event.stopPropagation(); setInterest('${id}','${interestUserId}','rejected')">
+          Reject Interest</button>`;
+        } else {
+          interestBtn = `
+          <button class="iA"
+          onclick="event.stopPropagation(); setInterest('${id}','${interestUserId}','approved')">
+          Approve Interest</button>`;
+        }
+      }
+
+      /* APPROVE BUTTON */
       let approveBtn = (d.status==="approved")
         ? `<button class="reject" onclick="event.stopPropagation(); unapprove('${id}')">Reject</button>`
         : `<button class="approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>`;
@@ -130,6 +163,8 @@ function loadData(){
           <button class="reject" onclick="event.stopPropagation(); deleteUser('${id}')">Delete</button>
           <button class="premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
           <button class="featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
+
+          ${interestBtn}
         </div>
 
       </div>`;
@@ -172,6 +207,14 @@ function closeModal(e){
   if(e.target.id==="profileModal"){
     document.getElementById("profileModal").style.display="none";
   }
+}
+
+/* INTEREST ACTION */
+function setInterest(profileId,userId,status){
+  db.ref("interests/"+profileId+"/"+userId).update({
+    status:status,
+    time:Date.now()
+  });
 }
 
 /* ACTIONS */
