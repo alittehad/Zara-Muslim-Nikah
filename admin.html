@@ -50,7 +50,6 @@ header{
   border-radius:15px;
   box-shadow:0 8px 20px rgba(0,0,0,0.1);
   text-align:center;
-  cursor:pointer;
 }
 
 .card img{
@@ -150,24 +149,39 @@ function loadProfiles(){
     snap.forEach(child=>{
       const d=child.val();
 
-      list.innerHTML+=`
-      <div class="card" onclick="openModal('${child.key}')">
-        <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
-        <h3>${d.name}</h3>
-        <p>${d.city}</p>
+      // check interest
+      db.ref("interests/"+child.key).once("value").then(intSnap=>{
 
-        <div>
-          <button class="card-btn approve" onclick="event.stopPropagation(); approve('${child.key}')">Approve</button>
-          <button class="card-btn reject" onclick="event.stopPropagation(); reject('${child.key}')">Reject</button>
-          <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${child.key}')">Premium</button>
-          <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${child.key}')">Featured</button>
+        let interestBtn = "";
 
-          <button class="card-btn interest"
-            onclick="event.stopPropagation(); approveInterest('${child.key}')">
-            ❤️ Approve Interest
-          </button>
-        </div>
-      </div>`;
+        if(intSnap.exists()){
+          interestBtn = `
+            <button class="card-btn interest"
+              onclick="event.stopPropagation(); approveInterest('${child.key}')">
+              ❤️ Approve Interest
+            </button>
+          `;
+        }
+
+        list.innerHTML+=`
+        <div class="card" onclick="openModal('${child.key}')">
+
+          <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
+
+          <h3>${d.name}</h3>
+          <p>${d.city}</p>
+
+          <div>
+            <button class="card-btn approve" onclick="event.stopPropagation(); approve('${child.key}')">Approve</button>
+            <button class="card-btn reject" onclick="event.stopPropagation(); reject('${child.key}')">Reject</button>
+            <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${child.key}')">Premium</button>
+            <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${child.key}')">Featured</button>
+
+            ${interestBtn}
+          </div>
+
+        </div>`;
+      });
     });
   });
 }
@@ -178,7 +192,7 @@ function reject(id){ db.ref("users/"+id).remove(); }
 function makePremium(id){ db.ref("users/"+id+"/premium").set(true); }
 function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); }
 
-/* ❤️ INTEREST APPROVE */
+/* INTEREST APPROVE */
 function approveInterest(profileId){
   db.ref("interests/"+profileId).once("value").then(snap=>{
     snap.forEach(u=>{
@@ -189,7 +203,7 @@ function approveInterest(profileId){
   alert("❤️ Interest Approved");
 }
 
-/* MODAL FULL PROFILE */
+/* FULL PROFILE */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
     const d=snap.val();
