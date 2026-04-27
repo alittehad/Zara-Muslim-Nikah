@@ -267,6 +267,19 @@ function openModal(id){
   });
 }
 function closeModal(){ document.getElementById("profileModal").style.display="none"; }
+
+
+function approveInterest(profileId, userId){
+  firebase.database()
+  .ref("interests/"+profileId+"/"+userId+"/status")
+  .set("approved");
+
+  alert("Interest Approved ❤️");
+}
+
+
+
+  
 </script>
 
 </body>
