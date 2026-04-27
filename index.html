@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -74,20 +73,41 @@ header{
   max-width:420px;
 }
 
-/* BUTTON */
-.interest{
-  background:#e11d48;
-  color:white;
+/* BUTTONS */
+.btn{
   padding:10px;
   border:none;
   border-radius:8px;
   width:100%;
-  margin-top:10px;
+  margin-top:8px;
   font-weight:bold;
   cursor:pointer;
 }
+
+.interest{
+  background:#e11d48;
+  color:white;
+}
+
 .interest:hover{
   background:#be123c;
+}
+
+.approve{
+  background:green;
+  color:white;
+}
+.reject{
+  background:red;
+  color:white;
+}
+.premium{
+  background:gold;
+  color:black;
+}
+.featured{
+  background:orange;
+  color:white;
 }
 </style>
 </head>
@@ -108,7 +128,7 @@ header{
 
 <script>
 
-// Firebase init
+// Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -121,13 +141,12 @@ const db = firebase.database();
 
 let currentUser = null;
 
-/* LOGIN SAFE */
 auth.onAuthStateChanged(user=>{
   currentUser = user || null;
   loadPosts();
 });
 
-/* LOAD PROFILES */
+/* LOAD USERS */
 function loadPosts(){
   db.ref("users").once("value").then(snap=>{
     const grid = document.getElementById("profileGrid");
@@ -150,7 +169,7 @@ function loadPosts(){
   });
 }
 
-/* OPEN MODAL */
+/* OPEN PROFILE */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
     const d = snap.val() || {};
@@ -158,20 +177,30 @@ function openModal(id){
     document.getElementById("modalBody").innerHTML = `
       <img src="${d.photo || 'https://via.placeholder.com/300'}"
            style="width:100%;border-radius:10px">
+
       <h2>${d.name || ''}</h2>
       <p>City: ${d.city || ''}</p>
       <p>Age: ${d.age || ''}</p>
+      <p>Gender: ${d.gender || ''}</p>
+      <p>Education: ${d.education || ''}</p>
 
-      <button class="interest" onclick="goPayment('${id}')">
-        ❤️ Send Interest & Pay
+      <!-- MAIN BUTTON -->
+      <button class="btn interest" onclick="goPayment('${id}')">
+        ❤️ Send Interest
       </button>
+
+      <!-- ADMIN STYLE BUTTONS (SAFE INCLUDED) -->
+      <button class="btn approve" onclick="approve('${id}')">Approve</button>
+      <button class="btn reject" onclick="reject('${id}')">Reject</button>
+      <button class="btn premium" onclick="makePremium('${id}')">Premium</button>
+      <button class="btn featured" onclick="makeFeatured('${id}')">Featured</button>
     `;
 
     document.getElementById("profileModal").style.display = "flex";
   });
 }
 
-/* PAYMENT REDIRECT */
+/* PAYMENT FLOW */
 function goPayment(id){
   if(!currentUser){
     alert("Please login first");
@@ -181,7 +210,13 @@ function goPayment(id){
   window.location.href = "payment.html?profile=" + id;
 }
 
-/* CLOSE MODAL FIX */
+/* ACTIONS (ADMIN SUPPORT) */
+function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
+function reject(id){ db.ref("users/"+id).remove(); }
+function makePremium(id){ db.ref("users/"+id+"/premium").set(true); }
+function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); }
+
+/* CLOSE MODAL */
 function closeModal(e){
   if(!e || e.target.id === "profileModal"){
     document.getElementById("profileModal").style.display = "none";
