@@ -72,8 +72,9 @@ header{
 .reject{background:red;color:white;}
 .premium{background:gold;color:black;}
 .featured{background:orange;color:white;}
-.interestA{background:#16a34a;color:white;}
-.interestR{background:#dc2626;color:white;}
+
+.interest-approve{background:#16a34a;color:white;}
+.interest-reject{background:#dc2626;color:white;}
 
 .modal{
   display:none;
@@ -148,39 +149,43 @@ function loadProfiles(){
 
     snap.forEach(child=>{
       const userId = child.key;
-      const d = child.val();
+      const d = child.val() || {};
 
       db.ref("interests/"+userId).once("value").then(intSnap=>{
 
-        let interestUI = "";
+        let interestBtn = "";
 
         if(intSnap.exists()){
+          const status = intSnap.val().status;
 
-          const status = intSnap.val().status || "pending";
-
-          if(status === "approved"){
-            interestUI = `
-              <button class="card-btn interestR"
-              onclick="event.stopPropagation(); rejectInterest('${userId}')">
-              ❌ Reject Interest
-              </button>`;
-          }
-          else{
-            interestUI = `
-              <button class="card-btn interestA"
+          // ❌ NOT APPROVED OR REJECTED → SHOW APPROVE
+          if(status !== "approved"){
+            interestBtn = `
+              <button class="card-btn interest-approve"
               onclick="event.stopPropagation(); approveInterest('${userId}')">
               ❤️ Approve Interest
-              </button>`;
+              </button>
+            `;
+          }
+
+          // ✔ APPROVED → SHOW REJECT
+          if(status === "approved"){
+            interestBtn = `
+              <button class="card-btn interest-reject"
+              onclick="event.stopPropagation(); rejectInterest('${userId}')">
+              ❌ Reject Interest
+              </button>
+            `;
           }
         }
 
         list.innerHTML += `
         <div class="card" onclick="openModal('${userId}')">
 
-          <img src="${d.photo}" onerror="this.src='https://via.placeholder.com/300'">
+          <img src="${d.photo || 'https://via.placeholder.com/300'}">
 
-          <h3>${d.name}</h3>
-          <p>${d.city}</p>
+          <h3>${d.name || ''}</h3>
+          <p>${d.city || ''}</p>
 
           <div>
             <button class="card-btn approve" onclick="event.stopPropagation(); approve('${userId}')">Approve</button>
@@ -188,7 +193,7 @@ function loadProfiles(){
             <button class="card-btn premium" onclick="event.stopPropagation(); makePremium('${userId}')">Premium</button>
             <button class="card-btn featured" onclick="event.stopPropagation(); makeFeatured('${userId}')">Featured</button>
 
-            ${interestUI}
+            ${interestBtn}
           </div>
 
         </div>`;
@@ -209,7 +214,6 @@ function approveInterest(id){
     status:"approved",
     time:Date.now()
   });
-  alert("Interest Approved");
 }
 
 /* INTEREST REJECT */
@@ -218,19 +222,18 @@ function rejectInterest(id){
     status:"rejected",
     time:Date.now()
   });
-  alert("Interest Rejected");
 }
 
 /* MODAL */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
-    const d=snap.val();
+    const d=snap.val() || {};
 
     document.getElementById("modalBody").innerHTML=`
       <img src="${d.photo}" style="width:100%;border-radius:10px">
       <h2>${d.name}</h2>
       <p>${d.city}</p>
-      <p>${d.age||""}</p>
+      <p>${d.age||''}</p>
     `;
 
     document.getElementById("profileModal").style.display="flex";
