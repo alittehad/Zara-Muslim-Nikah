@@ -13,76 +13,13 @@
 <style>
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 
-/* ===== 3D HEADER ===== */
-.top-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px 10px;
-
-  background: linear-gradient(145deg, #0f766e, #14b8a6);
-
-  box-shadow:
-    0 6px 0 #0b5c55,
-    0 15px 25px rgba(0,0,0,0.35);
-
-  border-bottom:3px solid rgba(255,255,255,0.2);
-
-  transform: perspective(800px) rotateX(6deg);
-}
-
-/* side blocks */
-.side{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+/* Header */
+header{
+  background:#0f766e;
   color:white;
-  font-size:11px;
-  font-weight:600;
-  transition:0.3s;
-}
-
-.side img{
-  width:48px;
-  height:48px;
-  border-radius:50%;
-  object-fit:cover;
-
-  border:2px solid white;
-
-  box-shadow:
-    0 4px 0 rgba(0,0,0,0.3),
-    0 10px 20px rgba(0,0,0,0.4);
-
-  transition:0.3s;
-}
-
-.side:hover img{
-  transform:translateY(-3px) scale(1.05);
-  box-shadow:0 12px 25px rgba(0,0,0,0.5);
-}
-
-/* title */
-.title{
-  font-size:18px;
-  font-weight:900;
-  color:white;
-  letter-spacing:1px;
-
-  text-shadow:
-    0 3px 0 #0b5c55,
-    0 8px 15px rgba(0,0,0,0.4);
-}
-
-/* hover effect */
-.top-header:hover{
-  transform: perspective(800px) rotateX(0deg) translateY(-2px);
-}
-
-/* Header mobile */
-@media(max-width:500px){
-  .title{font-size:14px;}
-  .side img{width:38px;height:38px;}
+  text-align:center;
+  padding:15px;
+  font-size:22px;
 }
 
 /* Topbar */
@@ -133,30 +70,91 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
   padding:10px;
 }
 
-/* LOGIN SCREEN */
+/* ===== LOGIN SCREEN ===== */
 #loginScreen{
   display:none;
   position:fixed;
-  top:0;
-  left:0;
+  top:0;left:0;
   width:100%;
   height:100vh;
   background:url('https://i.ibb.co/B5wzJpm6/nikah-wall.png') no-repeat center center;
   background-size:contain;
   background-color:black;
+  overflow:hidden;
 }
 
-/* login button */
+/* Animated background glow */
+#loginScreen::before{
+  content:"";
+  position:absolute;
+  width:100%;
+  height:100%;
+  background: radial-gradient(circle at 20% 20%, rgba(20,184,166,0.25), transparent 40%),
+              radial-gradient(circle at 80% 80%, rgba(15,118,110,0.25), transparent 40%);
+  animation: bgMove 6s infinite alternate;
+}
+
+@keyframes bgMove{
+  from{transform:scale(1);}
+  to{transform:scale(1.1);}
+}
+
+/* Floating particles */
+#loginScreen::after{
+  content:"";
+  position:absolute;
+  width:100%;
+  height:100%;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.4) 2px, transparent 3px);
+  background-size: 50px 50px;
+  animation: floatParticles 10s linear infinite;
+  opacity:0.25;
+}
+
+@keyframes floatParticles{
+  from{transform:translateY(0);}
+  to{transform:translateY(-100px);}
+}
+
+/* Center login */
+.center-login{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  z-index:2;
+}
+
+/* ===== 3D LOGIN BUTTON ===== */
 .login-btn{
-  padding:7px 14px;
-  font-size:12px;
-  font-weight:600;
+  padding:10px 18px;
+  font-size:14px;
+  font-weight:bold;
   color:white;
   background: linear-gradient(145deg, #0f766e, #14b8a6);
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   cursor:pointer;
-  box-shadow:0 4px 0 #0b5c55, 0 8px 18px rgba(0,0,0,0.35);
+
+  box-shadow: 0 6px 0 #0b5c55, 0 12px 25px rgba(0,0,0,0.4);
+
+  transition: all 0.25s ease;
+  transform: perspective(500px);
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow{
+  from{box-shadow:0 6px 0 #0b5c55, 0 10px 20px rgba(0,0,0,0.3);}
+  to{box-shadow:0 6px 0 #0b5c55, 0 0 25px rgba(20,184,166,0.8);}
+}
+
+.login-btn:hover{
+  transform: translateY(-4px) scale(1.05);
+}
+
+.login-btn:active{
+  transform: translateY(2px) scale(0.98);
+  box-shadow:0 3px 0 #0b5c55;
 }
 
 /* Modal */
@@ -182,24 +180,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 
 <body>
 
-<!-- 🔥 3D HEADER -->
-<header class="top-header">
-
-  <div class="side">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Kaaba_Makkah.jpg">
-    <span>Makkah</span>
-  </div>
-
-  <div class="title">
-    Zara Nikah Service
-  </div>
-
-  <div class="side">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/1/1d/Al-Masjid_an-Nabawi.jpg">
-    <span>Madinah</span>
-  </div>
-
-</header>
+<header>🕋 Zara Nikah Service 🕌</header>
 
 <!-- Topbar -->
 <div class="topbar" id="topbar">
@@ -209,14 +190,16 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
   <button onclick="handleAuth()" style="background:#0f766e;">Logout</button>
 </div>
 
-<!-- Login -->
+<!-- Login Screen -->
 <div id="loginScreen">
-  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">
-    <button class="login-btn" onclick="handleAuth()">🔐 Login</button>
+  <div class="center-login">
+    <button class="login-btn" onclick="handleAuth()">
+      🔐 Login to Continue
+    </button>
   </div>
 </div>
 
-<!-- Grid -->
+<!-- Profiles -->
 <div class="grid" id="profileGrid"></div>
 
 <!-- Modal -->
@@ -252,6 +235,7 @@ function handleAuth(){
 auth.onAuthStateChanged(user=>{
   currentUser = user;
 
+  const adminBtn = document.getElementById("adminBtn");
   const loginScreen = document.getElementById("loginScreen");
   const grid = document.getElementById("profileGrid");
   const topbar = document.getElementById("topbar");
@@ -260,7 +244,15 @@ auth.onAuthStateChanged(user=>{
     topbar.style.display = "flex";
     loginScreen.style.display = "none";
     grid.style.display = "grid";
+
+    if((user.email||"").toLowerCase() === ADMIN_EMAIL){
+      adminBtn.style.display = "inline-block";
+    } else {
+      adminBtn.style.display = "none";
+    }
+
     loadPosts();
+
   } else {
     topbar.style.display = "none";
     loginScreen.style.display = "block";
