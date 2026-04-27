@@ -18,41 +18,96 @@ firebase.initializeApp({
 const db = firebase.database();
 const auth = firebase.auth();
 
-const pid = new URLSearchParams(location.search).get("pid");
+/* FIX: profile id correct */
+const pid = new URLSearchParams(location.search).get("profile");
 </script>
+
+<style>
+body{
+  text-align:center;
+  font-family:sans-serif;
+  padding:20px;
+  background:#f4f6f9;
+}
+
+.card{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  max-width:400px;
+  margin:auto;
+  box-shadow:0 4px 15px rgba(0,0,0,0.1);
+}
+
+img{
+  width:100%;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+
+button{
+  background:green;
+  color:white;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  width:100%;
+  cursor:pointer;
+}
+</style>
 
 </head>
 
-<body style="text-align:center;font-family:sans-serif;padding:20px">
+<body>
+
+<div class="card">
 
 <h2>💳 UPI Payment</h2>
 
-<h3>UPI ID: zara@upi</h3>
+<!-- 🔥 UPI IMAGE (DEFAULT + ADMIN OVERRIDE) -->
+<img id="upiImg" src="https://i.ibb.co/fzQ1WgbN/upi.png">
 
+<h3>UPI ID: zara@upi</h3>
 <p>Pay ₹99 to continue</p>
 
-<button onclick="paid()" style="
-background:green;
-color:white;
-padding:12px;
-border:none;
-border-radius:8px;
-font-size:16px;
-">
-I Have Paid
-</button>
+<button onclick="paid()">I Have Paid</button>
+
+</div>
 
 <script>
+
+// 🔥 Admin can change UPI image from Firebase
+db.ref("settings/upiImage").on("value",snap=>{
+  const img = snap.val();
+  if(img){
+    document.getElementById("upiImg").src = img;
+  }
+});
+
 function paid(){
+
   const user = auth.currentUser;
 
-  db.ref("interests/"+pid+"/"+user.uid+"/status")
-  .set("paid");
+  if(!user){
+    alert("Login required");
+    return;
+  }
+
+  if(!pid){
+    alert("Profile not found");
+    return;
+  }
+
+  db.ref("interests/"+pid+"/"+user.uid).set({
+    status:"paid",
+    time:Date.now()
+  });
 
   alert("Payment submitted!");
-
   window.location.href = "index.html";
 }
+
 </script>
 
 </body>
