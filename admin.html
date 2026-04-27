@@ -34,8 +34,8 @@ header{
 
 .card{
   background:white;
-  border-radius:12px;
   padding:10px;
+  border-radius:12px;
   box-shadow:0 3px 10px rgba(0,0,0,0.1);
   cursor:pointer;
 }
@@ -113,12 +113,14 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
+let currentUser = null;
 
 /* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(!user || user.email !== ADMIN_EMAIL){
     location="index.html";
   } else {
+    currentUser = user;
     loadUsers();
   }
 });
@@ -127,14 +129,13 @@ auth.onAuthStateChanged(user=>{
 function loadUsers(){
   db.ref("users").on("value",snap=>{
     const list = document.getElementById("list");
-    list.innerHTML="";
+    list.innerHTML = "";
 
     snap.forEach(child=>{
       const id = child.key;
       const d = child.val();
 
-      // FIX: interest listener per card
-      db.ref("interests/"+id).on("value",intSnap=>{
+      db.ref("interests/"+id).once("value").then(intSnap=>{
 
         const data = intSnap.val() || {};
         const status = data.status || "pending";
@@ -145,12 +146,8 @@ function loadUsers(){
           btn = `<button class="btn iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
         }
 
-        if(status === "approved"){
+        else if(status === "approved"){
           btn = `<button class="btn iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`;
-        }
-
-        if(status === "rejected"){
-          btn = "";
         }
 
         list.innerHTML += `
@@ -194,11 +191,14 @@ function openProfile(id){
   });
 }
 
-/* INTEREST UPDATE */
-function setInterest(id,status){
-  db.ref("interests/"+id).set({
-    status:status,
-    time:Date.now()
+/* INTEREST FIXED STRUCTURE */
+function setInterest(profileId,status){
+
+  if(!currentUser) return;
+
+  db.ref("interests/"+profileId+"/"+currentUser.uid).set({
+    status: status,
+    time: Date.now()
   });
 }
 
@@ -221,7 +221,7 @@ function featured(id){
   db.ref("users/"+id+"/featured").set(true);
 }
 
-/* MODAL CLOSE */
+/* CLOSE MODAL */
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
