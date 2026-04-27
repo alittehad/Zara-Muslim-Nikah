@@ -45,8 +45,9 @@ button{margin:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;font-
 
 <script>
 
+// ✅ FULL CONFIG (अपनी original डालो)
 firebase.initializeApp({
-  apiKey:"AIzaSy...",
+  apiKey:"YOUR_API_KEY_HERE",
   authDomain:"zara-muslim-nikah.firebaseapp.com",
   databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com"
 });
@@ -64,7 +65,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* ✅ LOAD USERS + INTERESTS TOGETHER */
+/* LOAD USERS + INTEREST */
 function loadData(){
 
   db.ref().on("value",snap=>{
@@ -73,7 +74,7 @@ function loadData(){
     const interests = snap.child("interests").val() || {};
 
     const list = document.getElementById("list");
-    list.innerHTML="";
+    list.innerHTML=""; // ✅ duplicate fix
 
     Object.keys(users).forEach(id=>{
 
@@ -81,17 +82,19 @@ function loadData(){
       const intData = interests[id] || {};
       const status = intData.status || "pending";
 
+      /* 🔥 INTEREST BUTTON */
       let interestBtn="";
 
       if(status==="pending"){
         interestBtn=`<button class="iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
-      }
-      else if(status==="approved"){
+      } else {
         interestBtn=`<button class="iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`;
       }
-      else{
-        interestBtn=`<button class="iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
-      }
+
+      /* 🔥 APPROVE BUTTON TOGGLE */
+      let approveBtn = (d.status==="approved")
+        ? `<button class="reject" onclick="event.stopPropagation(); unapprove('${id}')">Reject</button>`
+        : `<button class="approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>`;
 
       list.innerHTML+=`
       <div class="card" onclick="openModal('${id}')">
@@ -102,8 +105,8 @@ function loadData(){
         <p>${d.city || ''}</p>
 
         <div>
-          <button class="approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>
-          <button class="reject" onclick="event.stopPropagation(); reject('${id}')">Delete</button>
+          ${approveBtn}
+          <button class="reject" onclick="event.stopPropagation(); deleteUser('${id}')">Delete</button>
           <button class="premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
           <button class="featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
 
@@ -126,6 +129,7 @@ function openModal(id){
       <p>Age: ${d.age||'-'}</p>
       <p>City: ${d.city||'-'}</p>
       <p>Phone: ${d.phone||'-'}</p>
+      <p>Status: ${d.status||'pending'}</p>
     `;
     document.getElementById("profileModal").style.display="flex";
   });
@@ -145,10 +149,27 @@ function setInterest(id,status){
   });
 }
 
-function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
-function reject(id){ if(confirm("Delete?")) db.ref("users/"+id).remove(); }
-function premium(id){ db.ref("users/"+id+"/premium").set(true); }
-function featured(id){ db.ref("users/"+id+"/featured").set(true); }
+function approve(id){
+  db.ref("users/"+id+"/status").set("approved");
+}
+
+function unapprove(id){
+  db.ref("users/"+id+"/status").set("pending");
+}
+
+function deleteUser(id){
+  if(confirm("Delete?")){
+    db.ref("users/"+id).remove();
+  }
+}
+
+function premium(id){
+  db.ref("users/"+id+"/premium").set(true);
+}
+
+function featured(id){
+  db.ref("users/"+id+"/featured").set(true);
+}
 
 function logout(){
   auth.signOut().then(()=>location="index.html");
