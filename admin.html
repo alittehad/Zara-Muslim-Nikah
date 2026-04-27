@@ -41,11 +41,6 @@ header{
   border-radius:15px;
   box-shadow:0 8px 20px rgba(0,0,0,0.1);
   cursor:pointer;
-  transition:0.2s;
-}
-
-.card:hover{
-  transform:translateY(-3px);
 }
 
 .card img{
@@ -89,7 +84,6 @@ button.card-btn{
   border-radius:15px;
   width:90%;
   max-width:420px;
-  position:relative;
 }
 </style>
 </head>
@@ -142,7 +136,8 @@ function loadProfiles(){
       const id = child.key;
       const d = child.val() || {};
 
-      db.ref("interests/"+id).once("value").then(intSnap=>{
+      /* 🔥 INTEREST REALTIME */
+      db.ref("interests/"+id).on("value",intSnap=>{
 
         const intData = intSnap.val() || {};
         const status = intData.status || "pending";
@@ -150,11 +145,24 @@ function loadProfiles(){
         let interestBtn = "";
 
         if(status === "pending"){
-          interestBtn = `<button class="card-btn iA" onclick="event.stopPropagation(); setInterest('${id}','approved')">Approve Interest</button>`;
+          interestBtn = `
+            <button class="card-btn iA"
+            onclick="event.stopPropagation(); setInterest('${id}','approved')">
+            Approve Interest</button>`;
         }
 
-        if(status === "approved"){
-          interestBtn = `<button class="card-btn iR" onclick="event.stopPropagation(); setInterest('${id}','rejected')">Reject Interest</button>`;
+        else if(status === "approved"){
+          interestBtn = `
+            <button class="card-btn iR"
+            onclick="event.stopPropagation(); setInterest('${id}','rejected')">
+            Reject Interest</button>`;
+        }
+
+        else if(status === "rejected"){
+          interestBtn = `
+            <button class="card-btn iA"
+            onclick="event.stopPropagation(); setInterest('${id}','approved')">
+            Approve Interest</button>`;
         }
 
         list.innerHTML += `
@@ -180,7 +188,7 @@ function loadProfiles(){
   });
 }
 
-/* MODAL OPEN */
+/* OPEN PROFILE */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
     const d = snap.val() || {};
@@ -200,9 +208,9 @@ function openModal(id){
   });
 }
 
-/* INTEREST SYSTEM */
-function setInterest(profileId,status){
-  db.ref("interests/"+profileId).set({
+/* INTEREST TOGGLE */
+function setInterest(id,status){
+  db.ref("interests/"+id).set({
     status:status,
     time:Date.now()
   });
