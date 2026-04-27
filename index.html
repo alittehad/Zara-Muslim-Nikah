@@ -70,11 +70,12 @@ header{
   padding:10px;
 }
 
-/* ===== LOGIN SCREEN ===== */
+/* LOGIN SCREEN */
 #loginScreen{
   display:none;
   position:fixed;
-  top:0;left:0;
+  top:0;
+  left:0;
   width:100%;
   height:100vh;
   background:url('https://i.ibb.co/B5wzJpm6/nikah-wall.png') no-repeat center center;
@@ -83,7 +84,7 @@ header{
   overflow:hidden;
 }
 
-/* Animated background glow */
+/* glow background */
 #loginScreen::before{
   content:"";
   position:absolute;
@@ -99,7 +100,7 @@ header{
   to{transform:scale(1.1);}
 }
 
-/* Floating particles */
+/* particles */
 #loginScreen::after{
   content:"";
   position:absolute;
@@ -116,7 +117,7 @@ header{
   to{transform:translateY(-100px);}
 }
 
-/* Center login */
+/* center */
 .center-login{
   position:absolute;
   top:50%;
@@ -125,36 +126,39 @@ header{
   z-index:2;
 }
 
-/* ===== 3D LOGIN BUTTON ===== */
+/* ⭐ SMALL 3D LOGIN BUTTON (UPDATED) */
 .login-btn{
-  padding:10px 18px;
-  font-size:14px;
-  font-weight:bold;
+  padding:7px 14px;
+  font-size:12px;
+  font-weight:600;
   color:white;
+
   background: linear-gradient(145deg, #0f766e, #14b8a6);
   border:none;
-  border-radius:12px;
+  border-radius:10px;
   cursor:pointer;
 
-  box-shadow: 0 6px 0 #0b5c55, 0 12px 25px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 0 #0b5c55, 0 8px 18px rgba(0,0,0,0.35);
 
-  transition: all 0.25s ease;
-  transform: perspective(500px);
+  transition: all 0.2s ease;
   animation: glow 2s infinite alternate;
 }
 
+/* glow */
 @keyframes glow{
-  from{box-shadow:0 6px 0 #0b5c55, 0 10px 20px rgba(0,0,0,0.3);}
-  to{box-shadow:0 6px 0 #0b5c55, 0 0 25px rgba(20,184,166,0.8);}
+  from{box-shadow:0 4px 0 #0b5c55, 0 6px 15px rgba(0,0,0,0.25);}
+  to{box-shadow:0 4px 0 #0b5c55, 0 0 18px rgba(20,184,166,0.7);}
 }
 
+/* hover */
 .login-btn:hover{
-  transform: translateY(-4px) scale(1.05);
+  transform: translateY(-2px) scale(1.03);
 }
 
+/* click */
 .login-btn:active{
-  transform: translateY(2px) scale(0.98);
-  box-shadow:0 3px 0 #0b5c55;
+  transform: translateY(1px) scale(0.98);
+  box-shadow:0 2px 0 #0b5c55;
 }
 
 /* Modal */
@@ -190,16 +194,16 @@ header{
   <button onclick="handleAuth()" style="background:#0f766e;">Logout</button>
 </div>
 
-<!-- Login Screen -->
+<!-- LOGIN -->
 <div id="loginScreen">
   <div class="center-login">
     <button class="login-btn" onclick="handleAuth()">
-      🔐 Login to Continue
+      🔐 Login
     </button>
   </div>
 </div>
 
-<!-- Profiles -->
+<!-- Grid -->
 <div class="grid" id="profileGrid"></div>
 
 <!-- Modal -->
@@ -252,7 +256,6 @@ auth.onAuthStateChanged(user=>{
     }
 
     loadPosts();
-
   } else {
     topbar.style.display = "none";
     loginScreen.style.display = "block";
