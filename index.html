@@ -22,7 +22,7 @@ header{
   font-size:22px;
 }
 
-/* Topbar (after login only) */
+/* Topbar */
 .topbar{
   display:none;
   justify-content:center;
@@ -70,7 +70,7 @@ header{
   padding:10px;
 }
 
-/* 🔥 Full Screen Login Image */
+/* 🔥 LOGIN SCREEN (BACKGROUND + CONTAIN) */
 #loginScreen{
   display:none;
   position:fixed;
@@ -78,16 +78,13 @@ header{
   left:0;
   width:100%;
   height:100vh;
-  z-index:999;
+
+  background:url('https://i.ibb.co/B5wzJpm6/nikah-wall.png') no-repeat center center;
+  background-size:contain; /* 🔥 पूरा image */
+  background-color:black;
 }
 
-#loginScreen img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* Center Button */
+/* Center Login Button */
 .center-login{
   position:absolute;
   top:50%;
@@ -120,7 +117,7 @@ header{
 
 <header>🌙 Zara Nikah Service ⭐</header>
 
-<!-- 🔥 Topbar (login के बाद ही दिखेगा) -->
+<!-- Topbar -->
 <div class="topbar" id="topbar">
   <button id="addPostBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
   <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
@@ -128,10 +125,8 @@ header{
   <button onclick="handleAuth()" style="background:#0f766e;">Logout</button>
 </div>
 
-<!-- 🔥 Full Screen Login -->
+<!-- 🔥 Login Screen -->
 <div id="loginScreen">
-  <img src="https://i.ibb.co/B5wzJpm6/nikah-wall.png">
-
   <div class="center-login">
     <button onclick="handleAuth()" 
       style="padding:15px 25px;font-size:18px;background:#0f766e;color:white;border:none;border-radius:8px;">
@@ -184,7 +179,6 @@ auth.onAuthStateChanged(user=>{
   const topbar = document.getElementById("topbar");
 
   if(user){
-    // ✅ Login
     topbar.style.display = "flex";
     loginScreen.style.display = "none";
     grid.style.display = "grid";
@@ -198,7 +192,6 @@ auth.onAuthStateChanged(user=>{
     loadPosts();
 
   } else {
-    // ❌ Logout
     topbar.style.display = "none";
     loginScreen.style.display = "block";
     grid.style.display = "none";
