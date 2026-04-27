@@ -18,25 +18,29 @@ header{
   padding:15px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
 }
-
-.section{padding:15px;}
 
 .card{
   background:white;
   padding:12px;
-  margin:10px 0;
-  border-radius:10px;
+  margin:10px;
+  border-radius:12px;
   box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
+img{
+  width:100%;
+  max-height:200px;
+  object-fit:cover;
+  border-radius:10px;
+}
+
 .btn{
-  padding:7px 10px;
+  padding:6px 10px;
   border:none;
   border-radius:6px;
-  cursor:pointer;
   margin:3px;
+  cursor:pointer;
   font-weight:bold;
 }
 
@@ -52,10 +56,7 @@ header{
   <button onclick="logout()">Logout</button>
 </header>
 
-<div class="section">
-<h2>❤️ Interest Requests (Live)</h2>
 <div id="box"></div>
-</div>
 
 <script>
 
@@ -76,60 +77,68 @@ auth.onAuthStateChanged(user=>{
   if(!user || user.email !== ADMIN_EMAIL){
     location="index.html";
   } else {
-    listenInterests();
+    loadData();
   }
 });
 
-/* 🔥 REALTIME LISTENER (OPTIMIZED) */
-function listenInterests(){
+/* 🔥 CLEAN + IMAGE + FULL DATA */
+function loadData(){
 
   db.ref("interests").on("value",snap=>{
 
-    let html = "";
+    let html="";
 
     snap.forEach(profile=>{
 
       const pid = profile.key;
+      const users = profile.val();
 
-      profile.forEach(userSnap=>{
+      Object.keys(users || {}).forEach(uid=>{
 
-        const uid = userSnap.key;
-        const d = userSnap.val();
+        const d = users[uid];
+
+        if(!d || typeof d !== "object") return;
 
         const status = d.status || "pending";
 
-        let btn = "";
+        let btn="";
 
-        // 🔴 PENDING → APPROVE BUTTON
         if(status === "pending"){
-          btn = `<button class="btn approve" onclick="setStatus('${pid}','${uid}','approved')">Approve</button>`;
+          btn = `<button class="btn approve"
+          onclick="update('${pid}','${uid}','approved')">Approve</button>`;
         }
 
-        // 🟢 APPROVED → REJECT BUTTON
         if(status === "approved"){
-          btn = `<button class="btn reject" onclick="setStatus('${pid}','${uid}','rejected')">Reject</button>`;
+          btn = `<button class="btn reject"
+          onclick="update('${pid}','${uid}','rejected')">Reject</button>`;
         }
 
-        // ❌ REJECTED → REMOVE FROM UI
         if(status === "rejected") return;
 
         html += `
         <div class="card">
-          <b>Profile:</b> ${pid}<br>
-          <b>User:</b> ${uid}<br>
-          <b>Status:</b> ${status}<br>
+
+          <img src="${d.photo || 'https://via.placeholder.com/300'}">
+
+          <h3>📌 Profile ID: ${pid}</h3>
+          <p>👤 User ID: ${uid}</p>
+          <p>📊 Status: ${status}</p>
+          <p>⏰ Time: ${d.time || '-'}</p>
+
           ${btn}
+
         </div>
         `;
       });
+
     });
 
     document.getElementById("box").innerHTML = html;
   });
 }
 
-/* 🔥 UPDATE STATUS */
-function setStatus(pid,uid,status){
+/* UPDATE STATUS */
+function update(pid,uid,status){
   db.ref("interests/"+pid+"/"+uid).update({
     status:status,
     time:Date.now()
