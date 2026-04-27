@@ -5,16 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f4f6f9;
-}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 
 header{
   width:100%;
@@ -25,6 +22,27 @@ header{
   font-weight:900;
   padding:14px;
 }
+
+.topbar{
+  display:none;
+  justify-content:center;
+  gap:10px;
+  padding:10px;
+}
+
+.topbar button{
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+  color:white;
+}
+
+#loginBtn{background:#0f766e;}
+#logoutBtn{background:black;}
+#adminBtn{background:#1e40af;}
+#addBtn{background:#dc2626;}
 
 .grid{
   display:grid;
@@ -73,7 +91,6 @@ header{
   max-width:420px;
 }
 
-/* BUTTONS */
 .btn{
   padding:10px;
   border:none;
@@ -84,31 +101,7 @@ header{
   cursor:pointer;
 }
 
-.interest{
-  background:#e11d48;
-  color:white;
-}
-
-.interest:hover{
-  background:#be123c;
-}
-
-.approve{
-  background:green;
-  color:white;
-}
-.reject{
-  background:red;
-  color:white;
-}
-.premium{
-  background:gold;
-  color:black;
-}
-.featured{
-  background:orange;
-  color:white;
-}
+.interest{background:#e11d48;color:white;}
 </style>
 </head>
 
@@ -116,6 +109,14 @@ header{
 
 <header>🕋 Zara Nikah Service 🕌</header>
 
+<!-- TOPBAR -->
+<div class="topbar" id="topbar">
+  <button id="addBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
+  <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin</button>
+  <button id="logoutBtn" onclick="logout()">Logout</button>
+</div>
+
+<!-- GRID -->
 <div class="grid" id="profileGrid"></div>
 
 <!-- MODAL -->
@@ -139,16 +140,40 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.database();
 
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 
+/* LOGIN (GOOGLE) */
+function login(){
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+}
+
+/* AUTH STATE */
 auth.onAuthStateChanged(user=>{
   currentUser = user || null;
-  loadPosts();
+
+  const topbar = document.getElementById("topbar");
+  const adminBtn = document.getElementById("adminBtn");
+
+  if(user){
+    topbar.style.display = "flex";
+
+    if((user.email||"").toLowerCase() === ADMIN_EMAIL.toLowerCase()){
+      adminBtn.style.display = "inline-block";
+    } else {
+      adminBtn.style.display = "none";
+    }
+
+    loadPosts();
+  } else {
+    topbar.style.display = "none";
+    document.getElementById("profileGrid").innerHTML = "";
+  }
 });
 
-/* LOAD USERS */
+/* LOAD PROFILES */
 function loadPosts(){
-  db.ref("users").once("value").then(snap=>{
+  db.ref("users").on("value",snap=>{
     const grid = document.getElementById("profileGrid");
     grid.innerHTML = "";
 
@@ -179,42 +204,26 @@ function openModal(id){
            style="width:100%;border-radius:10px">
 
       <h2>${d.name || ''}</h2>
-      <p>City: ${d.city || ''}</p>
-      <p>Age: ${d.age || ''}</p>
-      <p>Gender: ${d.gender || ''}</p>
-      <p>Education: ${d.education || ''}</p>
+      <p>${d.city || ''}</p>
+      <p>${d.age || ''}</p>
 
-      <!-- MAIN BUTTON -->
       <button class="btn interest" onclick="goPayment('${id}')">
-        ❤️ Send Interest
+        ❤️ Send Interest & Pay
       </button>
-
-      <!-- ADMIN STYLE BUTTONS (SAFE INCLUDED) -->
-      <button class="btn approve" onclick="approve('${id}')">Approve</button>
-      <button class="btn reject" onclick="reject('${id}')">Reject</button>
-      <button class="btn premium" onclick="makePremium('${id}')">Premium</button>
-      <button class="btn featured" onclick="makeFeatured('${id}')">Featured</button>
     `;
 
     document.getElementById("profileModal").style.display = "flex";
   });
 }
 
-/* PAYMENT FLOW */
+/* PAYMENT */
 function goPayment(id){
   if(!currentUser){
-    alert("Please login first");
+    alert("Login required");
     return;
   }
-
   window.location.href = "payment.html?profile=" + id;
 }
-
-/* ACTIONS (ADMIN SUPPORT) */
-function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
-function reject(id){ db.ref("users/"+id).remove(); }
-function makePremium(id){ db.ref("users/"+id+"/premium").set(true); }
-function makeFeatured(id){ db.ref("users/"+id+"/featured").set(true); }
 
 /* CLOSE MODAL */
 function closeModal(e){
@@ -222,6 +231,11 @@ function closeModal(e){
     document.getElementById("profileModal").style.display = "none";
   }
 }
+
+/* NAV */
+function logout(){ auth.signOut(); }
+function goAdmin(){ window.location.href="admin.html"; }
+function goAdd(){ window.location.href="profile-submit.html"; }
 
 </script>
 
