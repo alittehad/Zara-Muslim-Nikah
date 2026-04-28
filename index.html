@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -18,31 +17,16 @@ header{
   background: linear-gradient(90deg, #0f766e, #14b8a6);
   color:white;
   text-align:center;
-  font-size:22px;
+  font-size:clamp(16px, 4.5vw, 32px);
   font-weight:900;
-  padding:14px;
+  padding:14px 10px;
 }
 
-.topbar{
-  display:none;
-  justify-content:center;
-  gap:10px;
-  padding:10px;
-}
+.topbar{display:none;justify-content:center;gap:10px;padding:10px;}
+.topbar button{padding:10px 18px;border:none;border-radius:8px;color:white;font-weight:bold;}
 
-.topbar button{
-  padding:10px 16px;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-  color:white;
-}
-
-#loginBtn{background:#0f766e;}
-#logoutBtn{background:black;}
-#adminBtn{background:#1e40af;}
-#addBtn{background:#dc2626;}
+#addPostBtn{background:#1d4ed8;}
+#adminBtn{background:#000;}
 
 .grid{
   display:grid;
@@ -57,22 +41,33 @@ header{
   overflow:hidden;
   cursor:pointer;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  transition:0.3s;
-}
-.card:hover{transform:translateY(-4px);}
-
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
 }
 
-.card-body{
-  text-align:center;
-  padding:10px;
+.card img{width:100%;height:200px;object-fit:cover;}
+
+.card-body{text-align:center;padding:10px;}
+
+#loginScreen{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100vh;
+  background:black;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
 
-/* MODAL */
+.login-btn{
+  padding:10px 15px;
+  background:#14b8a6;
+  border:none;
+  color:white;
+  font-weight:bold;
+  border-radius:8px;
+}
+
 .modal{
   position:fixed;
   top:0;left:0;
@@ -85,23 +80,11 @@ header{
 
 .modal-content{
   background:white;
+  width:90%;
+  max-width:400px;
   padding:20px;
   border-radius:10px;
-  width:90%;
-  max-width:420px;
 }
-
-.btn{
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  width:100%;
-  margin-top:8px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.interest{background:#e11d48;color:white;}
 </style>
 </head>
 
@@ -109,84 +92,90 @@ header{
 
 <header>🕋 Zara Nikah Service 🕌</header>
 
-<!-- TOPBAR -->
 <div class="topbar" id="topbar">
-  <button id="addBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin</button>
-  <button id="logoutBtn" onclick="logout()">Logout</button>
+  <button id="addPostBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
+  <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
+  <button onclick="handleAuth()" style="background:#0f766e;">Logout</button>
 </div>
 
-<!-- GRID -->
+<div id="loginScreen">
+  <button class="login-btn" onclick="handleAuth()">Login</button>
+</div>
+
 <div class="grid" id="profileGrid"></div>
 
 <!-- MODAL -->
-<div class="modal" id="profileModal" onclick="closeModal(event)">
+<div class="modal" id="profileModal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
+    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
+
     <div id="modalBody"></div>
+
+    <!-- FIXED BUTTON -->
+    <button onclick="interest()"
+      style="background:#e11d48;color:white;padding:10px;border:none;border-radius:8px;width:100%;margin-top:10px;font-weight:bold;">
+      ❤️ I’m Interested
+    </button>
+
   </div>
 </div>
 
 <script>
 
-// Firebase
-firebase.initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
   projectId: "zara-muslim-nikah"
-});
+};
+
+firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
-let currentUser = null;
 
-/* LOGIN (GOOGLE) */
-function login(){
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+let currentUser = null;
+let currentProfileId = null;   // ✅ IMPORTANT FIX
+
+function handleAuth(){
+  if(currentUser){ auth.signOut(); }
+  else{ auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 }
 
-/* AUTH STATE */
 auth.onAuthStateChanged(user=>{
-  currentUser = user || null;
-
-  const topbar = document.getElementById("topbar");
-  const adminBtn = document.getElementById("adminBtn");
+  currentUser = user;
 
   if(user){
-    topbar.style.display = "flex";
+    document.getElementById("topbar").style.display="flex";
+    document.getElementById("loginScreen").style.display="none";
 
-    if((user.email||"").toLowerCase() === ADMIN_EMAIL.toLowerCase()){
-      adminBtn.style.display = "inline-block";
-    } else {
-      adminBtn.style.display = "none";
+    if((user.email||"").toLowerCase()===ADMIN_EMAIL){
+      document.getElementById("adminBtn").style.display="inline-block";
     }
 
     loadPosts();
   } else {
-    topbar.style.display = "none";
-    document.getElementById("profileGrid").innerHTML = "";
+    document.getElementById("topbar").style.display="none";
+    document.getElementById("loginScreen").style.display="flex";
   }
 });
 
-/* LOAD PROFILES */
 function loadPosts(){
-  db.ref("users").on("value",snap=>{
-    const grid = document.getElementById("profileGrid");
-    grid.innerHTML = "";
+  db.ref("users").once("value").then(snap=>{
+    const grid=document.getElementById("profileGrid");
+    grid.innerHTML="";
 
     snap.forEach(child=>{
-      const d = child.val() || {};
-
-      if(d.status === "approved"){
-        grid.innerHTML += `
+      const d=child.val();
+      if(d && d.status==="approved"){
+        grid.innerHTML+=`
         <div class="card" onclick="openModal('${child.key}')">
-          <img src="${d.photo || 'https://via.placeholder.com/300'}">
+          <img src="${d.photo||''}">
           <div class="card-body">
-            <h3>${d.name || 'Unknown'}</h3>
-            <p>${d.city || '-'}</p>
+            <h3>${d.name}</h3>
+            <p>${d.city}</p>
           </div>
         </div>`;
       }
@@ -194,48 +183,42 @@ function loadPosts(){
   });
 }
 
-/* OPEN PROFILE */
 function openModal(id){
+  currentProfileId = id;   // ✅ FIX STORE ID
+
   db.ref("users/"+id).once("value").then(snap=>{
-    const d = snap.val() || {};
+    const d=snap.val();
 
-    document.getElementById("modalBody").innerHTML = `
-      <img src="${d.photo || 'https://via.placeholder.com/300'}"
-           style="width:100%;border-radius:10px">
-
-      <h2>${d.name || ''}</h2>
-      <p>${d.city || ''}</p>
-      <p>${d.age || ''}</p>
-
-      <button class="btn interest" onclick="goPayment('${id}')">
-        ❤️ Send Interest & Pay
-      </button>
+    document.getElementById("modalBody").innerHTML=`
+      <h2>${d.name}</h2>
+      <img src="${d.photo}" style="width:100%">
+      <p>${d.city}</p>
+      <p>${d.age}</p>
     `;
 
-    document.getElementById("profileModal").style.display = "flex";
+    document.getElementById("profileModal").style.display="flex";
   });
 }
 
-/* PAYMENT */
-function goPayment(id){
-  if(!currentUser){
-    alert("Login required");
-    return;
-  }
-  window.location.href = "payment.html?profile=" + id;
+function closeModal(){
+  document.getElementById("profileModal").style.display="none";
 }
 
-/* CLOSE MODAL */
-function closeModal(e){
-  if(!e || e.target.id === "profileModal"){
-    document.getElementById("profileModal").style.display = "none";
-  }
+// ✅ INTEREST FUNCTION FIXED
+function interest(){
+  if(!currentUser || !currentProfileId) return;
+
+  db.ref("interests/"+currentProfileId+"/"+currentUser.uid).set({
+    userId: currentUser.uid,
+    name: currentUser.displayName,
+    status: "pending"
+  });
+
+  alert("Interest Sent ❤️ Admin will approve it");
 }
 
-/* NAV */
-function logout(){ auth.signOut(); }
-function goAdmin(){ window.location.href="admin.html"; }
-function goAdd(){ window.location.href="profile-submit.html"; }
+function goAdmin(){ window.location="admin.html"; }
+function goAdd(){ window.location="profile-submit.html"; }
 
 </script>
 
