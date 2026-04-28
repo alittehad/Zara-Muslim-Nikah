@@ -74,11 +74,19 @@ header{
 <header>🕋 Zara Nikah Service 🕌</header>
 
 <!-- TOPBAR -->
-<div class="topbar" id="topbar">
+<div class="topbar">
   <button id="loginBtn" onclick="login()">Login</button>
   <button id="addBtn" onclick="goAdd()" style="display:none">रिश्ता जोड़ें</button>
   <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin</button>
   <button id="logoutBtn" onclick="logout()" style="display:none">Logout</button>
+</div>
+
+<!-- ✅ WELCOME IMAGE -->
+<div id="welcomeBox" style="text-align:center;padding:20px;">
+  <img src="https://i.ibb.co/fzQ1WgbN/your-image-name.jpg"
+       style="width:95%;max-width:420px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+  <h2>Welcome to Zara Nikah Service</h2>
+  <p>Please login to view profiles</p>
 </div>
 
 <!-- GRID -->
@@ -121,8 +129,11 @@ auth.onAuthStateChanged(user=>{
   const logoutBtn = document.getElementById("logoutBtn");
   const addBtn = document.getElementById("addBtn");
   const adminBtn = document.getElementById("adminBtn");
+  const welcomeBox = document.getElementById("welcomeBox");
 
   if(user){
+    welcomeBox.style.display = "none";
+
     loginBtn.style.display="none";
     logoutBtn.style.display="inline-block";
     addBtn.style.display="inline-block";
@@ -134,20 +145,21 @@ auth.onAuthStateChanged(user=>{
     loadPosts();
 
   } else {
+    welcomeBox.style.display = "block";
+
     loginBtn.style.display="inline-block";
     logoutBtn.style.display="none";
     addBtn.style.display="none";
     adminBtn.style.display="none";
 
-    document.getElementById("profileGrid").innerHTML =
-      "<h2 style='text-align:center'>Please Login</h2>";
+    document.getElementById("profileGrid").innerHTML = "";
   }
 });
 
 /* LOAD PROFILES */
 function loadPosts(){
 
-  db.ref("users").off(); // duplicate fix
+  db.ref("users").off();
 
   db.ref("users").on("value",snap=>{
     const grid = document.getElementById("profileGrid");
@@ -196,7 +208,7 @@ function openModal(id){
   });
 }
 
-/* PAYMENT + DUPLICATE CHECK */
+/* PAYMENT CHECK */
 function goPayment(id){
   if(!currentUser){
     alert("Login required");
