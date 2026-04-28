@@ -14,29 +14,17 @@
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
 
 header{
-  width:100%;
-  background: linear-gradient(90deg, #0f766e, #14b8a6);
-  color:white;
-  text-align:center;
-  font-size:22px;
-  font-weight:900;
-  padding:14px;
+  background: linear-gradient(90deg,#0f766e,#14b8a6);
+  color:white;text-align:center;font-size:22px;font-weight:900;padding:14px;
 }
 
 .topbar{
-  display:none;
-  justify-content:center;
-  gap:10px;
-  padding:10px;
+  display:flex;justify-content:center;gap:10px;padding:10px;
 }
 
 .topbar button{
-  padding:10px 16px;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-  color:white;
+  padding:10px 16px;border:none;border-radius:8px;
+  font-weight:bold;cursor:pointer;color:white;
 }
 
 #loginBtn{background:#0f766e;}
@@ -47,58 +35,34 @@ header{
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:15px;
-  padding:15px;
+  gap:15px;padding:15px;
 }
 
 .card{
-  background:white;
-  border-radius:12px;
-  overflow:hidden;
-  cursor:pointer;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  background:white;border-radius:12px;overflow:hidden;
+  cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.1);
   transition:0.3s;
 }
 .card:hover{transform:translateY(-4px);}
 
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-}
+.card img{width:100%;height:200px;object-fit:cover;}
 
-.card-body{
-  text-align:center;
-  padding:10px;
-}
+.card-body{text-align:center;padding:10px;}
 
-/* MODAL */
 .modal{
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  display:none;
-  justify-content:center;
-  align-items:center;
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  display:none;justify-content:center;align-items:center;
   background:rgba(0,0,0,0.6);
 }
 
 .modal-content{
-  background:white;
-  padding:20px;
-  border-radius:10px;
-  width:90%;
-  max-width:420px;
+  background:white;padding:20px;border-radius:10px;
+  width:90%;max-width:420px;max-height:90%;overflow-y:auto;
 }
 
 .btn{
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  width:100%;
-  margin-top:8px;
-  font-weight:bold;
-  cursor:pointer;
+  padding:10px;border:none;border-radius:8px;
+  width:100%;margin-top:8px;font-weight:bold;cursor:pointer;
 }
 
 .interest{background:#e11d48;color:white;}
@@ -111,9 +75,10 @@ header{
 
 <!-- TOPBAR -->
 <div class="topbar" id="topbar">
-  <button id="addBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
+  <button id="loginBtn" onclick="login()">Login</button>
+  <button id="addBtn" onclick="goAdd()" style="display:none">रिश्ता जोड़ें</button>
   <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin</button>
-  <button id="logoutBtn" onclick="logout()">Logout</button>
+  <button id="logoutBtn" onclick="logout()" style="display:none">Logout</button>
 </div>
 
 <!-- GRID -->
@@ -143,36 +108,47 @@ const db = firebase.database();
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 
-/* LOGIN (GOOGLE) */
+/* LOGIN */
 function login(){
   auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
 }
 
 /* AUTH STATE */
 auth.onAuthStateChanged(user=>{
-  currentUser = user || null;
+  currentUser = user;
 
-  const topbar = document.getElementById("topbar");
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const addBtn = document.getElementById("addBtn");
   const adminBtn = document.getElementById("adminBtn");
 
   if(user){
-    topbar.style.display = "flex";
+    loginBtn.style.display="none";
+    logoutBtn.style.display="inline-block";
+    addBtn.style.display="inline-block";
 
     if((user.email||"").toLowerCase() === ADMIN_EMAIL.toLowerCase()){
-      adminBtn.style.display = "inline-block";
-    } else {
-      adminBtn.style.display = "none";
+      adminBtn.style.display="inline-block";
     }
 
     loadPosts();
+
   } else {
-    topbar.style.display = "none";
-    document.getElementById("profileGrid").innerHTML = "";
+    loginBtn.style.display="inline-block";
+    logoutBtn.style.display="none";
+    addBtn.style.display="none";
+    adminBtn.style.display="none";
+
+    document.getElementById("profileGrid").innerHTML =
+      "<h2 style='text-align:center'>Please Login</h2>";
   }
 });
 
 /* LOAD PROFILES */
 function loadPosts(){
+
+  db.ref("users").off(); // duplicate fix
+
   db.ref("users").on("value",snap=>{
     const grid = document.getElementById("profileGrid");
     grid.innerHTML = "";
@@ -200,12 +176,16 @@ function openModal(id){
     const d = snap.val() || {};
 
     document.getElementById("modalBody").innerHTML = `
-      <img src="${d.photo || 'https://via.placeholder.com/300'}"
-           style="width:100%;border-radius:10px">
+      <img src="${d.photo || 'https://via.placeholder.com/300'}" style="width:100%;border-radius:10px">
 
       <h2>${d.name || ''}</h2>
-      <p>${d.city || ''}</p>
-      <p>${d.age || ''}</p>
+
+      <p><b>Age:</b> ${d.age || '-'}</p>
+      <p><b>City:</b> ${d.city || '-'}</p>
+      <p><b>Gender:</b> ${d.gender || '-'}</p>
+      <p><b>Education:</b> ${d.education || '-'}</p>
+      <p><b>Profession:</b> ${d.profession || '-'}</p>
+      <p><b>Bio:</b> ${d.bio || '-'}</p>
 
       <button class="btn interest" onclick="goPayment('${id}')">
         ❤️ Send Interest & Pay
@@ -216,13 +196,21 @@ function openModal(id){
   });
 }
 
-/* PAYMENT */
+/* PAYMENT + DUPLICATE CHECK */
 function goPayment(id){
   if(!currentUser){
     alert("Login required");
     return;
   }
-  window.location.href = "payment.html?profile=" + id;
+
+  db.ref("interests/"+id+"/"+currentUser.uid).once("value")
+  .then(snap=>{
+    if(snap.exists()){
+      alert("You already sent interest!");
+    } else {
+      window.location.href = "payment.html?profile=" + id;
+    }
+  });
 }
 
 /* CLOSE MODAL */
