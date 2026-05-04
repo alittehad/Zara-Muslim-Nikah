@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
 <style>
 body{
   margin:0;
@@ -17,59 +20,48 @@ body{
   position:relative;
 }
 
-/* ✅ SINGLE IMAGE BACKGROUND */
+/* BACKGROUND IMAGE */
 body::before{
   content:"";
   position:absolute;
   inset:0;
   background:url("https://i.ibb.co/rG6YyCzB/nikah-wall.png") no-repeat center;
   background-size:cover;
-  z-index:0;
-
-  /* 🔥 LIGHT FIX (remove black harshness) */
   filter:brightness(0.95) contrast(1.05);
+  z-index:0;
 }
 
-/* 🔥 VERY LIGHT OVERLAY (NO DARK FEEL) */
+/* LIGHT OVERLAY */
 body::after{
   content:"";
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.15); /* very light */
+  background:rgba(0,0,0,0.15);
   z-index:1;
 }
 
-/* LOGIN BUTTON AREA */
+/* BUTTON AREA */
 .box{
   position:relative;
   z-index:2;
 }
 
-/* BUTTON */
+/* SMALL BUTTON */
 .btn{
-  padding:10px 18px;   /* छोटा padding */
+  padding:10px 18px;
   border:none;
   border-radius:10px;
   font-weight:bold;
-  font-size:8px;      /* छोटा text */
+  font-size:14px;
   color:white;
   cursor:pointer;
-
   background:linear-gradient(145deg,#14b8a6,#0f766e);
-  box-shadow:0 4px 0 #0b5e57;  /* हल्का shadow */
+  box-shadow:0 4px 0 #0b5e57;
 }
 
 .btn:active{
   transform:translateY(3px);
   box-shadow:0 1px 0 #0b5e57;
-}
-
-/* 📱 MOBILE FIX */
-@media(max-width:768px){
-  body::before{
-    background-size:cover;
-    background-position:center;
-  }
 }
 </style>
 </head>
@@ -77,8 +69,26 @@ body::after{
 <body>
 
 <div class="box">
-  <button class="btn">Login with Google</button>
+  <button class="btn" onclick="login()">Login with Google</button>
 </div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  projectId: "zara-muslim-nikah"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+function login(){
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+  .then(()=>{
+    window.location.href = "index.html";
+  });
+}
+</script>
 
 </body>
 </html>
