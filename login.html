@@ -17,27 +17,27 @@ body{
   align-items:center;
   font-family:sans-serif;
   overflow:hidden;
-  position:relative;
+  background:#000;
 }
 
-/* ✅ ONLY ONE IMAGE BACKGROUND */
-body::before{
-  content:"";
+/* 🔥 PERFECT FULL IMAGE (NO CUT, NO ZOOM) */
+.bg{
   position:absolute;
   inset:0;
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
+  width:100%;
+  height:100%;
 
-  /* smooth professional look */
-  filter:brightness(0.75);
+  object-fit:contain;   /* ⭐ MAIN FIX */
+  background:black;
+
   z-index:0;
 }
 
-/* DARK LAYER (optional but clean look) */
-body::after{
-  content:"";
+/* DARK OVERLAY */
+.overlay{
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.35);
+  background:rgba(0,0,0,0.45);
   z-index:1;
 }
 
@@ -49,7 +49,7 @@ body::after{
   color:white;
 }
 
-/* 3D BUTTON */
+/* BUTTON */
 .btn{
   padding:14px 28px;
   border:none;
@@ -66,18 +66,15 @@ body::after{
   transform:translateY(4px);
   box-shadow:0 2px 0 #0b5e57;
 }
-
-/* 📱 MOBILE FIX */
-@media(max-width:768px){
-  body::before{
-    background-position:center;
-    background-size:cover;
-  }
-}
 </style>
 </head>
 
 <body>
+
+<!-- 🔥 ONLY ONE IMAGE -->
+<img class="bg" src="https://i.ibb.co/fzQ1WgbN/bg.jpg">
+
+<div class="overlay"></div>
 
 <div class="box">
   <h2>🕋 Zara Nikah Service</h2>
