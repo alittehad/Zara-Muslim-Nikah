@@ -21,24 +21,24 @@ body{
   background:#000;
 }
 
-/* ✅ PERFECT BACKGROUND FIX */
+/* 🔥 BLUR BACKGROUND (FULL COVER) */
 body::before{
   content:"";
   position:absolute;
   inset:0;
   background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
-
-  /* smooth professional look */
-  filter:blur(5px) brightness(0.85);
+  filter:blur(8px) brightness(0.7);
+  transform:scale(1.1);
   z-index:0;
 }
 
-/* DARK OVERLAY */
+/* 🔥 SAFE CENTER IMAGE (NO CUT FEEL) */
 body::after{
   content:"";
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.35);
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/contain no-repeat;
+  background-color:rgba(0,0,0,0.4);
   z-index:1;
 }
 
@@ -50,7 +50,7 @@ body::after{
   color:white;
 }
 
-/* BUTTON 3D */
+/* BUTTON */
 .btn{
   padding:14px 28px;
   border:none;
@@ -61,20 +61,11 @@ body::after{
   cursor:pointer;
   background:linear-gradient(145deg,#14b8a6,#0f766e);
   box-shadow:0 6px 0 #0b5e57;
-  transition:0.2s;
 }
 
 .btn:active{
   transform:translateY(4px);
   box-shadow:0 2px 0 #0b5e57;
-}
-
-/* 📱 MOBILE FIX */
-@media(max-width:768px){
-  body::before{
-    background-position:center;
-    filter:blur(4px) brightness(0.9);
-  }
 }
 </style>
 </head>
