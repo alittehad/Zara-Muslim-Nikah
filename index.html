@@ -10,8 +10,13 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f4f6f9;}
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f4f6f9;
+}
 
+/* HEADER */
 header{
   background:linear-gradient(90deg,#0f766e,#14b8a6);
   color:white;
@@ -20,6 +25,7 @@ header{
   font-weight:900;
 }
 
+/* TOP BAR */
 .topbar{
   display:none;
   justify-content:center;
@@ -28,7 +34,7 @@ header{
 }
 
 .topbar button{
-  padding:10px;
+  padding:10px 14px;
   border:none;
   border-radius:8px;
   color:white;
@@ -36,18 +42,18 @@ header{
   cursor:pointer;
 }
 
-#homeBtn{background:#0f766e;}
-#addPostBtn{background:#1d4ed8;}
 #adminBtn{background:#000;}
 #logoutBtn{background:#dc2626;}
 
+/* GRID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
   gap:15px;
   padding:15px;
 }
 
+/* CARD */
 .card{
   background:white;
   border-radius:12px;
@@ -56,9 +62,18 @@ header{
   cursor:pointer;
 }
 
-.card img{width:100%;height:200px;object-fit:cover;}
-.card-body{text-align:center;padding:10px;}
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
 
+.card-body{
+  text-align:center;
+  padding:10px;
+}
+
+/* MODAL */
 .modal{
   position:fixed;
   inset:0;
@@ -66,11 +81,12 @@ header{
   justify-content:center;
   align-items:center;
   background:rgba(0,0,0,0.6);
+  padding:10px;
 }
 
 .modal-content{
   background:white;
-  width:90%;
+  width:100%;
   max-width:400px;
   padding:20px;
   border-radius:10px;
@@ -83,10 +99,8 @@ header{
 <header>🕋 Zara Nikah Service 🕌</header>
 
 <div class="topbar" id="topbar">
-  <button onclick="goHome()">Home</button>
-  <button onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button id="adminBtn" style="display:none" onclick="goAdmin()">Admin</button>
-  <button onclick="logout()">Logout</button>
+  <button id="adminBtn" style="display:none">Admin</button>
+  <button id="logoutBtn" onclick="logout()">Logout</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
@@ -99,6 +113,8 @@ header{
 </div>
 
 <script>
+
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -113,10 +129,11 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-let currentUser=null;
+let currentUser = null;
 
+/* LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
-  currentUser=user;
+  currentUser = user;
 
   if(!user){
     window.location.href="login.html";
@@ -132,20 +149,22 @@ auth.onAuthStateChanged(user=>{
   loadPosts();
 });
 
+/* LOAD PROFILES */
 function loadPosts(){
   db.ref("users").once("value").then(snap=>{
-    const grid=document.getElementById("profileGrid");
+    const grid = document.getElementById("profileGrid");
     grid.innerHTML="";
 
     snap.forEach(child=>{
-      const d=child.val();
-      if(d.status==="approved"){
-        grid.innerHTML+=`
+      const d = child.val();
+
+      if(d && d.status==="approved"){
+        grid.innerHTML += `
         <div class="card" onclick="openModal('${child.key}')">
-          <img src="${d.photo}">
+          <img src="${d.photo || ''}">
           <div class="card-body">
-            <h3>${d.name}</h3>
-            <p>${d.city}</p>
+            <h3>${d.name || ''}</h3>
+            <p>${d.city || ''}</p>
           </div>
         </div>`;
       }
@@ -153,32 +172,54 @@ function loadPosts(){
   });
 }
 
+/* OPEN PROFILE */
 function openModal(id){
   db.ref("users/"+id).once("value").then(snap=>{
-    const d=snap.val();
+    const d = snap.val();
 
-    document.getElementById("modalBody").innerHTML=`
+    document.getElementById("modalBody").innerHTML = `
+      <img src="${d.photo}" style="width:100%;border-radius:10px;">
       <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%">
-      <p>${d.city}</p>
-      <p>${d.age}</p>
+      <p><b>Age:</b> ${d.age}</p>
+      <p><b>City:</b> ${d.city}</p>
+
+      <button onclick="goPayment('${id}')"
+      style="
+        width:100%;
+        padding:12px;
+        margin-top:10px;
+        border:none;
+        border-radius:8px;
+        background:#e11d48;
+        color:white;
+        font-weight:bold;
+        cursor:pointer;
+      ">
+        ❤️ Rishta Pasand Hai
+      </button>
     `;
 
     document.getElementById("modal").style.display="flex";
   });
 }
 
+/* PAYMENT PAGE */
+function goPayment(id){
+  window.location.href = "payment.html?id=" + id;
+}
+
+/* CLOSE MODAL */
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
+/* LOGOUT */
 function logout(){
-  auth.signOut();
+  auth.signOut().then(()=>{
+    window.location.href="login.html";
+  });
 }
 
-function goHome(){ location.reload(); }
-function goAdd(){ window.location="profile-submit.html"; }
-function goAdmin(){ window.location="admin.html"; }
 </script>
 
 </body>
