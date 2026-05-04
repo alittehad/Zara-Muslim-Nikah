@@ -15,43 +15,27 @@ body{
   font-family:sans-serif;
   overflow:hidden;
   position:relative;
-  background:#000;
 }
 
-/* 🔥 FULL SCREEN BACKGROUND */
-.bg{
+/* ✅ ONLY ONE IMAGE */
+body::before{
+  content:"";
   position:absolute;
   inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;   /* fills screen */
-  filter:blur(8px) brightness(0.7);
-  transform:scale(1.1);
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") no-repeat center;
+
+  /* 🔥 IMPORTANT FIX */
+  background-size:cover;       /* fills screen */
+  background-position:center;  /* keeps focus center */
+
+  filter:brightness(0.75);
   z-index:0;
-}
-
-/* 🔥 CENTER IMAGE (NO CUT FEEL FIX) */
-.center-img{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;  /* full image visible */
-  z-index:1;
-}
-
-/* DARK OVERLAY */
-.overlay{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,0.35);
-  z-index:2;
 }
 
 /* LOGIN BOX */
 .box{
   position:relative;
-  z-index:3;
+  z-index:2;
   text-align:center;
   color:white;
 }
@@ -74,28 +58,17 @@ body{
   box-shadow:0 2px 0 #0b5e57;
 }
 
-/* 📱 MOBILE PERFECT FIX */
+/* 📱 MOBILE FIX */
 @media(max-width:768px){
-  .bg{
-    filter:blur(6px) brightness(0.75);
-  }
-
-  .center-img{
-    object-fit:contain;
+  body::before{
+    background-size:cover;
+    background-position:center;
   }
 }
 </style>
 </head>
 
 <body>
-
-<!-- BACKGROUND BLUR -->
-<img class="bg" src="https://i.ibb.co/fzQ1WgbN/bg.jpg">
-
-<!-- FULL IMAGE (NO CUT FEEL) -->
-<img class="center-img" src="https://i.ibb.co/fzQ1WgbN/bg.jpg">
-
-<div class="overlay"></div>
 
 <div class="box">
   <h2>🕋 Zara Nikah Service</h2>
