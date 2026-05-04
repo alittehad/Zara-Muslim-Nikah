@@ -62,51 +62,16 @@ header{
 .card-body{text-align:center;padding:10px;}
 
 /* LOGIN SCREEN WITH IMAGE */
-html,body{
-  margin:0;
-  height:100%;
-}
-
-/* LOGIN SCREEN WITH IMAGE */
 #loginScreen{
   display:none;
   position:fixed;
-  top:0;
-  left:0;
+  top:0;left:0;
   width:100%;
   height:100vh;
-
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
-
-  display:flex;
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") no-repeat center center/cover;
   justify-content:center;
   align-items:center;
   flex-direction:column;
-}
-
-/* DARK OVERLAY */
-#loginScreen::before{
-  content:"";
-  position:absolute;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.5);
-}
-
-/* BUTTON */
-.login-btn{
-  position:relative;
-  z-index:1;
-  padding:14px 22px;
-  font-size:16px;
-  background:#14b8a6;
-  border:none;
-  border-radius:10px;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
 }
 
 .login-btn{
