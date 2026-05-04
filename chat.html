@@ -25,7 +25,7 @@ body{
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
-input, textarea{
+input{
   width:100%;
   padding:10px;
   margin:8px 0;
@@ -79,17 +79,25 @@ const db = firebase.database();
 const auth = firebase.auth();
 const storage = firebase.storage();
 
+let currentUser = null;
+
+/* ✅ SAFE LOGIN HANDLER */
 auth.onAuthStateChanged(user=>{
   if(!user){
     alert("Login required");
     window.location.href="login.html";
+  } else {
+    currentUser = user;
   }
 });
 
+/* 🔥 SUBMIT FUNCTION (FIXED) */
 function submitData(){
 
-  const user = auth.currentUser;
-  if(!user) return;
+  if(!currentUser){
+    alert("User not ready yet, please wait...");
+    return;
+  }
 
   const file = document.getElementById("file").files[0];
 
@@ -100,10 +108,16 @@ function submitData(){
     whatsapp: document.getElementById("whatsapp").value,
     amount: document.getElementById("amount").value,
     liked: document.getElementById("liked").value,
-    uid: user.uid,
-    email: user.email,
+    uid: currentUser.uid,
+    email: currentUser.email,
     time: Date.now()
   };
+
+  // validation
+  if(!data.name || !data.amount){
+    alert("Please fill required fields");
+    return;
+  }
 
   if(file){
 
