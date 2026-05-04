@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Payment Proof Submit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<style>
+body{
+  font-family:sans-serif;
+  background:#f4f6f9;
+  padding:15px;
+}
+
+.box{
+  max-width:500px;
+  margin:auto;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+input, textarea{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  background:green;
+  color:white;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>📩 Payment Proof Submit</h2>
+
+<input type="text" id="name" placeholder="Your Name">
+<input type="number" id="age" placeholder="Age">
+<input type="text" id="address" placeholder="Address">
+<input type="text" id="whatsapp" placeholder="WhatsApp Number">
+
+<input type="number" id="amount" placeholder="Amount Paid">
+<input type="text" id="liked" placeholder="Whom you liked">
+
+<p>Upload Screenshot:</p>
+<input type="file" id="file">
+
+<button onclick="submitData()">Submit</button>
+
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  storageBucket: "zara-muslim-nikah.appspot.com"
+});
+
+const db = firebase.database();
+const auth = firebase.auth();
+const storage = firebase.storage();
+
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    alert("Login required");
+    window.location.href="login.html";
+  }
+});
+
+function submitData(){
+
+  const user = auth.currentUser;
+  if(!user) return;
+
+  const file = document.getElementById("file").files[0];
+
+  const data = {
+    name: document.getElementById("name").value,
+    age: document.getElementById("age").value,
+    address: document.getElementById("address").value,
+    whatsapp: document.getElementById("whatsapp").value,
+    amount: document.getElementById("amount").value,
+    liked: document.getElementById("liked").value,
+    uid: user.uid,
+    email: user.email,
+    time: Date.now()
+  };
+
+  if(file){
+
+    const ref = storage.ref("screenshots/"+Date.now()+file.name);
+
+    ref.put(file).then(()=>{
+
+      ref.getDownloadURL().then(url=>{
+        data.screenshot = url;
+
+        db.ref("paymentProofs").push(data);
+
+        alert("Submitted Successfully ✔️");
+
+        window.location.href="index.html";
+      });
+
+    });
+
+  } else {
+
+    db.ref("paymentProofs").push(data);
+
+    alert("Submitted Successfully ✔️");
+
+    window.location.href="index.html";
+  }
+}
+</script>
+
+</body>
+</html>
