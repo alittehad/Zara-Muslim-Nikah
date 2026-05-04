@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login - Zara Nikah</title>
+<title>Login</title>
 
 <style>
 body{
@@ -18,36 +17,32 @@ body{
   position:relative;
 }
 
-/* ✅ PERFECT FULL SCREEN IMAGE */
+/* ✅ SINGLE IMAGE BACKGROUND */
 body::before{
   content:"";
   position:absolute;
   inset:0;
   background:url("https://i.ibb.co/rG6YyCzB/nikah-wall.png") no-repeat center;
-
-  /* 🔥 MAIN FIX (no cut, no zoom issue) */
   background-size:cover;
-  background-position:center;
-
-  filter:brightness(0.75);
   z-index:0;
+
+  /* 🔥 LIGHT FIX (remove black harshness) */
+  filter:brightness(0.95) contrast(1.05);
 }
 
-/* DARK OVERLAY (clean look) */
+/* 🔥 VERY LIGHT OVERLAY (NO DARK FEEL) */
 body::after{
   content:"";
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.35);
+  background:rgba(0,0,0,0.15); /* very light */
   z-index:1;
 }
 
-/* LOGIN BOX */
+/* LOGIN BUTTON AREA */
 .box{
   position:relative;
   z-index:2;
-  text-align:center;
-  color:white;
 }
 
 /* BUTTON */
@@ -81,7 +76,6 @@ body::after{
 <body>
 
 <div class="box">
-  <h2>🕋 Zara Nikah Service</h2>
   <button class="btn">Login with Google</button>
 </div>
 
