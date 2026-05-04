@@ -21,43 +21,46 @@ body{
   background:#000;
 }
 
-/* 🔥 BEST FIX: NO ZOOM, NO CUT, STABLE BG */
-body::before{
-  content:"";
+/* ================= BACKGROUND FIX ================= */
+
+/* BLUR LAYER (FULL COVER) */
+.bg-blur{
   position:absolute;
   inset:0;
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/contain no-repeat;
-  background-color:#000;
-
-  filter:blur(3px) brightness(0.9);
-  transform:scale(1.05);
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center center no-repeat;
+  background-size:cover;
+  filter:blur(12px) brightness(0.6);
+  transform:scale(1.1);
   z-index:0;
 }
 
+/* MAIN IMAGE LAYER (NO CUT LOOK) */
+.bg-main{
+  position:absolute;
+  inset:0;
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center center no-repeat;
+  background-size:contain;
+  background-color:#000;
+  z-index:1;
+}
+
 /* DARK OVERLAY */
-body::after{
-  content:"";
+.overlay{
   position:absolute;
   inset:0;
   background:rgba(0,0,0,0.35);
-  z-index:1;
+  z-index:2;
 }
 
 /* LOGIN BOX */
 .box{
   position:relative;
-  z-index:2;
+  z-index:3;
   text-align:center;
   color:white;
 }
 
-/* TITLE */
-.box h2{
-  margin-bottom:20px;
-  font-size:22px;
-}
-
-/* 🔥 3D BUTTON */
+/* BUTTON */
 .btn{
   padding:14px 28px;
   border:none;
@@ -66,7 +69,6 @@ body::after{
   font-size:16px;
   color:white;
   cursor:pointer;
-
   background:linear-gradient(145deg,#14b8a6,#0f766e);
   box-shadow:0 6px 0 #0b5e57;
   transition:0.2s;
@@ -77,12 +79,13 @@ body::after{
   box-shadow:0 2px 0 #0b5e57;
 }
 
-/* 📱 MOBILE */
+/* MOBILE SAFE */
 @media(max-width:768px){
-  body::before{
+  .bg-blur{
+    background-size:cover;
+  }
+  .bg-main{
     background-size:contain;
-    background-position:center;
-    filter:blur(2.5px) brightness(0.95);
   }
 }
 </style>
@@ -90,6 +93,12 @@ body::after{
 
 <body>
 
+<!-- BACKGROUND LAYERS -->
+<div class="bg-blur"></div>
+<div class="bg-main"></div>
+<div class="overlay"></div>
+
+<!-- LOGIN -->
 <div class="box">
   <h2>🕋 Zara Nikah Service</h2>
   <button class="btn" onclick="login()">Login with Google</button>
