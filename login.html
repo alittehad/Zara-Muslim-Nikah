@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -22,17 +21,15 @@ body{
   background:#000;
 }
 
-/* ✅ SINGLE PERFECT BACKGROUND FIX */
+/* ✅ PERFECT BACKGROUND FIX */
 body::before{
   content:"";
   position:absolute;
   inset:0;
   background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
 
-  /* IMPORTANT FIX */
-  background-position:center top;
-  transform:scale(1);
-  filter:blur(6px) brightness(0.8);
+  /* smooth professional look */
+  filter:blur(5px) brightness(0.85);
   z-index:0;
 }
 
@@ -53,7 +50,7 @@ body::after{
   color:white;
 }
 
-/* BUTTON */
+/* BUTTON 3D */
 .btn{
   padding:14px 28px;
   border:none;
@@ -75,8 +72,8 @@ body::after{
 /* 📱 MOBILE FIX */
 @media(max-width:768px){
   body::before{
-    background-position:center top;
-    filter:blur(5px) brightness(0.85);
+    background-position:center;
+    filter:blur(4px) brightness(0.9);
   }
 }
 </style>
@@ -84,40 +81,6 @@ body::after{
 
 <body>
 
-<div class="box">
-  <h2>🕋 Zara Nikah Service</h2>
-  <button class="btn" onclick="login()">Login with Google</button>
-</div>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  projectId: "zara-muslim-nikah"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
-function login(){
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-  .then(()=>{
-    window.location.href="index.html";
-  });
-}
-</script>
-
-</body>
-</html>
-
-<body>
-
-<!-- BACKGROUND LAYERS -->
-<div class="bg-blur"></div>
-<div class="bg-main"></div>
-<div class="overlay"></div>
-
-<!-- LOGIN -->
 <div class="box">
   <h2>🕋 Zara Nikah Service</h2>
   <button class="btn" onclick="login()">Login with Google</button>
