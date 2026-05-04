@@ -18,44 +18,32 @@ body{
   font-family:sans-serif;
   overflow:hidden;
   position:relative;
-  background:#000;
 }
 
-/* 🔥 BLUR BACKGROUND IMAGE (MAIN FIX) */
-.bg{
+/* 🔥 SINGLE BACKGROUND IMAGE ONLY */
+body::before{
+  content:"";
   position:absolute;
   inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  filter:blur(12px) brightness(0.6);
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
+  filter:blur(10px) brightness(0.6);
   transform:scale(1.1);
   z-index:0;
 }
 
-/* CLEAR FRONT IMAGE LAYER */
-.front{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  z-index:1;
-  opacity:0.9;
-}
-
 /* DARK OVERLAY */
-.overlay{
+body::after{
+  content:"";
   position:absolute;
   inset:0;
   background:rgba(0,0,0,0.35);
-  z-index:2;
+  z-index:1;
 }
 
 /* LOGIN BOX */
 .box{
   position:relative;
-  z-index:3;
+  z-index:2;
   text-align:center;
 }
 
@@ -81,14 +69,6 @@ body{
 </head>
 
 <body>
-
-<!-- BLUR BACK -->
-<img class="bg" src="https://i.ibb.co/fzQ1WgbN/bg.jpg">
-
-<!-- FRONT CLEAN LOOK -->
-<img class="front" src="https://i.ibb.co/fzQ1WgbN/bg.jpg">
-
-<div class="overlay"></div>
 
 <div class="box">
   <button class="btn" onclick="login()">Login with Google</button>
