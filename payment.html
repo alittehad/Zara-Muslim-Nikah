@@ -69,14 +69,10 @@ firebase.initializeApp({
 const db = firebase.database();
 const auth = firebase.auth();
 
-/* ✅ SAFE PROFILE ID */
-let pid = null;
+/* ✅ PROFILE ID SAFE LOAD */
+let pid = new URLSearchParams(window.location.search).get("profile");
 
-window.onload = function () {
-  pid = new URLSearchParams(window.location.search).get("profile");
-};
-
-/* 🔥 UPI IMAGE CONTROL (optional admin feature) */
+/* 🔥 UPI IMAGE CONTROL */
 db.ref("settings/upiImage").on("value",snap=>{
   const img = snap.val();
   if(img){
@@ -84,40 +80,38 @@ db.ref("settings/upiImage").on("value",snap=>{
   }
 });
 
-/* 💳 PAYMENT FUNCTION (FIXED FINAL) */
+/* 💳 FIXED PAYMENT FUNCTION */
 function paid(){
 
-  auth.onAuthStateChanged(user => {
+  const user = auth.currentUser;
 
-    if(!user){
-      alert("Login required");
-      return;
-    }
+  if(!user){
+    alert("Login required");
+    return;
+  }
 
-    // 🔥 Payment entry
-    db.ref("payments").push({
-      fromUid: user.uid,
-      fromEmail: user.email || "",
-      toProfile: pid || "unknown",
-      status: "paid",
-      time: Date.now()
-    });
-
-    // 🔥 Interest tracking (if profile exists)
-    if(pid){
-      db.ref("interests/"+pid+"/"+user.uid).set({
-        status: "waiting_admin",
-        paid: true,
-        time: Date.now()
-      });
-    }
-
-    alert("Payment submitted successfully ✔️");
-
-    // 🔥 ALWAYS GO TO INDEX PAGE
-    window.location.href = "index.html";
+  // 🔥 save payment
+  db.ref("payments").push({
+    fromUid: user.uid,
+    fromEmail: user.email || "",
+    toProfile: pid || "unknown",
+    status: "paid",
+    time: Date.now()
   });
 
+  // 🔥 interest tracking only if pid exists
+  if(pid){
+    db.ref("interests/"+pid+"/"+user.uid).set({
+      status: "waiting_admin",
+      paid: true,
+      time: Date.now()
+    });
+  }
+
+  alert("Payment submitted successfully ✔️");
+
+  // 🔥 redirect always
+  window.location.href = "chat.html";
 }
 </script>
 
