@@ -10,8 +10,13 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f4f6f9;
+}
 
+/* HEADER */
 header{
   background: linear-gradient(90deg, #0f766e, #14b8a6);
   color:white;
@@ -43,6 +48,7 @@ header{
 #adminBtn{background:#000;}
 #logoutBtn{background:#dc2626;}
 
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -58,10 +64,18 @@ header{
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
-.card img{width:100%;height:200px;object-fit:cover;}
-.card-body{text-align:center;padding:10px;}
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
 
-/* ✅ LOGIN SCREEN FINAL FIX */
+.card-body{
+  text-align:center;
+  padding:10px;
+}
+
+/* ================= LOGIN SCREEN FIX (IMPORTANT) ================= */
 #loginScreen{
   display:none;
   position:fixed;
@@ -70,42 +84,27 @@ header{
   width:100%;
   height:100vh;
 
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") no-repeat center center;
-  background-size:cover;
-
+  display:flex;
   justify-content:center;
   align-items:center;
   flex-direction:column;
+
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") no-repeat center center;
+  background-size:cover;
+
+  overflow:hidden;
 }
 
-/* 📱 Mobile + Small screen fix */
-@media (max-width:768px){
-  #loginScreen{
-    background-size:contain;
-    background-color:black;
-  }
-}
-
-/* 💻 Large screen (PC) control zoom */
-@media (min-width:1200px){
-  #loginScreen{
-    background-size:cover;
-    background-position:center;
-  }
-}
-
-/* overlay */
+/* DARK OVERLAY FIX */
 #loginScreen::before{
   content:"";
   position:absolute;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
+  inset:0;
   background:rgba(0,0,0,0.45);
+  z-index:0;
 }
 
-/* button */
+/* BUTTON FIX */
 .login-btn{
   position:relative;
   z-index:2;
@@ -117,6 +116,14 @@ header{
   color:white;
   font-weight:bold;
   cursor:pointer;
+}
+
+/* MOBILE FIX (no zoom/cut feel) */
+@media(max-width:768px){
+  #loginScreen{
+    background-size:cover;
+    background-position:center;
+  }
 }
 
 /* MODAL */
@@ -166,7 +173,6 @@ header{
       style="background:#e11d48;color:white;padding:10px;border:none;border-radius:8px;width:100%;margin-top:10px;font-weight:bold;">
       ❤️ I’m Interested
     </button>
-
   </div>
 </div>
 
