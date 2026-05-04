@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -21,41 +22,33 @@ body{
   background:#000;
 }
 
-/* ================= BACKGROUND FIX ================= */
-
-/* BLUR LAYER (FULL COVER) */
-.bg-blur{
+/* ✅ SINGLE PERFECT BACKGROUND FIX */
+body::before{
+  content:"";
   position:absolute;
   inset:0;
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center center no-repeat;
-  background-size:cover;
-  filter:blur(12px) brightness(0.6);
-  transform:scale(1.1);
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
+
+  /* IMPORTANT FIX */
+  background-position:center top;
+  transform:scale(1);
+  filter:blur(6px) brightness(0.8);
   z-index:0;
 }
 
-/* MAIN IMAGE LAYER (NO CUT LOOK) */
-.bg-main{
-  position:absolute;
-  inset:0;
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center center no-repeat;
-  background-size:contain;
-  background-color:#000;
-  z-index:1;
-}
-
 /* DARK OVERLAY */
-.overlay{
+body::after{
+  content:"";
   position:absolute;
   inset:0;
   background:rgba(0,0,0,0.35);
-  z-index:2;
+  z-index:1;
 }
 
 /* LOGIN BOX */
 .box{
   position:relative;
-  z-index:3;
+  z-index:2;
   text-align:center;
   color:white;
 }
@@ -79,17 +72,43 @@ body{
   box-shadow:0 2px 0 #0b5e57;
 }
 
-/* MOBILE SAFE */
+/* 📱 MOBILE FIX */
 @media(max-width:768px){
-  .bg-blur{
-    background-size:cover;
-  }
-  .bg-main{
-    background-size:contain;
+  body::before{
+    background-position:center top;
+    filter:blur(5px) brightness(0.85);
   }
 }
 </style>
 </head>
+
+<body>
+
+<div class="box">
+  <h2>🕋 Zara Nikah Service</h2>
+  <button class="btn" onclick="login()">Login with Google</button>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  projectId: "zara-muslim-nikah"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+function login(){
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+  .then(()=>{
+    window.location.href="index.html";
+  });
+}
+</script>
+
+</body>
+</html>
 
 <body>
 
