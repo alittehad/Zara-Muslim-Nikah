@@ -42,6 +42,22 @@ button{
   cursor:pointer;
 }
 </style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>💳 UPI Payment</h2>
+
+<img id="upiImg" src="https://i.ibb.co/fzQ1WgbN/upi.png">
+
+<h3>UPI ID: zara@upi</h3>
+<p>Pay ₹99 to continue</p>
+
+<button onclick="paid()">I Have Paid</button>
+
+</div>
 
 <script>
 firebase.initializeApp({
@@ -53,30 +69,14 @@ firebase.initializeApp({
 const db = firebase.database();
 const auth = firebase.auth();
 
-const pid = new URLSearchParams(location.search).get("profile");
-</script>
+/* ✅ SAFE PROFILE ID */
+let pid = null;
 
-</head>
+window.onload = function () {
+  pid = new URLSearchParams(window.location.search).get("profile");
+};
 
-<body>
-
-<div class="card">
-
-<h2>💳 UPI Payment</h2>
-
-<!-- 🔥 Admin changeable UPI image -->
-<img id="upiImg" src="https://i.ibb.co/fzQ1WgbN/upi.png">
-
-<h3>UPI ID: zara@upi</h3>
-<p>Pay ₹99 to continue</p>
-
-<button onclick="paid()">I Have Paid</button>
-
-</div>
-
-<script>
-
-/* 🔥 ADMIN UPI IMAGE CONTROL */
+/* 🔥 UPI IMAGE CONTROL (optional admin feature) */
 db.ref("settings/upiImage").on("value",snap=>{
   const img = snap.val();
   if(img){
@@ -84,42 +84,41 @@ db.ref("settings/upiImage").on("value",snap=>{
   }
 });
 
-/* ✅ PAYMENT FUNCTION (FULL FIXED SYSTEM) */
+/* 💳 PAYMENT FUNCTION (FIXED FINAL) */
 function paid(){
 
-  const user = auth.currentUser;
+  auth.onAuthStateChanged(user => {
 
-  if(!user){
-    alert("Login required");
-    return;
-  }
+    if(!user){
+      alert("Login required");
+      return;
+    }
 
-  if(!pid){
-    alert("Profile not found");
-    return;
-  }
+    // 🔥 Payment entry
+    db.ref("payments").push({
+      fromUid: user.uid,
+      fromEmail: user.email || "",
+      toProfile: pid || "unknown",
+      status: "paid",
+      time: Date.now()
+    });
 
-  /* 🔥 1. ADMIN TRACKING (WHO → WHOM) */
-  db.ref("payments").push({
-    fromUid: user.uid,
-    fromEmail: user.email || "",
-    toProfile: pid,
-    status: "paid",
-    time: Date.now()
+    // 🔥 Interest tracking (if profile exists)
+    if(pid){
+      db.ref("interests/"+pid+"/"+user.uid).set({
+        status: "waiting_admin",
+        paid: true,
+        time: Date.now()
+      });
+    }
+
+    alert("Payment submitted successfully ✔️");
+
+    // 🔥 ALWAYS GO TO INDEX PAGE
+    window.location.href = "index.html";
   });
 
-  /* 🔥 2. LOCK INTEREST BUTTON UNTIL ADMIN DECISION */
-  db.ref("interests/"+pid+"/"+user.uid).set({
-    status: "waiting_admin",
-    paid: true,
-    time: Date.now()
-  });
-
-  alert("Payment submitted! Waiting admin approval");
-
-  window.location.href = "index.html";
 }
-
 </script>
 
 </body>
