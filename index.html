@@ -10,23 +10,16 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f4f6f9;
-}
+body{margin:0;font-family:sans-serif;background:#f4f6f9;}
 
-/* HEADER */
 header{
-  background: linear-gradient(90deg, #0f766e, #14b8a6);
+  background:linear-gradient(90deg,#0f766e,#14b8a6);
   color:white;
   text-align:center;
-  font-size:clamp(16px, 4.5vw, 32px);
-  font-weight:900;
   padding:14px;
+  font-weight:900;
 }
 
-/* TOPBAR */
 .topbar{
   display:none;
   justify-content:center;
@@ -35,7 +28,7 @@ header{
 }
 
 .topbar button{
-  padding:10px 16px;
+  padding:10px;
   border:none;
   border-radius:8px;
   color:white;
@@ -48,7 +41,6 @@ header{
 #adminBtn{background:#000;}
 #logoutBtn{background:#dc2626;}
 
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -60,82 +52,16 @@ header{
   background:white;
   border-radius:12px;
   overflow:hidden;
-  cursor:pointer;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  cursor:pointer;
 }
 
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-}
+.card img{width:100%;height:200px;object-fit:cover;}
+.card-body{text-align:center;padding:10px;}
 
-.card-body{
-  text-align:center;
-  padding:10px;
-}
-
-
-/* ================= LOGIN SCREEN FIX (FINAL CLEAN VERSION) ================= */
-#loginScreen{
-  display:none;
-  position:fixed;
-  inset:0;
-
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-
-  background-image:url("https://i.ibb.co/fzQ1WgbN/bg.jpg");
-  background-repeat:no-repeat;
-
-  /* ⭐ BEST FIX (no cut + professional look) */
-  background-position:center;
-  background-size:cover;
-
-  background-color:#000;
-  overflow:hidden;
-}
-
-/* overlay FIX */
-#loginScreen::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,0.45);
-  z-index:0;
-}
-
-/* login button always above */
-.login-btn{
-  position:relative;
-  z-index:2;
-}
-
-/* 📱 MOBILE FIX */
-@media(max-width:768px){
-  #loginScreen{
-    background-position:center;
-    background-size:cover;
-  }
-}
-
-/* 💻 PC FIX */
-@media(min-width:1024px){
-  #loginScreen{
-    background-position:center;
-    background-size:cover;
-  }
-}
-
-/* ================= MODAL ================= */
 .modal{
   position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
+  inset:0;
   display:none;
   justify-content:center;
   align-items:center;
@@ -157,32 +83,22 @@ header{
 <header>🕋 Zara Nikah Service 🕌</header>
 
 <div class="topbar" id="topbar">
-  <button id="homeBtn" onclick="goHome()">Home</button>
-  <button id="addPostBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
-  <button id="logoutBtn" onclick="handleAuth()">Logout</button>
-</div>
-
-<div id="loginScreen">
-  <button class="login-btn" onclick="handleAuth()">Login</button>
+  <button onclick="goHome()">Home</button>
+  <button onclick="goAdd()">रिश्ता जोड़ें</button>
+  <button id="adminBtn" style="display:none" onclick="goAdmin()">Admin</button>
+  <button onclick="logout()">Logout</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
 
-<div class="modal" id="profileModal">
+<div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
     <div id="modalBody"></div>
-
-    <button onclick="interest()"
-      style="background:#e11d48;color:white;padding:10px;border:none;border-radius:8px;width:100%;margin-top:10px;font-weight:bold;">
-      ❤️ I’m Interested
-    </button>
   </div>
 </div>
 
 <script>
-
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -197,37 +113,23 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-let currentUser = null;
-let currentProfileId = null;
-
-function handleAuth(){
-  if(currentUser){
-    auth.signOut();
-  } else {
-    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-  }
-}
+let currentUser=null;
 
 auth.onAuthStateChanged(user=>{
-  currentUser = user;
+  currentUser=user;
 
-  if(user){
-    document.querySelector("header").style.display="block";
-    document.getElementById("topbar").style.display="flex";
-    document.getElementById("loginScreen").style.display="none";
-
-    if((user.email||"").toLowerCase()===ADMIN_EMAIL){
-      document.getElementById("adminBtn").style.display="inline-block";
-    }
-
-    loadPosts();
-
-  } else {
-    document.querySelector("header").style.display="none";
-    document.getElementById("topbar").style.display="none";
-    document.getElementById("loginScreen").style.display="flex";
-    document.getElementById("profileGrid").innerHTML="";
+  if(!user){
+    window.location.href="login.html";
+    return;
   }
+
+  document.getElementById("topbar").style.display="flex";
+
+  if((user.email||"").toLowerCase()===ADMIN_EMAIL){
+    document.getElementById("adminBtn").style.display="inline-block";
+  }
+
+  loadPosts();
 });
 
 function loadPosts(){
@@ -237,10 +139,10 @@ function loadPosts(){
 
     snap.forEach(child=>{
       const d=child.val();
-      if(d && d.status==="approved"){
+      if(d.status==="approved"){
         grid.innerHTML+=`
         <div class="card" onclick="openModal('${child.key}')">
-          <img src="${d.photo||''}">
+          <img src="${d.photo}">
           <div class="card-body">
             <h3>${d.name}</h3>
             <p>${d.city}</p>
@@ -252,8 +154,6 @@ function loadPosts(){
 }
 
 function openModal(id){
-  currentProfileId = id;
-
   db.ref("users/"+id).once("value").then(snap=>{
     const d=snap.val();
 
@@ -264,33 +164,21 @@ function openModal(id){
       <p>${d.age}</p>
     `;
 
-    document.getElementById("profileModal").style.display="flex";
+    document.getElementById("modal").style.display="flex";
   });
 }
 
 function closeModal(){
-  document.getElementById("profileModal").style.display="none";
+  document.getElementById("modal").style.display="none";
 }
 
-function interest(){
-  if(!currentUser || !currentProfileId) return;
-
-  db.ref("interests/"+currentProfileId+"/"+currentUser.uid).set({
-    userId: currentUser.uid,
-    name: currentUser.displayName,
-    status: "pending"
-  });
-
-  alert("Interest Sent ❤️");
+function logout(){
+  auth.signOut();
 }
 
-function goAdmin(){ window.location="admin.html"; }
+function goHome(){ location.reload(); }
 function goAdd(){ window.location="profile-submit.html"; }
-
-function goHome(){
-  window.location.href = "index.html";
-}
-
+function goAdmin(){ window.location="admin.html"; }
 </script>
 
 </body>
