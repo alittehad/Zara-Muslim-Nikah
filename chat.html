@@ -81,21 +81,21 @@ const storage = firebase.storage();
 
 let currentUser = null;
 
-/* ✅ SAFE LOGIN HANDLER */
+/* 🔥 WAIT FOR LOGIN */
 auth.onAuthStateChanged(user=>{
-  if(!user){
+  if(user){
+    currentUser = user;
+  } else {
     alert("Login required");
     window.location.href="login.html";
-  } else {
-    currentUser = user;
   }
 });
 
-/* 🔥 SUBMIT FUNCTION (FIXED) */
-function submitData(){
+/* 🔥 FIXED SUBMIT */
+async function submitData(){
 
   if(!currentUser){
-    alert("User not ready yet, please wait...");
+    alert("Please wait login...");
     return;
   }
 
@@ -113,37 +113,34 @@ function submitData(){
     time: Date.now()
   };
 
-  // validation
   if(!data.name || !data.amount){
-    alert("Please fill required fields");
+    alert("Name & Amount required");
     return;
   }
 
-  if(file){
+  try {
 
-    const ref = storage.ref("screenshots/"+Date.now()+file.name);
+    // 🔥 UPLOAD SCREENSHOT (SAFE)
+    if(file){
 
-    ref.put(file).then(()=>{
+      const fileRef = storage.ref().child("screenshots/" + Date.now() + "_" + file.name);
 
-      ref.getDownloadURL().then(url=>{
-        data.screenshot = url;
+      await fileRef.put(file);
+      const url = await fileRef.getDownloadURL();
 
-        db.ref("paymentProofs").push(data);
+      data.screenshot = url;
+    }
 
-        alert("Submitted Successfully ✔️");
-
-        window.location.href="index.html";
-      });
-
-    });
-
-  } else {
-
-    db.ref("paymentProofs").push(data);
+    // 🔥 SAVE TO DATABASE
+    await db.ref("paymentProofs").push(data);
 
     alert("Submitted Successfully ✔️");
 
-    window.location.href="index.html";
+    window.location.href = "index.html";
+
+  } catch(err){
+    console.log(err);
+    alert("Error uploading. Check Firebase rules.");
   }
 }
 </script>
