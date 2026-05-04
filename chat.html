@@ -1,46 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Payment Proof Submit</title>
+<title>Payment Chat</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
 body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
   font-family:sans-serif;
   background:#f4f6f9;
-  padding:15px;
 }
 
 .box{
-  max-width:500px;
-  margin:auto;
+  text-align:center;
   background:white;
-  padding:20px;
+  padding:25px;
   border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  box-shadow:0 4px 15px rgba(0,0,0,0.1);
+  max-width:400px;
+  width:90%;
 }
 
-input{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border:1px solid #ccc;
-  border-radius:8px;
+h2{
+  font-size:20px;
+  margin-bottom:10px;
+}
+
+p{
+  font-size:14px;
+  color:#555;
+  margin-bottom:20px;
 }
 
 button{
   width:100%;
-  padding:12px;
-  background:green;
+  padding:14px;
+  background:#25D366;
   color:white;
   border:none;
   border-radius:8px;
   font-size:16px;
+  font-weight:bold;
   cursor:pointer;
 }
 </style>
@@ -50,98 +54,32 @@ button{
 
 <div class="box">
 
-<h2>📩 Payment Proof Submit</h2>
+<h2>💳 Payment Done?</h2>
 
-<input type="text" id="name" placeholder="Your Name">
-<input type="number" id="age" placeholder="Age">
-<input type="text" id="address" placeholder="Address">
-<input type="text" id="whatsapp" placeholder="WhatsApp Number">
+<p>
+If you have completed payment,<br>
+click below button and send details on WhatsApp.<br><br>
 
-<input type="number" id="amount" placeholder="Amount Paid">
-<input type="text" id="liked" placeholder="Whom you liked">
+यदि आपने पेमेंट कर दिया है तो नीचे बटन दबाकर WhatsApp पर मैसेज भेजें।
+</p>
 
-<p>Upload Screenshot:</p>
-<input type="file" id="file">
-
-<button onclick="submitData()">Submit</button>
+<button onclick="openWhatsApp()">📩 Chat on WhatsApp</button>
 
 </div>
 
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  storageBucket: "zara-muslim-nikah.appspot.com"
-});
+function openWhatsApp(){
 
-const db = firebase.database();
-const auth = firebase.auth();
-const storage = firebase.storage();
+  let number = "7378342192";
 
-let currentUser = null;
+  let message =
+`Hello,
+I have done payment.
+I want to continue chat.`;
 
-/* 🔥 WAIT FOR LOGIN */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    currentUser = user;
-  } else {
-    alert("Login required");
-    window.location.href="login.html";
-  }
-});
+  let url = "https://wa.me/" + number + "?text=" + encodeURIComponent(message);
 
-/* 🔥 FIXED SUBMIT */
-async function submitData(){
-
-  if(!currentUser){
-    alert("Please wait login...");
-    return;
-  }
-
-  const file = document.getElementById("file").files[0];
-
-  const data = {
-    name: document.getElementById("name").value,
-    age: document.getElementById("age").value,
-    address: document.getElementById("address").value,
-    whatsapp: document.getElementById("whatsapp").value,
-    amount: document.getElementById("amount").value,
-    liked: document.getElementById("liked").value,
-    uid: currentUser.uid,
-    email: currentUser.email,
-    time: Date.now()
-  };
-
-  if(!data.name || !data.amount){
-    alert("Name & Amount required");
-    return;
-  }
-
-  try {
-
-    // 🔥 UPLOAD SCREENSHOT (SAFE)
-    if(file){
-
-      const fileRef = storage.ref().child("screenshots/" + Date.now() + "_" + file.name);
-
-      await fileRef.put(file);
-      const url = await fileRef.getDownloadURL();
-
-      data.screenshot = url;
-    }
-
-    // 🔥 SAVE TO DATABASE
-    await db.ref("paymentProofs").push(data);
-
-    alert("Submitted Successfully ✔️");
-
-    window.location.href = "index.html";
-
-  } catch(err){
-    console.log(err);
-    alert("Error uploading. Check Firebase rules.");
-  }
+  window.open(url, "_blank");
 }
 </script>
 
