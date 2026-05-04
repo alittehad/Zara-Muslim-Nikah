@@ -70,12 +70,28 @@ header{
   width:100%;
   height:100vh;
 
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center top no-repeat;
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") no-repeat center center;
   background-size:cover;
 
   justify-content:center;
   align-items:center;
   flex-direction:column;
+}
+
+/* 📱 Mobile + Small screen fix */
+@media (max-width:768px){
+  #loginScreen{
+    background-size:contain;
+    background-color:black;
+  }
+}
+
+/* 💻 Large screen (PC) control zoom */
+@media (min-width:1200px){
+  #loginScreen{
+    background-size:cover;
+    background-position:center;
+  }
 }
 
 /* overlay */
