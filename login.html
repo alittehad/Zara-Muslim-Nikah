@@ -21,15 +21,16 @@ body{
   background:#000;
 }
 
-/* 🔥 BACKGROUND (FIXED - NO ZOOM ISSUE) */
+/* 🔥 BEST FIX: NO ZOOM, NO CUT, STABLE BG */
 body::before{
   content:"";
   position:absolute;
   inset:0;
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/contain no-repeat;
+  background-color:#000;
 
-  /* smooth professional look */
-  filter:blur(4px) brightness(0.9);
+  filter:blur(3px) brightness(0.9);
+  transform:scale(1.05);
   z-index:0;
 }
 
@@ -56,7 +57,7 @@ body::after{
   font-size:22px;
 }
 
-/* 🔥 3D LOGIN BUTTON */
+/* 🔥 3D BUTTON */
 .btn{
   padding:14px 28px;
   border:none;
@@ -76,12 +77,12 @@ body::after{
   box-shadow:0 2px 0 #0b5e57;
 }
 
-/* 📱 MOBILE FIX */
+/* 📱 MOBILE */
 @media(max-width:768px){
   body::before{
+    background-size:contain;
     background-position:center;
-    background-size:cover;
-    filter:blur(3px) brightness(0.95);
+    filter:blur(2.5px) brightness(0.95);
   }
 }
 </style>
@@ -107,7 +108,7 @@ const auth = firebase.auth();
 function login(){
   auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
   .then(()=>{
-    window.location.href = "index.html";
+    window.location.href="index.html";
   });
 }
 </script>
