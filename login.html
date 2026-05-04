@@ -21,29 +21,41 @@ body{
   background:#000;
 }
 
-/* 🔥 IMAGE FIX (IMPORTANT PART) */
+/* 🔥 BLUR BACKGROUND IMAGE (MAIN FIX) */
 .bg{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
-  object-fit:contain;   /* ⭐ MAIN FIX (no cut) */
-  background:#000;
+  object-fit:cover;
+  filter:blur(12px) brightness(0.6);
+  transform:scale(1.1);
   z-index:0;
+}
+
+/* CLEAR FRONT IMAGE LAYER */
+.front{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  z-index:1;
+  opacity:0.9;
 }
 
 /* DARK OVERLAY */
 .overlay{
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.55);
-  z-index:1;
+  background:rgba(0,0,0,0.35);
+  z-index:2;
 }
 
 /* LOGIN BOX */
 .box{
   position:relative;
-  z-index:2;
+  z-index:3;
   text-align:center;
 }
 
@@ -65,27 +77,16 @@ body{
   transform:translateY(4px);
   box-shadow:0 2px 0 #0b5e57;
 }
-
-/* 📱 MOBILE */
-@media(max-width:768px){
-  .bg{
-    object-fit:contain;
-  }
-}
-
-/* 💻 PC */
-@media(min-width:1024px){
-  .bg{
-    object-fit:contain;
-  }
-}
 </style>
 </head>
 
 <body>
 
-<!-- 🔥 BACKGROUND IMAGE PROPER FIT -->
+<!-- BLUR BACK -->
 <img class="bg" src="https://i.ibb.co/fzQ1WgbN/bg.jpg">
+
+<!-- FRONT CLEAN LOOK -->
+<img class="front" src="https://i.ibb.co/fzQ1WgbN/bg.jpg">
 
 <div class="overlay"></div>
 
