@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,19 +18,28 @@ body{
   position:relative;
 }
 
-/* ✅ ONLY ONE IMAGE */
+/* ✅ PERFECT FULL SCREEN IMAGE */
 body::before{
   content:"";
   position:absolute;
   inset:0;
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") no-repeat center;
+  background:url("https://i.ibb.co/rG6YyCzB/nikah-wall.png") no-repeat center;
 
-  /* 🔥 IMPORTANT FIX */
-  background-size:cover;       /* fills screen */
-  background-position:center;  /* keeps focus center */
+  /* 🔥 MAIN FIX (no cut, no zoom issue) */
+  background-size:cover;
+  background-position:center;
 
   filter:brightness(0.75);
   z-index:0;
+}
+
+/* DARK OVERLAY (clean look) */
+body::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.35);
+  z-index:1;
 }
 
 /* LOGIN BOX */
