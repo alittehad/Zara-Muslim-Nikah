@@ -17,37 +17,61 @@ body{
   align-items:center;
   font-family:sans-serif;
   background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
+  position:relative;
+  overflow:hidden;
 }
 
+/* ✅ OVERLAY FIX (IMPORTANT) */
 body::before{
   content:"";
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.5);
+  background:rgba(0,0,0,0.55);
+  z-index:0;
 }
 
+/* LOGIN BOX */
 .box{
   position:relative;
   z-index:2;
   text-align:center;
   color:white;
+  padding:20px;
 }
 
+/* TITLE */
+.box h2{
+  font-size:22px;
+  margin-bottom:20px;
+}
+
+/* 🔥 3D BUTTON FIX */
 .btn{
-  margin-top:20px;
-  padding:14px 30px;
+  padding:14px 28px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   font-weight:bold;
+  font-size:16px;
   color:white;
-  background:linear-gradient(145deg,#14b8a6,#0f766e);
   cursor:pointer;
+
+  background:linear-gradient(145deg,#14b8a6,#0f766e);
+
   box-shadow:0 6px 0 #0b5e57;
+  transition:0.2s;
 }
 
 .btn:active{
   transform:translateY(4px);
   box-shadow:0 2px 0 #0b5e57;
+}
+
+/* 📱 MOBILE FIX */
+@media(max-width:768px){
+  body{
+    background-position:center;
+    background-size:cover;
+  }
 }
 </style>
 </head>
@@ -71,8 +95,8 @@ const auth = firebase.auth();
 
 function login(){
   auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-  .then(()=> {
-    window.location.href = "index.html";
+  .then(()=>{
+    window.location.href="index.html";
   });
 }
 </script>
