@@ -1,74 +1,93 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Login - Zara Muslim Nikah</title>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Zara Nikah</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <style>
 body{
-  font-family:Segoe UI;
+  margin:0;
+  height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
-  background:#f4f6f9;
+  font-family:sans-serif;
+  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
 }
+
+/* overlay */
+body::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.5);
+}
+
+/* login box */
 .box{
-  background:white;
-  padding:40px;
+  position:relative;
+  z-index:2;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(10px);
+  padding:30px;
   border-radius:15px;
-  box-shadow:0 5px 20px rgba(0,0,0,0.1);
   text-align:center;
-}
-button{
-  padding:12px 25px;
-  background:#008080;
   color:white;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  font-size:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.3);
 }
-button:hover{background:#006666;}
+
+/* 3D BUTTON */
+.btn{
+  margin-top:20px;
+  padding:14px 30px;
+  font-size:16px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(145deg,#14b8a6,#0f766e);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  box-shadow:0 6px 0 #0b5e57;
+  transition:0.2s;
+}
+
+.btn:active{
+  transform:translateY(4px);
+  box-shadow:0 2px 0 #0b5e57;
+}
 </style>
 </head>
+
 <body>
 
 <div class="box">
-<h2>Login</h2>
-<button onclick="googleLogin()">Login with Google</button>
+  <h2>🕋 Zara Nikah Service</h2>
+  <button class="btn" onclick="login()">Login with Google</button>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
 <script>
-firebase.initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   projectId: "zara-muslim-nikah"
-});
+};
+
+firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 
-function googleLogin(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-
-  auth.signInWithPopup(provider)
+function login(){
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
   .then(()=>{
-    window.location.replace("index.html");
-  })
-  .catch(error=>{
-    alert(error.message);
+    window.location.href="index.html";
   });
 }
-
-/* IMPORTANT REDIRECT FIX */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    window.location.replace("index.html");
-  }
-});
 </script>
 
 </body>
