@@ -16,19 +16,28 @@ body{
   justify-content:center;
   align-items:center;
   font-family:sans-serif;
-
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") center/cover no-repeat;
-  position:relative;
   overflow:hidden;
+  position:relative;
+  background:#000;
+}
+
+/* 🔥 IMAGE FIX (IMPORTANT PART) */
+.bg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;   /* ⭐ MAIN FIX (no cut) */
+  background:#000;
+  z-index:0;
 }
 
 /* DARK OVERLAY */
-body::before{
-  content:"";
+.overlay{
   position:absolute;
   inset:0;
   background:rgba(0,0,0,0.55);
-  z-index:0;
+  z-index:1;
 }
 
 /* LOGIN BOX */
@@ -47,7 +56,6 @@ body::before{
   font-size:16px;
   color:white;
   cursor:pointer;
-
   background:linear-gradient(145deg,#14b8a6,#0f766e);
   box-shadow:0 6px 0 #0b5e57;
   transition:0.2s;
@@ -58,25 +66,28 @@ body::before{
   box-shadow:0 2px 0 #0b5e57;
 }
 
-/* 📱 MOBILE FIX */
+/* 📱 MOBILE */
 @media(max-width:768px){
-  body{
-    background-size:cover;
-    background-position:center;
+  .bg{
+    object-fit:contain;
   }
 }
 
-/* 💻 PC FIX */
+/* 💻 PC */
 @media(min-width:1024px){
-  body{
-    background-size:cover;
-    background-position:center;
+  .bg{
+    object-fit:contain;
   }
 }
 </style>
 </head>
 
 <body>
+
+<!-- 🔥 BACKGROUND IMAGE PROPER FIT -->
+<img class="bg" src="https://i.ibb.co/fzQ1WgbN/bg.jpg">
+
+<div class="overlay"></div>
 
 <div class="box">
   <button class="btn" onclick="login()">Login with Google</button>
