@@ -173,6 +173,7 @@ auth.onAuthStateChanged(user=>{
   currentUser = user;
 
   if(user){
+    document.querySelector("header").style.display="block"; // ✅ show header
     document.getElementById("topbar").style.display="flex";
     document.getElementById("loginScreen").style.display="none";
 
@@ -183,9 +184,8 @@ auth.onAuthStateChanged(user=>{
     loadPosts();
 
   } else {
+    document.querySelector("header").style.display="none"; // 🔥 hide header
     document.getElementById("topbar").style.display="none";
-
-    // 🔥 FIX: image screen show
     document.getElementById("loginScreen").style.display="flex";
 
     document.getElementById("profileGrid").innerHTML="";
