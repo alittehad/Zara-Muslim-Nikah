@@ -29,8 +29,8 @@ button{
 }
 
 .preview{
-  width:120px;
-  height:120px;
+  width:100px;
+  height:100px;
   object-fit:cover;
   border-radius:10px;
   display:none;
@@ -48,9 +48,9 @@ button{
 <input id="age" placeholder="Age">
 
 <select id="gender">
-  <option value="">Select Gender</option>
-  <option value="Male">Male</option>
-  <option value="Female">Female</option>
+  <option value="">Gender</option>
+  <option>Male</option>
+  <option>Female</option>
 </select>
 
 <input id="city" placeholder="City">
@@ -63,7 +63,7 @@ button{
 <input type="file" id="file">
 <img id="preview" class="preview">
 
-<button onclick="submitProfile()">Submit & Go Payment</button>
+<button onclick="submitProfile()">Submit & Payment</button>
 
 </div>
 
@@ -90,43 +90,29 @@ auth.onAuthStateChanged(u=>{
 });
 
 /* IMAGE PREVIEW */
-document.getElementById("file").onchange = function(e){
-  let file = e.target.files[0];
+document.getElementById("file").onchange = e=>{
   let reader = new FileReader();
-
-  reader.onload = function(){
+  reader.onload = ()=>{
     let img = document.getElementById("preview");
     img.src = reader.result;
     img.style.display="block";
   }
-
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(e.target.files[0]);
 };
 
-/* IMGBB UPLOAD FIXED */
+/* IMGBB UPLOAD */
 async function uploadImage(file){
 
-  try{
-    let form = new FormData();
-    form.append("image", file);
+  let form = new FormData();
+  form.append("image", file);
 
-    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
-      method:"POST",
-      body:form
-    });
+  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
+    method:"POST",
+    body:form
+  });
 
-    let data = await res.json();
-
-    if(!data || !data.data){
-      throw "Upload failed";
-    }
-
-    return data.data.url;
-
-  }catch(err){
-    alert("Image upload failed");
-    return "";
-  }
+  let data = await res.json();
+  return data.data?.url || "";
 }
 
 /* SUBMIT FIXED */
@@ -137,48 +123,55 @@ async function submitProfile(){
     return;
   }
 
-  let name = document.getElementById("name").value;
-  let age = document.getElementById("age").value;
-  let gender = document.getElementById("gender").value;
-  let city = document.getElementById("city").value;
-  let phone = document.getElementById("phone").value;
+  // ✅ FIXED REFERENCES
+  let nameVal = document.getElementById("name").value;
+  let ageVal = document.getElementById("age").value;
+  let genderVal = document.getElementById("gender").value;
+  let cityVal = document.getElementById("city").value;
+  let phoneVal = document.getElementById("phone").value;
 
-  if(!name || !age || !gender || !city || !phone){
+  let educationVal = document.getElementById("education").value;
+  let professionVal = document.getElementById("profession").value;
+  let bioVal = document.getElementById("bio").value;
+
+  if(!nameVal || !ageVal || !genderVal || !cityVal || !phoneVal){
     alert("❗ सभी fields भरें");
     return;
   }
 
   let file = document.getElementById("file").files[0];
+  let imgUrl = "";
 
-  if(!file){
-    alert("Image जरूरी है");
-    return;
+  if(file){
+    imgUrl = await uploadImage(file);
   }
 
-  alert("Uploading image...");
-
-  let imgUrl = await uploadImage(file);
-
-  if(!imgUrl){
-    alert("Submit failed (image issue)");
-    return;
-  }
-
-  let data = {
+  let profile = {
     uid:user.uid,
-    name,age,gender,city,phone,
-    education:document.getElementById("education").value,
-    profession:document.getElementById("profession").value,
-    bio:document.getElementById("bio").value,
+    name:nameVal,
+    age:ageVal,
+    gender:genderVal,
+    city:cityVal,
+    phone:phoneVal,
+    education:educationVal,
+    profession:professionVal,
+    bio:bioVal,
     photo:imgUrl,
+    status:"pending",
     time:Date.now()
   };
 
-  db.ref("profiles").push(data);
+  try{
+    await db.ref("users").push(profile);
 
-  alert("✔ Profile Saved Successfully");
+    alert("✔ Profile Saved Successfully");
 
-  window.location="payment.html";
+    window.location="payment.html";
+
+  }catch(err){
+    alert("❌ Firebase error");
+    console.log(err);
+  }
 }
 
 </script>
