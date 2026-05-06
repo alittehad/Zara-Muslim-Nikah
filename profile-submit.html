@@ -17,7 +17,7 @@ body{
 }
 
 .box{
-  max-width:450px;
+  max-width:420px;
   margin:auto;
   background:white;
   padding:15px;
@@ -25,14 +25,15 @@ body{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-input{
+input,select{
   width:100%;
   padding:10px;
   margin:6px 0;
-  border-radius:8px;
   border:1px solid #ddd;
+  border-radius:8px;
 }
 
+/* 3D BUTTON */
 .btn3d{
   width:100%;
   padding:12px;
@@ -45,35 +46,42 @@ input{
   cursor:pointer;
 }
 
+.btn3d:active{
+  transform:translateY(3px);
+  box-shadow:0 2px 0 #0b5c56;
+}
+
+/* SUBMIT */
 .submitBtn{
   width:100%;
   padding:12px;
-  margin-top:10px;
   border:none;
   border-radius:10px;
+  margin-top:10px;
   font-weight:bold;
 }
 
-.locked{background:gray;color:white;cursor:not-allowed;}
-.unlocked{background:green;color:white;cursor:pointer;}
+.locked{background:gray;color:white;}
+.unlocked{background:green;color:white;}
 
+/* MSG */
 .msg{
   text-align:center;
   font-weight:bold;
   margin:10px 0;
 }
+.lock{color:red;}
+.ok{color:green;}
 
-.card{
-  background:white;
-  margin-top:10px;
-  padding:10px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.card img{
-  width:100%;
-  border-radius:10px;
+/* IMAGE PREVIEW SMALL */
+#preview{
+  width:90px;
+  height:90px;
+  object-fit:cover;
+  border-radius:8px;
+  margin-top:5px;
+  display:none;
+  border:1px solid #ddd;
 }
 </style>
 </head>
@@ -82,33 +90,29 @@ input{
 
 <div class="box">
 
-<h2>👤 Profile Submit</h2>
+<h3>👤 Profile Submit</h3>
 
-<input id="name" placeholder="पूरा नाम">
-<input id="age" placeholder="उम्र">
-<input id="phone" placeholder="मोबाइल नंबर">
-<input id="city" placeholder="शहर">
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="city" placeholder="City">
+<input id="phone" placeholder="Mobile Number">
 
-<p>📷 Profile Photo</p>
+<p>📷 Photo Upload</p>
 <input type="file" id="file">
+<img id="preview">
 
-<img id="preview" style="width:100%;display:none;border-radius:10px;margin-top:5px;">
-
-<!-- PAYMENT BUTTON -->
+<!-- PAYMENT -->
 <button class="btn3d" onclick="goPayment()">
 💰 Registration Fees जमा करें
 </button>
 
-<div id="status" class="msg">Checking payment...</div>
+<div id="status" class="msg lock">Checking payment...</div>
 
 <button id="submitBtn" class="submitBtn locked" onclick="submitProfile()">
 🔒 Submit Profile
 </button>
 
 </div>
-
-<!-- USER DATA -->
-<div id="list"></div>
 
 <script>
 
@@ -123,36 +127,38 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 let isPaid = false;
-let imageURL = "";
 
-/* PAYMENT PAGE */
-function goPayment(){
-  window.location = "payment.html";
-}
-
-/* IMAGE PREVIEW */
+/* PREVIEW (SMALL) */
 document.getElementById("file").onchange = function(e){
+  let file = e.target.files[0];
   let reader = new FileReader();
+
   reader.onload = function(){
-    document.getElementById("preview").src = reader.result;
-    document.getElementById("preview").style.display="block";
-  }
-  reader.readAsDataURL(e.target.files[0]);
+    let img = document.getElementById("preview");
+    img.src = reader.result;
+    img.style.display = "block";
+  };
+
+  reader.readAsDataURL(file);
 };
 
 /* IMGBB UPLOAD */
-async function uploadToImgBB(file){
-
+async function uploadImg(file){
   let form = new FormData();
   form.append("image", file);
 
-  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
+  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
     method:"POST",
     body:form
   });
 
   let data = await res.json();
   return data.data.url;
+}
+
+/* PAYMENT PAGE */
+function goPayment(){
+  window.location="payment.html";
 }
 
 /* CHECK PAYMENT */
@@ -171,24 +177,24 @@ function checkPayment(uid){
     });
 
     if(isPaid){
-      document.getElementById("status").innerHTML =
-      "✔ आप registered हैं";
+      document.getElementById("status").innerHTML = "✔ आप registered हो गए हैं";
+      document.getElementById("status").className="msg ok";
 
       document.getElementById("submitBtn").classList.remove("locked");
       document.getElementById("submitBtn").classList.add("unlocked");
 
     }else{
-      document.getElementById("status").innerHTML =
-      "❗ पहले registration fees जमा करें";
+      document.getElementById("status").innerHTML = "⏳ Wait for approval";
+      document.getElementById("submitBtn").classList.add("locked");
     }
   });
 }
 
-/* SUBMIT PROFILE */
+/* SUBMIT */
 async function submitProfile(){
 
   if(!isPaid){
-    alert("❗ पहले payment करें");
+    alert("पहले payment करें");
     return;
   }
 
@@ -196,70 +202,37 @@ async function submitProfile(){
 
   let name = document.getElementById("name").value;
   let age = document.getElementById("age").value;
-  let phone = document.getElementById("phone").value;
   let city = document.getElementById("city").value;
+  let phone = document.getElementById("phone").value;
   let file = document.getElementById("file").files[0];
 
-  if(!name || !age || !phone || !city || !file){
+  if(!name || !age || !city || !phone || !file){
     alert("Required fields fill करें");
     return;
   }
 
-  alert("Image upload हो रहा है...");
+  let imgUrl = await uploadImg(file);
 
-  imageURL = await uploadToImgBB(file);
-
-  db.ref("profiles_admin").push({
-    uid: user.uid,
+  db.ref("profiles").push({
+    uid:user.uid,
     name,
     age,
-    phone,
     city,
-    image: imageURL,
-    time: Date.now()
+    phone,
+    photo:imgUrl,
+    time:Date.now()
   });
 
-  alert("✔ Profile Submit हो गया");
+  alert("✔ Profile Submitted");
 }
 
-/* SHOW ONLY OWN DATA */
+/* LOGIN */
 auth.onAuthStateChanged(user=>{
-
   if(!user){
     window.location="index.html";
     return;
   }
-
   checkPayment(user.uid);
-
-  db.ref("profiles_admin").on("value", snap=>{
-
-    let html = "";
-
-    snap.forEach(c=>{
-
-      let d = c.val();
-
-      // 🔒 ONLY OWN USER DATA
-      if(d.uid !== user.uid) return;
-
-      html += `
-      <div class="card">
-
-        <img src="${d.image}">
-
-        <b>${d.name}</b><br>
-        🎂 ${d.age}<br>
-        📱 ${d.phone}<br>
-        🏙 ${d.city}<br>
-
-      </div>`;
-    });
-
-    document.getElementById("list").innerHTML =
-    html || "<p style='text-align:center'>No Data Found</p>";
-  });
-
 });
 
 </script>
