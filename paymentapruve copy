@@ -165,7 +165,7 @@ function render(){
       <b>👤 ${d.name || ""}</b><br>
     📱 ${d.phone || "N/A"}<br>
       🎂 ${d.age || ""}<br>
-      💰 ₹${d.amount || "0"}<br>
+   💰 Registration Fee Paid ✔
 
       ${d.screenshot ? `<img src="${d.screenshot}">` : ""}
 
