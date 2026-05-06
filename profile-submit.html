@@ -13,7 +13,7 @@
 body{
   font-family:sans-serif;
   background:#f4f6f9;
-  padding:15px;
+  padding:10px;
 }
 
 .box{
@@ -25,33 +25,36 @@ body{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-input, select{
+input,select,textarea{
   width:100%;
   padding:10px;
   margin:6px 0;
-  border:1px solid #ddd;
   border-radius:8px;
+  border:1px solid #ddd;
 }
 
-button{
+.btn{
   width:100%;
   padding:12px;
-  border:none;
-  border-radius:10px;
   background:#0f766e;
   color:white;
+  border:none;
+  border-radius:10px;
   font-weight:bold;
   cursor:pointer;
 }
 
-/* IMAGE PREVIEW FIX (SMALL) */
-.preview{
-  width:100px;
-  height:100px;
+.lock{
+  background:gray;
+  cursor:not-allowed;
+}
+
+img.preview{
+  width:120px;
+  height:120px;
   object-fit:cover;
   border-radius:10px;
-  margin-top:8px;
-  border:1px solid #ccc;
+  margin-top:5px;
 }
 </style>
 </head>
@@ -60,31 +63,33 @@ button{
 
 <div class="box">
 
-<h2>👤 Profile Form</h2>
+<h2>💍 शादी प्रोफाइल फॉर्म</h2>
 
 <input id="name" placeholder="पूरा नाम">
 <input id="age" placeholder="उम्र">
 <input id="city" placeholder="शहर">
 <input id="phone" placeholder="मोबाइल नंबर">
-<input id="religion" placeholder="धर्म">
 <input id="education" placeholder="शिक्षा">
+<input id="job" placeholder="नौकरी / काम">
+<textarea id="about" placeholder="अपने बारे में लिखें"></textarea>
 
 <p>📷 फोटो अपलोड करें</p>
-<input type="file" id="image">
-
+<input type="file" id="file">
 <img id="preview" class="preview" style="display:none;">
 
-<button onclick="submitProfile()">💾 Save Profile</button>
+<br>
+
+<button class="btn" onclick="submitProfile()">💾 Save Profile</button>
 
 </div>
 
 <script>
 
 const firebaseConfig = {
- apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
- authDomain:"zara-muslim-nikah.firebaseapp.com",
- databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
- projectId:"zara-muslim-nikah"
+  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain:"zara-muslim-nikah.firebaseapp.com",
+  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId:"zara-muslim-nikah"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -92,33 +97,22 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-/* LOGIN CHECK */
-auth.onAuthStateChanged(user=>{
-  if(!user){
-    window.location="index.html";
-  }
-});
-
-/* IMAGE PREVIEW SMALL */
-document.getElementById("image").onchange = function(e){
-  let file = e.target.files[0];
+/* IMAGE PREVIEW SMALL FIX */
+document.getElementById("file").onchange = function(e){
   let reader = new FileReader();
-
   reader.onload = function(){
     document.getElementById("preview").src = reader.result;
     document.getElementById("preview").style.display = "block";
   }
-
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(e.target.files[0]);
 };
 
 /* IMGBB UPLOAD */
-async function uploadImage(file){
-
+async function uploadImg(file){
   let form = new FormData();
   form.append("image", file);
 
-  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
+  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
     method:"POST",
     body:form
   });
@@ -133,49 +127,56 @@ async function submitProfile(){
   const user = auth.currentUser;
 
   if(!user){
-    alert("Login करें");
+    alert("Login करें पहले");
     return;
   }
 
-  let name = document.getElementById("name").value.trim();
-  let age = document.getElementById("age").value.trim();
-  let city = document.getElementById("city").value.trim();
-  let phone = document.getElementById("phone").value.trim();
-  let religion = document.getElementById("religion").value.trim();
-  let education = document.getElementById("education").value.trim();
-  let file = document.getElementById("image").files[0];
+  let name = document.getElementById("name").value;
+  let age = document.getElementById("age").value;
+  let city = document.getElementById("city").value;
+  let phone = document.getElementById("phone").value;
+  let education = document.getElementById("education").value;
+  let job = document.getElementById("job").value;
+  let about = document.getElementById("about").value;
+  let file = document.getElementById("file").files[0];
 
-  /* FIX: proper validation */
-  if(!name || !age || !city || !phone || !religion || !education){
+  /* FIX ERROR */
+  if(!name || !age || !city || !phone || !education || !job || !about || !file){
     alert("❗ सभी fields भरें");
     return;
   }
 
-  let imageUrl = "";
+  alert("Uploading...");
 
-  if(file){
-    imageUrl = await uploadImage(file);
-  }
+  let imgUrl = await uploadImg(file);
 
-  let newProfile = db.ref("profiles").push();
+  let newRef = db.ref("profiles").push();
 
-  await newProfile.set({
+  await newRef.set({
     uid: user.uid,
     name,
     age,
     city,
     phone,
-    religion,
     education,
-    image: imageUrl,
+    job,
+    about,
+    photo: imgUrl,
     time: Date.now()
   });
 
-  alert("✔ Profile Saved Successfully");
+  alert("✔ Profile Saved");
 
-  /* REDIRECT TO PAYMENT */
+  /* PAYMENT PAGE OPEN */
   window.location = "payment.html";
 }
+
+/* LOGIN CHECK */
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.location="index.html";
+  }
+});
 
 </script>
 
