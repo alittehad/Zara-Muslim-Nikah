@@ -77,14 +77,6 @@ header{
   border-radius:10px;
 }
 
-input{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border:1px solid #ccc;
-  border-radius:8px;
-}
-
 .btn{
   width:100%;
   margin-top:10px;
@@ -106,7 +98,7 @@ input{
 <div class="topbar" id="topbar">
   <button onclick="location.reload()">Home</button>
   <button onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button id="adminAddBtn" style="display:none" onclick="openAddModal()">➕ Add Profile</button>
+  <button id="adminAddBtn" style="display:none" onclick="goAdminAdd()">➕ Add Profile</button>
   <button onclick="logout()">Logout</button>
 </div>
 
@@ -117,21 +109,6 @@ input{
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
     <div id="modalBody"></div>
-  </div>
-</div>
-
-<!-- ADMIN ADD PROFILE -->
-<div class="modal" id="addModal">
-  <div class="modal-content">
-    <span onclick="closeAddModal()" style="float:right;cursor:pointer">✖</span>
-    <h3>Add Profile</h3>
-
-    <input id="name" placeholder="Name">
-    <input id="age" placeholder="Age">
-    <input id="city" placeholder="City">
-    <input id="photo" placeholder="Photo URL">
-
-    <button class="btn" onclick="addProfile()">Submit</button>
   </div>
 </div>
 
@@ -154,6 +131,7 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 let currentProfileId = null;
 
+/* 🔐 LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
   currentUser = user;
 
@@ -171,7 +149,7 @@ auth.onAuthStateChanged(user=>{
   loadPosts();
 });
 
-/* 🔥 LOAD PROFILES */
+/* 📦 LOAD PROFILES */
 function loadPosts(){
   db.ref("profiles").once("value").then(snap=>{
     const grid=document.getElementById("profileGrid");
@@ -179,6 +157,8 @@ function loadPosts(){
 
     snap.forEach(child=>{
       const d=child.val();
+
+      if(!d) return;
 
       grid.innerHTML+=`
       <div class="card" onclick="openModal('${child.key}')">
@@ -192,12 +172,17 @@ function loadPosts(){
   });
 }
 
-/* 🔥 OPEN PROFILE */
+/* 👁️ OPEN PROFILE */
 function openModal(id){
   currentProfileId=id;
 
   db.ref("profiles/"+id).once("value").then(snap=>{
     const d=snap.val();
+
+    if(!d){
+      alert("Profile not found");
+      return;
+    }
 
     document.getElementById("modalBody").innerHTML=`
       <h2>${d.name}</h2>
@@ -212,62 +197,28 @@ function openModal(id){
   });
 }
 
-/* 🔥 PAYMENT PAGE */
+/* 💳 PAYMENT */
 function goPayment(){
   localStorage.setItem("selectedProfile", currentProfileId);
   window.location.href="payment.html";
 }
 
-/* 🔥 ADMIN ADD */
-function openAddModal(){
-  document.getElementById("addModal").style.display="flex";
+/* 👑 ADMIN PAGE */
+function goAdminAdd(){
+  window.location.href="admin-add.html";
 }
 
-function closeAddModal(){
-  document.getElementById("addModal").style.display="none";
-
-  // clear fields
-  document.getElementById("name").value="";
-  document.getElementById("age").value="";
-  document.getElementById("city").value="";
-  document.getElementById("photo").value="";
-}
-
-function addProfile(){
-
-  if(currentUser.email !== ADMIN_EMAIL){
-    alert("Only admin allowed");
-    return;
-  }
-
-  const data={
-    name: document.getElementById("name").value,
-    age: document.getElementById("age").value,
-    city: document.getElementById("city").value,
-    photo: document.getElementById("photo").value
-  };
-
-  if(!data.name || !data.age){
-    alert("Name & Age required");
-    return;
-  }
-
-  db.ref("profiles").push(data);
-
-  alert("Profile Added ✔️");
-
-  closeAddModal();
-  loadPosts();
-}
-
+/* ❌ CLOSE MODAL */
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
+/* 🚪 LOGOUT */
 function logout(){
   auth.signOut();
 }
 
+/* ➕ USER ADD PAGE */
 function goAdd(){
   window.location="profile-submit.html";
 }
