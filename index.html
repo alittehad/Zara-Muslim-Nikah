@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <style>
 body{
   margin:0;
@@ -30,7 +34,7 @@ header{
   flex-wrap:wrap;
 }
 
-/* 3D BUTTON */
+/* 3D BUTTONS */
 .btn{
   padding:10px 16px;
   border:none;
@@ -49,7 +53,6 @@ header{
 
 .add{background:#1d4ed8;}
 .admin{background:#111;}
-.logout{background:#dc2626;}
 
 /* GRID */
 .grid{
@@ -112,9 +115,12 @@ header{
 
   <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
 
-  <!-- ADMIN BUTTON (ONLY SHOW IF LOGIN) -->
-  <button class="btn admin" id="adminBtn" onclick="goAdmin()" style="display:none">
+  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">
     👑 Admin Panel
+  </button>
+
+  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">
+    ➕ Admin Add
   </button>
 
 </div>
@@ -131,89 +137,101 @@ header{
 
 <script>
 
-/* =========================
-   ADMIN LOGIN (SIMPLE)
-   ========================= */
-const ADMIN_PASSWORD = "1234"; // change this
+/* ================= FIREBASE ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah"
+};
 
-let isAdmin = localStorage.getItem("isAdmin") === "true";
+firebase.initializeApp(firebaseConfig);
 
-/* show admin button */
-if(isAdmin){
-  document.getElementById("adminBtn").style.display="inline-block";
-}
+const auth = firebase.auth();
+const db = firebase.database();
 
-/* fake admin login prompt (demo) */
-if(!isAdmin){
-  let pass = prompt("Enter Admin Password (or cancel for user mode)");
+/* ADMIN EMAIL */
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-  if(pass === ADMIN_PASSWORD){
-    localStorage.setItem("isAdmin","true");
-    isAdmin = true;
-    document.getElementById("adminBtn").style.display="inline-block";
+let currentUser = null;
+
+/* ================= AUTH ================= */
+auth.onAuthStateChanged(user=>{
+  currentUser = user;
+
+  if(user){
+
+    const isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
+
+    if(isAdmin){
+      document.getElementById("adminPanelBtn").style.display="inline-block";
+      document.getElementById("adminAddBtn").style.display="inline-block";
+    }
+
+    loadProfiles();
+
+  } else {
+    document.getElementById("grid").innerHTML = "<p style='text-align:center'>Login Required</p>";
   }
-}
+});
 
-/* =========================
-   LOCAL STORAGE DATA
-   ========================= */
-function getData(){
-  return JSON.parse(localStorage.getItem("profiles") || "[]");
-}
+/* ================= LOAD PROFILES ================= */
+function loadProfiles(){
 
-function load(){
-  let data = getData();
+  db.ref("profiles").on("value",snap=>{
 
-  let html="";
+    let html="";
 
-  data.forEach((p,i)=>{
-    html+=`
-    <div class="card" onclick="openModal(${i})">
-      <img src="${p.photo}">
-      <div class="card-body">
-        <h3>${p.name}</h3>
-        <p>${p.city}</p>
-      </div>
-    </div>`;
+    snap.forEach(child=>{
+      let d = child.val();
+
+      html+=`
+      <div class="card" onclick="openModal('${child.key}')">
+        <img src="${d.photo}">
+        <div class="card-body">
+          <h3>${d.name}</h3>
+          <p>${d.city}</p>
+        </div>
+      </div>`;
+    });
+
+    document.getElementById("grid").innerHTML = html;
   });
-
-  document.getElementById("grid").innerHTML = html;
 }
 
-load();
+/* ================= MODAL ================= */
+function openModal(id){
 
-/* =========================
-   OPEN PROFILE
-   ========================= */
-function openModal(i){
+  db.ref("profiles/"+id).once("value").then(snap=>{
+    let d = snap.val();
 
-  let data = getData();
-  let p = data[i];
+    document.getElementById("modalBody").innerHTML=`
+      <h2>${d.name}</h2>
+      <img src="${d.photo}" style="width:100%;border-radius:10px;">
+      <p><b>Age:</b> ${d.age}</p>
+      <p><b>City:</b> ${d.city}</p>
+      <p>${d.desc || ""}</p>
+    `;
 
-  document.getElementById("modalBody").innerHTML=`
-    <h2>${p.name}</h2>
-    <img src="${p.photo}" style="width:100%;border-radius:10px;">
-    <p><b>Age:</b> ${p.age}</p>
-    <p><b>City:</b> ${p.city}</p>
-    <p>${p.desc || ""}</p>
-  `;
-
-  document.getElementById("modal").style.display="flex";
+    document.getElementById("modal").style.display="flex";
+  });
 }
 
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* =========================
-   NAVIGATION
-   ========================= */
+/* ================= NAV ================= */
 function goAdd(){
   window.location="profile-submit.html";
 }
 
 function goAdmin(){
   window.location="admin.html";
+}
+
+function goAdminAdd(){
+  window.location="admin-add.html";
 }
 
 </script>
