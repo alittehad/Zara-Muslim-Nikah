@@ -15,7 +15,6 @@ body{
   padding:20px;
 }
 
-/* BOX */
 .box{
   max-width:420px;
   margin:auto;
@@ -25,45 +24,56 @@ body{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-input,button{
+h2{
+  text-align:center;
+  color:#0f766e;
+}
+
+/* 🔥 SCANNER FIX */
+.scanner{
+  text-align:center;
+  margin:10px 0;
+}
+
+.scanner img{
+  width:100%;
+  max-width:250px;
+  height:auto;
+  border-radius:10px;
+  border:2px solid #ddd;
+}
+
+/* MESSAGE */
+.msg{
+  background:#e0f2fe;
+  padding:10px;
+  border-radius:8px;
+  text-align:center;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+input{
   width:100%;
   padding:10px;
   margin:8px 0;
+  border:1px solid #ddd;
   border-radius:8px;
 }
 
 button{
+  width:100%;
+  padding:12px;
   background:#0f766e;
   color:white;
   border:none;
-}
-
-/* 🔥 PREVIEW FIX */
-.preview{
-  width:100%;
-  height:160px;
-  object-fit:cover;
-  margin-top:10px;
-  border-radius:10px;
-  display:none;
-  border:1px solid #ddd;
-}
-
-/* CARD */
-.card{
-  background:white;
-  margin-top:10px;
-  padding:10px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-/* 🔥 IMAGE FIX (MAIN PROBLEM SOLVED) */
-.card img{
-  width:100%;
-  height:160px;
-  object-fit:cover;
   border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+}
+
+button:active{
+  transform:scale(0.98);
 }
 </style>
 </head>
@@ -72,23 +82,31 @@ button{
 
 <div class="box">
 
-<h2>💍 Registration Payment</h2>
+<h2>💍 रिश्ता रजिस्ट्रेशन</h2>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="phone" placeholder="Phone">
-
-<p>📷 Screenshot Upload</p>
-<input type="file" id="file">
-
-<!-- PREVIEW FIXED -->
-<img id="preview" class="preview">
-
-<button onclick="submit()">Send</button>
-
+<!-- 🔥 MESSAGE -->
+<div class="msg">
+👉 रिश्ता करने के लिए Registration Fees भरना अनिवार्य है<br>
+👉 नीचे दिए गए QR को scan करके payment करें
 </div>
 
-<div id="list"></div>
+<!-- 🔥 SCANNER / QR -->
+<div class="scanner">
+  <p><b>📸 Scan & Pay</b></p>
+  <img src="https://i.ibb.co/6RkksFjc/qr.png" alt="scanner">
+</div>
+
+<!-- FORM -->
+<input id="name" placeholder="नाम लिखें">
+<input id="age" placeholder="उम्र लिखें">
+<input id="phone" placeholder="मोबाइल नंबर">
+
+<p><b>📷 Payment Screenshot Upload</b></p>
+<input type="file" id="image">
+
+<button onclick="submitPayment()">📩 Send करें</button>
+
+</div>
 
 <script>
 
@@ -102,25 +120,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* PREVIEW FIX */
-document.getElementById("file").onchange = function(e){
-  let file = e.target.files[0];
-
-  if(!file) return;
-
-  let reader = new FileReader();
-
-  reader.onload = function(){
-    let img = document.getElementById("preview");
-    img.src = reader.result;
-    img.style.display = "block";
-  }
-
-  reader.readAsDataURL(file);
-};
-
-/* IMGBB */
-async function uploadImg(file){
+/* IMGBB UPLOAD */
+async function uploadToImgBB(file){
 
   let form = new FormData();
   form.append("image", file);
@@ -135,55 +136,34 @@ async function uploadImg(file){
 }
 
 /* SUBMIT */
-async function submit(){
+async function submitPayment(){
 
   let name = document.getElementById("name").value;
   let age = document.getElementById("age").value;
   let phone = document.getElementById("phone").value;
-  let file = document.getElementById("file").files[0];
+  let file = document.getElementById("image").files[0];
 
   if(!name || !age || !phone || !file){
-    alert("Fill all fields");
+    alert("सभी जानकारी भरें");
     return;
   }
 
-  alert("Uploading...");
+  alert("Image upload हो रहा है...");
 
-  let imgUrl = await uploadImg(file);
+  let imageUrl = await uploadToImgBB(file);
 
   db.ref("payments").push({
     name,
     age,
     phone,
-    screenshot: imgUrl,
+    screenshot: imageUrl,
     status:"pending",
     time:Date.now()
   });
 
-  alert("✔ Payment sent");
+  alert("✔️ Payment भेज दिया गया है");
+  window.location = "index.html";
 }
-
-db.ref("payments").on("value", snap=>{
-
-  let html="";
-
-  snap.forEach(c=>{
-
-    let d=c.val();
-
-    html+=`
-    <div class="card">
-      <b>${d.name}</b><br>
-      ${d.age} | ${d.phone}<br>
-
-      <img src="${d.screenshot}">
-
-      <p>Status: ${d.status}</p>
-    </div>`;
-  });
-
-  document.getElementById("list").innerHTML=html;
-});
 
 </script>
 
