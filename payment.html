@@ -48,6 +48,12 @@ button{
 
 .ok{color:green;font-weight:bold;}
 .wait{color:orange;font-weight:bold;}
+
+.preview{
+  width:100%;
+  margin-top:10px;
+  border-radius:10px;
+}
 </style>
 </head>
 
@@ -60,7 +66,11 @@ button{
 <input id="age" placeholder="Age">
 <input id="phone" placeholder="Phone">
 
+<p>📷 Payment Screenshot (Scanner)</p>
 <input type="file" id="file">
+
+<!-- 🔥 IMAGE PREVIEW (SCANNER) -->
+<img id="preview" class="preview" style="display:none;">
 
 <button id="btn" onclick="submit()">Send Payment</button>
 </div>
@@ -81,7 +91,17 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-/* UPLOAD IMAGE (IMGBB - YOUR KEY) */
+/* 🔥 SCANNER PREVIEW (IMGBB INPUT SUPPORT) */
+document.getElementById("file").onchange = function(e){
+  let reader = new FileReader();
+  reader.onload = function(){
+    document.getElementById("preview").src = reader.result;
+    document.getElementById("preview").style.display = "block";
+  }
+  reader.readAsDataURL(e.target.files[0]);
+};
+
+/* 🔥 UPLOAD TO IMGBB (YOUR SCANNER KEY) */
 async function upload(file){
 
   let form = new FormData();
@@ -130,12 +150,12 @@ async function submit(){
     time:Date.now()
   });
 
-  alert("✔ Payment Sent");
+  alert("✔ Payment Sent (Waiting Approval)");
 
   document.getElementById("btn").style.display="none";
 }
 
-/* SHOW ONLY USER DATA (NO SCREENSHOT) */
+/* SHOW USER DATA (NO SCREENSHOT SHOWN) */
 auth.onAuthStateChanged(user=>{
 
   if(!user){
@@ -159,7 +179,7 @@ auth.onAuthStateChanged(user=>{
         <b>${d.name}</b><br>
         📱 ${d.phone}<br>
 
-        <!-- ❌ SCREENSHOT HIDDEN (IMPORTANT FIX) -->
+        <!-- ❌ SCREENSHOT HIDDEN FROM USER -->
 
         ${
           d.status==="approved"
