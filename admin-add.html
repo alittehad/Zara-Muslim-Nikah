@@ -10,46 +10,16 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-body{
-  font-family:sans-serif;
-  background:#f4f6f9;
-  padding:15px;
-}
-
-.box{
-  max-width:500px;
-  margin:auto;
-  background:white;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-input, textarea{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border:1px solid #ccc;
-  border-radius:8px;
-}
-
-button{
-  width:100%;
-  padding:12px;
-  background:#0f766e;
-  color:white;
-  border:none;
-  border-radius:8px;
-  font-size:16px;
-  cursor:pointer;
-}
+body{font-family:sans-serif;background:#f4f6f9;padding:15px;}
+.box{max-width:500px;margin:auto;background:white;padding:20px;border-radius:12px;}
+input,textarea{width:100%;padding:10px;margin:8px 0;border:1px solid #ccc;border-radius:8px;}
+button{width:100%;padding:12px;background:#0f766e;color:white;border:none;border-radius:8px;}
 </style>
 </head>
 
 <body>
 
 <div class="box">
-
 <h2>👑 Admin Add Profile</h2>
 
 <input id="name" placeholder="Name">
@@ -57,81 +27,71 @@ button{
 <input id="city" placeholder="City">
 <textarea id="desc" placeholder="Description"></textarea>
 
-<p>Upload Photo:</p>
 <input type="file" id="photo">
-
 <button onclick="addProfile()">Add Profile</button>
-
 </div>
 
 <script>
 
-// 🔥 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
   projectId: "zara-muslim-nikah",
   storageBucket: "zara-muslim-nikah.appspot.com",
-  messagingSenderId: "690336186269",
-  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
 };
 
 firebase.initializeApp(firebaseConfig);
 
-// 🔥 SERVICES
 const auth = firebase.auth();
 const db = firebase.database();
-const storage = firebase.storage();
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
+// ⚠️ IMPORTANT: DON'T INIT storage HERE
+let storage;   // lazy init
 
-let currentUser = null;
-
-/* 🔥 ADMIN CHECK */
 auth.onAuthStateChanged(user=>{
   if(!user){
     window.location.href="login.html";
     return;
   }
 
-  currentUser = user;
+  const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-  if((user.email || "").toLowerCase() !== ADMIN_EMAIL){
+  if((user.email||"").toLowerCase() !== ADMIN_EMAIL){
     alert("Only admin allowed");
     window.location.href="index.html";
   }
+
+  // ✅ SAFE INIT HERE (AFTER FIREBASE FULL READY)
+  storage = firebase.storage();
 });
 
-/* 🔥 ADD PROFILE FUNCTION (FIXED 100%) */
 async function addProfile(){
 
-  const name = document.getElementById("name").value.trim();
-  const age = document.getElementById("age").value.trim();
-  const city = document.getElementById("city").value.trim();
-  const desc = document.getElementById("desc").value.trim();
+  const name = document.getElementById("name").value;
+  const age = document.getElementById("age").value;
+  const city = document.getElementById("city").value;
+  const desc = document.getElementById("desc").value;
   const file = document.getElementById("photo").files[0];
 
-  if(!name || !age || !city){
-    alert("Name, Age, City required");
+  if(!storage){
+    alert("Storage not ready, please wait...");
     return;
   }
 
-  if(!file){
-    alert("Photo required");
+  if(!name || !age || !city || !file){
+    alert("All fields required");
     return;
   }
 
   try{
 
-    // 🔥 Upload image first
-    const fileRef = storage.ref("profiles/" + Date.now() + "_" + file.name);
+    const ref = storage.ref("profiles/" + Date.now() + "_" + file.name);
 
-    await fileRef.put(file);
+    await ref.put(file);
 
-    const url = await fileRef.getDownloadURL();
+    const url = await ref.getDownloadURL();
 
-    // 🔥 Save data in database
     await db.ref("profiles").push({
       name,
       age,
@@ -141,18 +101,11 @@ async function addProfile(){
       time: Date.now()
     });
 
-    alert("Profile Added Successfully ✔️");
-
-    // clear form
-    document.getElementById("name").value = "";
-    document.getElementById("age").value = "";
-    document.getElementById("city").value = "";
-    document.getElementById("desc").value = "";
-    document.getElementById("photo").value = "";
+    alert("Profile Added ✔️");
 
   }catch(err){
     console.log(err);
-    alert("Upload failed: " + err.message);
+    alert("Error: " + err.message);
   }
 }
 
