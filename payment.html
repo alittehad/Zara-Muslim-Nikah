@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Payment Page</title>
+<title>Registration Payment</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -21,6 +21,32 @@ body{
   background:white;
   padding:20px;
   border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h2{
+  text-align:center;
+  color:#0f766e;
+}
+
+.msg{
+  background:#e0f2fe;
+  padding:10px;
+  border-radius:8px;
+  text-align:center;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+.qr{
+  text-align:center;
+  margin:10px 0;
+}
+
+.qr img{
+  width:200px;
+  border-radius:10px;
+  border:1px solid #ddd;
 }
 
 input{
@@ -53,23 +79,36 @@ button{
 
 <div class="box">
 
-<h2>💍 Rishta Payment</h2>
+<h2>💍 रिश्ता रजिस्ट्रेशन</h2>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="phone" placeholder="Phone">
+<!-- 🔥 HINDI MESSAGE -->
+<div class="msg">
+👉 रिश्ता करने के लिए Registration Fees भरना अनिवार्य है<br>
+👉 Scan करें और Payment करें
+</div>
 
+<!-- QR -->
+<div class="qr">
+  <p><b>📸 QR को स्कैन करें</b></p>
+  <img src="https://i.ibb.co/6RkksFjc/qr.png">
+</div>
+
+<!-- FORM -->
+<input id="name" placeholder="नाम लिखें">
+<input id="age" placeholder="उम्र लिखें">
+<input id="phone" placeholder="मोबाइल नंबर">
+
+<p><b>📷 Payment का Screenshot Upload करें</b></p>
 <input type="file" id="image">
 
 <img id="preview" class="preview" style="display:none;">
 
-<button onclick="submitPayment()">Send Request 💖</button>
+<button onclick="submitPayment()">📩 Send करें</button>
 
 </div>
 
 <script>
 
-/* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -80,7 +119,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* PREVIEW IMAGE */
+/* PREVIEW */
 document.getElementById("image").onchange = function(e){
   let file = e.target.files[0];
   let reader = new FileReader();
@@ -93,7 +132,7 @@ document.getElementById("image").onchange = function(e){
   reader.readAsDataURL(file);
 };
 
-/* UPLOAD TO IMGBB */
+/* IMGBB UPLOAD */
 async function uploadToImgBB(file){
 
   let form = new FormData();
@@ -105,7 +144,6 @@ async function uploadToImgBB(file){
   });
 
   let data = await res.json();
-
   return data.data.url;
 }
 
@@ -118,11 +156,11 @@ async function submitPayment(){
   let file = document.getElementById("image").files[0];
 
   if(!name || !age || !phone || !file){
-    alert("All fields required");
+    alert("सभी जानकारी भरें");
     return;
   }
 
-  alert("Uploading image...");
+  alert("Image upload हो रहा है...");
 
   let imageUrl = await uploadToImgBB(file);
 
@@ -135,7 +173,7 @@ async function submitPayment(){
     time: Date.now()
   });
 
-  alert("Payment Sent ✔️ (Waiting Approval)");
+  alert("✔️ Request भेज दिया गया है (Approval का इंतजार करें)");
 
   window.location = "index.html";
 }
