@@ -28,18 +28,15 @@ header{
   align-items:center;
 }
 
-/* LOGO */
 .logo{
   font-size:16px;
 }
 
-/* RIGHT BUTTONS */
 .header-btns{
   display:flex;
   gap:10px;
 }
 
-/* BUTTON */
 .btn{
   padding:8px 12px;
   border:none;
@@ -64,7 +61,6 @@ header{
 .add{background:#1d4ed8;}
 .admin{background:#111;}
 
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -95,7 +91,6 @@ header{
 .edit{background:#1d4ed8;}
 .delete{background:#dc2626;}
 
-/* MODAL */
 .modal{
   position:fixed;
   inset:0;
@@ -113,7 +108,6 @@ header{
   border-radius:10px;
 }
 
-/* MOBILE FIX */
 @media(max-width:600px){
   header{
     flex-direction:column;
@@ -170,23 +164,27 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let isAdmin = false;
+let loaded = false;
 
-/* LOGIN */
+/* LOGIN FIX */
 auth.onAuthStateChanged(user=>{
-  if(user){
 
-    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
+  if(loaded) return;
+  loaded = true;
 
-    if(isAdmin){
-      document.getElementById("adminPanelBtn").style.display="inline-block";
-      document.getElementById("adminAddBtn").style.display="inline-block";
-    }
-
-    loadProfiles();
-
-  }else{
-    window.location = "index.html"; // FIXED
+  if(!user){
+    window.location.replace("index.html"); // clean redirect
+    return;
   }
+
+  isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
+
+  if(isAdmin){
+    document.getElementById("adminPanelBtn").style.display="inline-block";
+    document.getElementById("adminAddBtn").style.display="inline-block";
+  }
+
+  loadProfiles();
 });
 
 /* LOAD DATA */
@@ -260,11 +258,10 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* LOGOUT */
+/* LOGOUT FINAL FIX */
 function logout(){
   auth.signOut().then(()=>{
-    alert("Logout Successfully");
-    window.location="index.html";
+    window.location.replace("index.html"); // no blink
   });
 }
 
