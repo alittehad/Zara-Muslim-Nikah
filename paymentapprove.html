@@ -3,94 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Payment Panel</title>
+<title>Payment Approve</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
 body{
   font-family:sans-serif;
-  background:#f4f6f9;
   margin:0;
-  padding:10px;
+  background:#f4f6f9;
 }
 
 /* HEADER */
-h2{
+header{
+  background:#0f766e;
+  color:white;
   text-align:center;
-  color:#0f766e;
-}
-
-/* SECTIONS */
-.section-title{
-  margin-top:20px;
+  padding:12px;
   font-weight:bold;
-  color:#333;
 }
 
-/* CARD */
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+  padding:10px;
+}
+
+/* CARD SMALL */
 .card{
   background:white;
-  margin:10px 0;
-  padding:12px;
-  border-radius:12px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.1);
+  border-radius:10px;
+  padding:10px;
+  font-size:13px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* IMAGE */
 .card img{
   width:100%;
-  border-radius:10px;
-  margin-top:8px;
+  height:120px;
+  object-fit:cover;
+  border-radius:8px;
 }
 
 /* BUTTONS */
 .btn{
   width:48%;
-  padding:10px;
+  padding:8px;
   border:none;
-  border-radius:8px;
+  border-radius:6px;
   color:white;
-  margin-top:8px;
+  font-size:12px;
 }
 
 .approve{background:green;}
 .reject{background:red;}
-.pending{background:#f59e0b;}
-.status{
-  font-weight:bold;
-  margin-top:5px;
-}
 
-/* MOBILE FRIENDLY */
-@media(max-width:600px){
-  .btn{width:100%;}
+.row{
+  display:flex;
+  justify-content:space-between;
+  margin-top:8px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>👑 Payment Admin Panel</h2>
+<header>💰 Payment Approval Panel</header>
 
-<div id="pendingSection">
-  <div class="section-title">⏳ Pending Payments</div>
-  <div id="pendingList"></div>
-</div>
-
-<div id="approvedSection">
-  <div class="section-title">✔ Approved Payments</div>
-  <div id="approvedList"></div>
-</div>
-
-<div id="rejectedSection">
-  <div class="section-title">❌ Rejected Payments</div>
-  <div id="rejectedList"></div>
-</div>
+<div class="grid" id="list"></div>
 
 <script>
 
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -99,72 +87,48 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 
-/* LOAD DATA */
-db.ref("payments").on("value", snap => {
+/* LOAD PAYMENTS */
+db.ref("payments").on("value",snap=>{
 
-  let pending = "";
-  let approved = "";
-  let rejected = "";
+  let html="";
 
-  snap.forEach(child => {
-
+  snap.forEach(child=>{
     let d = child.val();
-    let id = child.key;
+    let key = child.key;
 
-    let card = `
-      <div class="card">
-        <p><b>नाम:</b> ${d.name}</p>
-        <p><b>उम्र:</b> ${d.age}</p>
-        <p><b>फोन:</b> ${d.phone}</p>
+    if(d.status === "approved") return;
 
-        <img src="${d.image}">
+    html += `
+    <div class="card">
+      <img src="${d.screenshot}">
+      <b>${d.name}</b><br>
+      Age: ${d.age}<br>
+      Amount: ₹${d.amount}<br>
 
-        <div class="status">Status: ${d.status}</div>
-    `;
-
-    if(d.status === "pending"){
-      pending += card + `
-        <button class="btn approve" onclick="approve('${id}')">✔ Approve</button>
-        <button class="btn reject" onclick="reject('${id}')">❌ Reject</button>
-      </div>`;
-    }
-
-    else if(d.status === "approved"){
-      approved += card + `
-        <p style="color:green;font-weight:bold;">✔ Approved</p>
-      </div>`;
-    }
-
-    else if(d.status === "rejected"){
-      rejected += card + `
-        <p style="color:red;font-weight:bold;">❌ Rejected</p>
-      </div>`;
-    }
+      <div class="row">
+        <button class="btn approve" onclick="approve('${key}')">Approve</button>
+        <button class="btn reject" onclick="reject('${key}')">Reject</button>
+      </div>
+    </div>`;
   });
 
-  document.getElementById("pendingList").innerHTML = pending || "No Pending";
-  document.getElementById("approvedList").innerHTML = approved || "No Approved";
-  document.getElementById("rejectedList").innerHTML = rejected || "No Rejected";
+  document.getElementById("list").innerHTML = html;
+
 });
 
 /* APPROVE */
 function approve(id){
-  db.ref("payments/" + id).update({
-    status: "approved"
+  db.ref("payments/"+id).update({
+    status:"approved"
   });
-
-  alert("Approved ✔️");
 }
 
 /* REJECT */
 function reject(id){
-  db.ref("payments/" + id).update({
-    status: "rejected"
-  });
-
-  alert("Rejected ❌");
+  db.ref("payments/"+id).remove();
 }
 
 </script>
