@@ -5,44 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9;}
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f4f6f9;
+}
 
+/* HEADER */
 header{
-  background: linear-gradient(90deg, #0f766e, #14b8a6);
+  background:linear-gradient(90deg,#0f766e,#14b8a6);
   color:white;
   text-align:center;
-  font-size:clamp(16px, 4.5vw, 32px);
-  font-weight:900;
   padding:14px;
+  font-weight:900;
 }
 
 /* TOPBAR */
 .topbar{
-  display:none;
+  display:flex;
   justify-content:center;
   gap:10px;
   padding:10px;
+  flex-wrap:wrap;
 }
 
-.topbar button{
+/* BUTTON */
+.btn{
   padding:10px 16px;
   border:none;
-  border-radius:8px;
+  border-radius:10px;
   color:white;
   font-weight:bold;
   cursor:pointer;
 }
 
-#homeBtn{background:#0f766e;}
-#addPostBtn{background:#1d4ed8;}
-#adminBtn{background:#000;}
-#logoutBtn{background:#dc2626;}
+.add{background:#1d4ed8;}
+.admin{background:#111;}
 
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -50,46 +56,44 @@ header{
   padding:15px;
 }
 
+/* CARD */
 .card{
   background:white;
   border-radius:12px;
   overflow:hidden;
-  cursor:pointer;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
-.card img{width:100%;height:200px;object-fit:cover;}
-.card-body{text-align:center;padding:10px;}
-
-/* LOGIN SCREEN WITH IMAGE */
-#loginScreen{
-  display:none;
-  position:fixed;
-  top:0;left:0;
+.card img{
   width:100%;
-  height:100vh;
-  background:url("https://i.ibb.co/fzQ1WgbN/bg.jpg") no-repeat center center/cover;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-}
-
-.login-btn{
-  padding:12px 20px;
-  background:#14b8a6;
-  border:none;
-  color:white;
-  font-weight:bold;
-  border-radius:8px;
-  font-size:16px;
+  height:200px;
+  object-fit:cover;
   cursor:pointer;
 }
+
+.card-body{
+  text-align:center;
+  padding:10px;
+}
+
+.card-body button{
+  margin:4px;
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  color:white;
+}
+
+/* BUTTON COLORS */
+.like{background:#16a34a;}
+.edit{background:#1d4ed8;}
+.delete{background:#dc2626;}
 
 /* MODAL */
 .modal{
   position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
+  inset:0;
   display:none;
   justify-content:center;
   align-items:center;
@@ -110,38 +114,31 @@ header{
 
 <header>🕋 Zara Nikah Service 🕌</header>
 
-<!-- TOPBAR -->
-<div class="topbar" id="topbar">
-  <button id="homeBtn" onclick="goHome()">Home</button>
-  <button id="addPostBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button id="adminBtn" onclick="goAdmin()" style="display:none">Admin Panel</button>
-  <button id="logoutBtn" onclick="handleAuth()">Logout</button>
+<div class="topbar">
+  <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
+
+  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">
+    👑 Admin Panel
+  </button>
+
+  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">
+    ➕ Admin Add
+  </button>
 </div>
 
-<!-- LOGIN SCREEN -->
-<div id="loginScreen">
-  <button class="login-btn" onclick="handleAuth()">Login</button>
-</div>
-
-<!-- GRID -->
-<div class="grid" id="profileGrid"></div>
+<div class="grid" id="grid"></div>
 
 <!-- MODAL -->
-<div class="modal" id="profileModal">
+<div class="modal" id="modal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
     <div id="modalBody"></div>
-
-    <button onclick="interest()"
-      style="background:#e11d48;color:white;padding:10px;border:none;border-radius:8px;width:100%;margin-top:10px;font-weight:bold;">
-      ❤️ I’m Interested
-    </button>
-
   </div>
 </div>
 
 <script>
 
+/* 🔥 Firebase Config */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -156,107 +153,106 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-let currentUser = null;
-let currentProfileId = null;
+let isAdmin = false;
 
-/* LOGIN / LOGOUT */
-function handleAuth(){
-  if(currentUser){
-    auth.signOut();
-  } else {
-    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-  }
-}
-
-/* AUTH STATE */
+/* 🔐 LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
-  currentUser = user;
-
   if(user){
-    document.getElementById("topbar").style.display="flex";
-    document.getElementById("loginScreen").style.display="none";
 
-    if((user.email||"").toLowerCase()===ADMIN_EMAIL){
-      document.getElementById("adminBtn").style.display="inline-block";
+    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
+
+    if(isAdmin){
+      document.getElementById("adminPanelBtn").style.display="inline-block";
+      document.getElementById("adminAddBtn").style.display="inline-block";
     }
 
-    loadPosts();
+    loadProfiles();
 
-  } else {
-    document.getElementById("topbar").style.display="none";
-
-    // 🔥 FIX: image screen show
-    document.getElementById("loginScreen").style.display="flex";
-
-    document.getElementById("profileGrid").innerHTML="";
+  }else{
+    document.getElementById("grid").innerHTML = "<p style='text-align:center'>Login Required</p>";
   }
 });
 
-/* LOAD DATA */
-function loadPosts(){
-  db.ref("users").once("value").then(snap=>{
-    const grid=document.getElementById("profileGrid");
-    grid.innerHTML="";
+/* 📥 LOAD DATA */
+function loadProfiles(){
+
+  db.ref("profiles").on("value",snap=>{
+
+    let html="";
 
     snap.forEach(child=>{
-      const d=child.val();
-      if(d && d.status==="approved"){
-        grid.innerHTML+=`
-        <div class="card" onclick="openModal('${child.key}')">
-          <img src="${d.photo||''}">
-          <div class="card-body">
-            <h3>${d.name}</h3>
-            <p>${d.city}</p>
-          </div>
-        </div>`;
-      }
+      let d = child.val();
+
+      html+=`
+      <div class="card">
+
+        <img src="${d.photo}" onclick="openModal('${child.key}')">
+
+        <div class="card-body">
+          <h3>${d.name}</h3>
+          <p>${d.city}</p>
+
+          <!-- 💍 RISHTA BUTTON -->
+          <button class="like" onclick="goPayment()">
+            💍 रिश्ता करें
+          </button>
+
+          <!-- 👑 ADMIN BUTTON -->
+          ${isAdmin ? `
+            <button class="edit" onclick="editProfile('${child.key}')">✏ Edit</button>
+            <button class="delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
+          ` : ""}
+
+        </div>
+      </div>`;
     });
+
+    document.getElementById("grid").innerHTML = html;
   });
 }
 
-/* OPEN PROFILE */
-function openModal(id){
-  currentProfileId = id;
+/* 💍 GO TO PAYMENT */
+function goPayment(){
+  window.location.href = "payment.html";
+}
 
-  db.ref("users/"+id).once("value").then(snap=>{
-    const d=snap.val();
+/* 🗑 DELETE */
+function deleteProfile(id){
+  if(confirm("Delete profile?")){
+    db.ref("profiles/"+id).remove();
+  }
+}
+
+/* ✏ EDIT */
+function editProfile(id){
+  window.location = "admin-add.html?id=" + id;
+}
+
+/* 📄 MODAL */
+function openModal(id){
+  db.ref("profiles/"+id).once("value").then(snap=>{
+    let d = snap.val();
 
     document.getElementById("modalBody").innerHTML=`
       <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%">
-      <p>${d.city}</p>
-      <p>${d.age}</p>
+      <img src="${d.photo}" style="width:100%;border-radius:10px;">
+      <p><b>Age:</b> ${d.age}</p>
+      <p><b>City:</b> ${d.city}</p>
+      <p>${d.description || ""}</p>
     `;
 
-    document.getElementById("profileModal").style.display="flex";
+    document.getElementById("modal").style.display="flex";
   });
 }
 
 function closeModal(){
-  document.getElementById("profileModal").style.display="none";
+  document.getElementById("modal").style.display="none";
 }
 
-/* INTEREST */
-function interest(){
-  if(!currentUser || !currentProfileId) return;
-
-  db.ref("interests/"+currentProfileId+"/"+currentUser.uid).set({
-    userId: currentUser.uid,
-    name: currentUser.displayName,
-    status: "pending"
-  });
-
-  alert("Interest Sent ❤️");
-}
-
-/* NAV */
-function goAdmin(){ window.location="admin.html"; }
+/* NAVIGATION */
 function goAdd(){ window.location="profile-submit.html"; }
-
-// ✅ FIXED HOME BUTTON
-function goHome(){
-  window.location.href = "index.html";
-}
+function goAdmin(){ window.location="admin.html"; }
+function goAdminAdd(){ window.location="admin-add.html"; }
 
 </script>
 
