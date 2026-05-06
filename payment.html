@@ -22,6 +22,12 @@ body{
   background:#fff;
   padding:15px;
   border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h2{
+  text-align:center;
+  color:#0f766e;
 }
 
 input,button{
@@ -43,19 +49,31 @@ button:disabled{
   background:gray;
 }
 
+.qr{
+  text-align:center;
+  margin:10px 0;
+}
+
+.qr img{
+  width:200px;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+
+.preview{
+  width:100%;
+  margin-top:10px;
+  border-radius:10px;
+  display:none;
+}
+
+/* CARD */
 .card{
   background:#fff;
   margin-top:10px;
   padding:10px;
   border-radius:10px;
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.preview{
-  width:100%;
-  border-radius:10px;
-  margin-top:8px;
-  display:none;
 }
 
 .ok{color:green;font-weight:bold;}
@@ -66,17 +84,32 @@ button:disabled{
 <body>
 
 <div class="box">
-<h2>💍 Registration Payment</h2>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="phone" placeholder="Phone">
+<h2>💍 रिश्ता रजिस्ट्रेशन</h2>
 
-<p>📷 Screenshot (Scanner)</p>
+<!-- MESSAGE -->
+<div style="background:#e0f2fe;padding:10px;border-radius:8px;text-align:center;font-weight:bold;margin-bottom:10px;">
+👉 रिश्ता करने के लिए Registration Fees जरूरी है
+</div>
+
+<!-- SCANNER -->
+<div class="qr">
+  <p><b>📸 QR को स्कैन करें</b></p>
+  <img src="https://i.ibb.co/99Nb64Yk/OIP-1.jpg">
+</div>
+
+<!-- FORM -->
+<input id="name" placeholder="नाम लिखें">
+<input id="age" placeholder="उम्र">
+<input id="phone" placeholder="मोबाइल नंबर">
+
+<p><b>📷 Payment Screenshot</b></p>
 <input type="file" id="file">
+
 <img id="preview" class="preview">
 
-<button id="btn" onclick="submit()">Send Payment</button>
+<button id="btn" onclick="submitPayment()">📩 Send Payment</button>
+
 </div>
 
 <div id="list"></div>
@@ -109,7 +142,7 @@ document.getElementById("file").onchange = function(e){
   reader.readAsDataURL(file);
 };
 
-/* UPLOAD */
+/* UPLOAD IMAGE */
 async function upload(file){
 
   let form = new FormData();
@@ -125,7 +158,7 @@ async function upload(file){
 }
 
 /* SUBMIT */
-async function submit(){
+async function submitPayment(){
 
   const user = auth.currentUser;
 
@@ -162,7 +195,7 @@ async function submit(){
     time:Date.now()
   });
 
-  alert("✔ Sent Successfully");
+  alert("✔ Payment Sent (Waiting Approval)");
 
   btn.style.display="none";
 }
