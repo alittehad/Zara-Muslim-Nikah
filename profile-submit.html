@@ -10,173 +10,99 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  font-family:sans-serif;
-  background:#f4f6f9;
-  padding:10px;
-}
-
-.box{
-  max-width:420px;
-  margin:auto;
-  background:white;
-  padding:15px;
-  border-radius:12px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-input,select,textarea{
-  width:100%;
-  padding:10px;
-  margin:6px 0;
-  border-radius:8px;
-  border:1px solid #ddd;
-}
-
-.btn{
-  width:100%;
-  padding:12px;
-  background:#0f766e;
-  color:white;
-  border:none;
-  border-radius:10px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.lock{
-  background:gray;
-  cursor:not-allowed;
-}
-
-img.preview{
-  width:120px;
-  height:120px;
-  object-fit:cover;
-  border-radius:10px;
-  margin-top:5px;
-}
+body{font-family:sans-serif;background:#f4f6f9;padding:20px;}
+.box{max-width:400px;margin:auto;background:white;padding:15px;border-radius:10px;}
+input,button{width:100%;padding:10px;margin:8px 0;border-radius:8px;}
+button{background:#0f766e;color:white;border:none;}
+.lock{background:gray;}
 </style>
 </head>
 
 <body>
 
 <div class="box">
+<h2>👤 Profile Form</h2>
 
-<h2>💍 शादी प्रोफाइल फॉर्म</h2>
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="city" placeholder="City">
+<input id="phone" placeholder="Phone">
 
-<input id="name" placeholder="पूरा नाम">
-<input id="age" placeholder="उम्र">
-<input id="city" placeholder="शहर">
-<input id="phone" placeholder="मोबाइल नंबर">
-<input id="education" placeholder="शिक्षा">
-<input id="job" placeholder="नौकरी / काम">
-<textarea id="about" placeholder="अपने बारे में लिखें"></textarea>
+<button onclick="goPayment()">💰 Payment करें</button>
 
-<p>📷 फोटो अपलोड करें</p>
-<input type="file" id="file">
-<img id="preview" class="preview" style="display:none;">
-
-<br>
-
-<button class="btn" onclick="submitProfile()">💾 Save Profile</button>
+<button id="submitBtn" class="lock" onclick="submitProfile()" disabled>
+🔒 Submit (Locked)
+</button>
 
 </div>
 
 <script>
 
-const firebaseConfig = {
-  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain:"zara-muslim-nikah.firebaseapp.com",
-  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId:"zara-muslim-nikah"
-};
-
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp({
+ apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+ authDomain:"zara-muslim-nikah.firebaseapp.com",
+ databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com"
+});
 
 const auth = firebase.auth();
 const db = firebase.database();
 
-/* IMAGE PREVIEW SMALL FIX */
-document.getElementById("file").onchange = function(e){
-  let reader = new FileReader();
-  reader.onload = function(){
-    document.getElementById("preview").src = reader.result;
-    document.getElementById("preview").style.display = "block";
-  }
-  reader.readAsDataURL(e.target.files[0]);
-};
+let userId = null;
 
-/* IMGBB UPLOAD */
-async function uploadImg(file){
-  let form = new FormData();
-  form.append("image", file);
-
-  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
-    method:"POST",
-    body:form
-  });
-
-  let data = await res.json();
-  return data.data.url;
-}
-
-/* SAVE PROFILE */
-async function submitProfile(){
-
-  const user = auth.currentUser;
-
-  if(!user){
-    alert("Login करें पहले");
-    return;
-  }
-
-  let name = document.getElementById("name").value;
-  let age = document.getElementById("age").value;
-  let city = document.getElementById("city").value;
-  let phone = document.getElementById("phone").value;
-  let education = document.getElementById("education").value;
-  let job = document.getElementById("job").value;
-  let about = document.getElementById("about").value;
-  let file = document.getElementById("file").files[0];
-
-  /* FIX ERROR */
-  if(!name || !age || !city || !phone || !education || !job || !about || !file){
-    alert("❗ सभी fields भरें");
-    return;
-  }
-
-  alert("Uploading...");
-
-  let imgUrl = await uploadImg(file);
-
-  let newRef = db.ref("profiles").push();
-
-  await newRef.set({
-    uid: user.uid,
-    name,
-    age,
-    city,
-    phone,
-    education,
-    job,
-    about,
-    photo: imgUrl,
-    time: Date.now()
-  });
-
-  alert("✔ Profile Saved");
-
-  /* PAYMENT PAGE OPEN */
-  window.location = "payment.html";
-}
-
-/* LOGIN CHECK */
+/* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(!user){
     window.location="index.html";
+  }else{
+    userId = user.uid;
+    checkPayment();
   }
 });
+
+/* PAYMENT PAGE */
+function goPayment(){
+  window.location="payment.html";
+}
+
+/* PAYMENT CHECK */
+function checkPayment(){
+  db.ref("payments").on("value",snap=>{
+    let approved = false;
+
+    snap.forEach(s=>{
+      let d = s.val();
+      if(d.uid === userId && d.status==="approved"){
+        approved = true;
+      }
+    });
+
+    if(approved){
+      document.getElementById("submitBtn").disabled = false;
+      document.getElementById("submitBtn").classList.remove("lock");
+    }
+  });
+}
+
+/* SUBMIT PROFILE (PRIVATE - NOT SHOWN IN INDEX) */
+function submitProfile(){
+
+  if(!userId) return;
+
+  db.ref("users").push({
+    uid:userId,
+    name:document.getElementById("name").value,
+    age:document.getElementById("age").value,
+    city:document.getElementById("city").value,
+    phone:document.getElementById("phone").value,
+    time:Date.now(),
+    visibleToIndex:false
+  });
+
+  alert("✔ Profile Saved Successfully");
+
+  // 👉 payment page open after submit
+  window.location="payment.html";
+}
 
 </script>
 
