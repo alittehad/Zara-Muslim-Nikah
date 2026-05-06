@@ -47,8 +47,8 @@ header{
   box-shadow:0 2px 0 rgba(0,0,0,0.25);
 }
 
-.admin{background:#111;}
 .add{background:#1d4ed8;}
+.admin{background:#111;}
 .logout{background:#dc2626;}
 
 /* GRID */
@@ -112,8 +112,9 @@ header{
 
   <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
 
+  <!-- ADMIN BUTTON (ONLY SHOW IF LOGIN) -->
   <button class="btn admin" id="adminBtn" onclick="goAdmin()" style="display:none">
-    👑 Admin Add
+    👑 Admin Panel
   </button>
 
 </div>
@@ -130,18 +131,38 @@ header{
 
 <script>
 
-/* ADMIN LOGIN CHECK (simple demo) */
-let isAdmin = localStorage.getItem("admin") === "true";
+/* =========================
+   ADMIN LOGIN (SIMPLE)
+   ========================= */
+const ADMIN_PASSWORD = "1234"; // change this
+
+let isAdmin = localStorage.getItem("isAdmin") === "true";
 
 /* show admin button */
 if(isAdmin){
   document.getElementById("adminBtn").style.display="inline-block";
 }
 
-/* LOAD PROFILES */
-function load(){
+/* fake admin login prompt (demo) */
+if(!isAdmin){
+  let pass = prompt("Enter Admin Password (or cancel for user mode)");
 
-  let data = JSON.parse(localStorage.getItem("profiles") || "[]");
+  if(pass === ADMIN_PASSWORD){
+    localStorage.setItem("isAdmin","true");
+    isAdmin = true;
+    document.getElementById("adminBtn").style.display="inline-block";
+  }
+}
+
+/* =========================
+   LOCAL STORAGE DATA
+   ========================= */
+function getData(){
+  return JSON.parse(localStorage.getItem("profiles") || "[]");
+}
+
+function load(){
+  let data = getData();
 
   let html="";
 
@@ -161,10 +182,12 @@ function load(){
 
 load();
 
-/* OPEN MODAL */
+/* =========================
+   OPEN PROFILE
+   ========================= */
 function openModal(i){
 
-  let data = JSON.parse(localStorage.getItem("profiles") || "[]");
+  let data = getData();
   let p = data[i];
 
   document.getElementById("modalBody").innerHTML=`
@@ -172,7 +195,7 @@ function openModal(i){
     <img src="${p.photo}" style="width:100%;border-radius:10px;">
     <p><b>Age:</b> ${p.age}</p>
     <p><b>City:</b> ${p.city}</p>
-    <p>${p.desc}</p>
+    <p>${p.desc || ""}</p>
   `;
 
   document.getElementById("modal").style.display="flex";
@@ -182,13 +205,15 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* NAV */
+/* =========================
+   NAVIGATION
+   ========================= */
 function goAdd(){
   window.location="profile-submit.html";
 }
 
 function goAdmin(){
-  window.location="admin-add.html";
+  window.location="admin.html";
 }
 
 </script>
