@@ -75,54 +75,70 @@ const storage = firebase.storage();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-/* 🔥 SECURITY CHECK */
+let currentUser = null;
+
+/* 🔥 AUTH CHECK */
 auth.onAuthStateChanged(user=>{
   if(!user){
     window.location.href="login.html";
     return;
   }
 
-  if((user.email||"").toLowerCase() !== ADMIN_EMAIL){
+  currentUser = user;
+
+  if((user.email || "").toLowerCase() !== ADMIN_EMAIL){
     alert("Only admin allowed");
     window.location.href="index.html";
   }
 });
 
+/* 🔥 FIXED SUBMIT FUNCTION */
 async function addProfile(){
 
+  const name = document.getElementById("name").value.trim();
+  const age = document.getElementById("age").value.trim();
+  const city = document.getElementById("city").value.trim();
   const file = document.getElementById("photo").files[0];
+
+  if(!name || !age || !city){
+    alert("All fields required");
+    return;
+  }
 
   if(!file){
     alert("Photo required");
     return;
   }
 
-  const name = document.getElementById("name").value;
-  const age = document.getElementById("age").value;
-  const city = document.getElementById("city").value;
-
   try{
 
-    const ref = storage.ref("profiles/"+Date.now()+"_"+file.name);
+    // 🔥 STORAGE UPLOAD FIX
+    const storageRef = storage.ref("profiles/" + Date.now() + "_" + file.name);
 
-    await ref.put(file);
+    const uploadTask = await storageRef.put(file);
 
-    const url = await ref.getDownloadURL();
+    const url = await uploadTask.ref.getDownloadURL();
 
+    // 🔥 DATABASE SAVE
     await db.ref("profiles").push({
-      name: name,
-      age: age,
-      city: city,
+      name,
+      age,
+      city,
       photo: url,
       time: Date.now()
     });
 
-    alert("Profile Added ✔️");
+    alert("Profile Added Successfully ✔️");
 
-    location.reload();
+    // clear form
+    document.getElementById("name").value = "";
+    document.getElementById("age").value = "";
+    document.getElementById("city").value = "";
+    document.getElementById("photo").value = "";
 
   }catch(err){
-    alert("Error: "+err.message);
+    console.log(err);
+    alert("Upload failed: " + err.message);
   }
 }
 </script>
