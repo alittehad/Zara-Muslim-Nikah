@@ -3,219 +3,175 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Payment System</title>
+<title>Payment Admin Panel</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
 body{
+  margin:0;
   font-family:sans-serif;
   background:#f4f6f9;
-  padding:15px;
 }
 
-.box{
-  max-width:420px;
-  margin:auto;
-  background:white;
-  padding:18px;
-  border-radius:12px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-h2{
-  text-align:center;
-  color:#0f766e;
-}
-
-/* SCANNER */
-.scanner{
-  text-align:center;
-  background:#e0f2fe;
-  padding:10px;
-  border-radius:10px;
-  margin-bottom:10px;
-}
-
-.scanner img{
-  width:160px;
-  border-radius:10px;
-}
-
-/* INPUT */
-input,button{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border-radius:8px;
-  border:1px solid #ddd;
-}
-
-button{
-  background:#0f766e;
+header{
+  background:#111;
   color:white;
-  border:none;
-  cursor:pointer;
+  text-align:center;
+  padding:12px;
+  font-size:16px;
+  font-weight:bold;
 }
 
-/* CARD */
+.topbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:10px;
+}
+
+input{
+  flex:1;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+
+.filter-btn{
+  padding:8px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+  background:#ddd;
+}
+
+.container{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  padding:10px;
+}
+
+@media(max-width:768px){
+  .container{ grid-template-columns:1fr; }
+}
+
 .card{
   background:white;
-  margin-top:10px;
-  padding:10px;
   border-radius:10px;
+  padding:8px;
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
-  font-size:14px;
+  font-size:13px;
 }
 
-/* IMAGE FIX (IMPORTANT) */
-.card img{
-  width:100%;
-  height:140px;
-  object-fit:cover;
-  border-radius:8px;
+.btn{
+  padding:6px 8px;
+  border:none;
+  border-radius:5px;
   margin-top:5px;
+  cursor:pointer;
+  font-size:11px;
+  color:white;
 }
 
-/* STATUS */
-.ok{color:green;font-weight:bold;}
-.wait{color:orange;font-weight:bold;}
+.approve{background:green;}
+.reject{background:red;}
+.delete{background:black;}
 </style>
 </head>
 
 <body>
 
-<div class="box">
+<header>👑 Payment Admin Panel</header>
 
-<h2>💍 Registration Payment</h2>
+<div class="topbar">
+  <input type="text" id="search" placeholder="🔍 Name / Mobile search..." onkeyup="render()">
 
-<!-- 🔥 SCANNER ADDED -->
-<div class="scanner">
-  <p><b>📷 Scan QR & Pay</b></p>
-  <img src="https://i.ibb.co/6RkksFjc/qr.png">
+  <button class="filter-btn" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" onclick="setFilter('pending')">Request</button>
+  <button class="filter-btn" onclick="setFilter('approved')">Approved</button>
+  <button class="filter-btn" onclick="setFilter('rejected')">Rejected</button>
 </div>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="phone" placeholder="Phone">
-
-<input type="file" id="file">
-
-<button onclick="submit()">Send Payment</button>
-
-</div>
-
-<div id="list"></div>
+<div class="container" id="list"></div>
 
 <script>
 
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
-};
-
-firebase.initializeApp(firebaseConfig);
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
+});
 
 const db = firebase.database();
-const auth = firebase.auth();
 
-/* IMG UPLOAD */
-async function uploadImg(file){
+let payments = {};
+let currentFilter = "all";
 
-  let form = new FormData();
-  form.append("image", file);
-
-  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
-    method:"POST",
-    body:form
-  });
-
-  let data = await res.json();
-  return data.data.url;
-}
-
-/* SUBMIT */
-async function submit(){
-
-  const user = auth.currentUser;
-
-  if(!user){
-    alert("Please login first");
-    return;
-  }
-
-  let name = document.getElementById("name").value;
-  let age = document.getElementById("age").value;
-  let phone = document.getElementById("phone").value;
-  let file = document.getElementById("file").files[0];
-
-  if(!name || !age || !phone || !file){
-    alert("Fill all fields");
-    return;
-  }
-
-  alert("Uploading...");
-
-  let img = await uploadImg(file);
-
-  db.ref("payments").push({
-    uid: user.uid,
-    name,
-    age,
-    phone,
-    screenshot: img,
-    status: "pending",
-    time: Date.now()
-  });
-
-  alert("✔ Sent for approval");
-}
-
-/* SHOW ONLY USER DATA */
-auth.onAuthStateChanged(user=>{
-
-  if(!user){
-    document.getElementById("list").innerHTML =
-      "<p style='text-align:center'>Login Required</p>";
-    return;
-  }
-
-  db.ref("payments").on("value", snap=>{
-
-    let html="";
-
-    snap.forEach(c=>{
-
-      let d = c.val();
-
-      if(d.uid !== user.uid) return;
-
-      html+=`
-      <div class="card">
-
-        <b>👤 ${d.name}</b><br>
-        📞 ${d.phone}<br>
-
-        <img src="${d.screenshot}">
-
-        ${
-          d.status === "approved"
-          ? `<p class="ok">✔️ आप रजिस्टर हो गए हैं</p>`
-          : `<p class="wait">⏳ Wait for approval</p>`
-        }
-
-      </div>`;
-    });
-
-    document.getElementById("list").innerHTML =
-      html || "<p>No Payment Found</p>";
-  });
-
+db.ref("payments").on("value", snap=>{
+  payments = snap.val() || {};
+  render();
 });
+
+function setFilter(f){
+  currentFilter = f;
+  render();
+}
+
+function render(){
+
+  let search = document.getElementById("search").value.toLowerCase();
+  let html = "";
+
+  Object.keys(payments).forEach(id=>{
+
+    let d = payments[id];
+
+    let text = (d.name + " " + (d.mobile||"") + " " + (d.age||"")).toLowerCase();
+
+    if(search && !text.includes(search)) return;
+
+    if(currentFilter !== "all" && (d.status||"pending") !== currentFilter) return;
+
+    html += `
+    <div class="card">
+
+      <b>👤 ${d.name || ""}</b><br>
+      📱 ${d.mobile || "N/A"}<br>
+      🎂 ${d.age || ""}<br>
+      💰 ₹${d.amount || "0"}<br>
+
+      <!-- ❌ SCREENSHOT HIDDEN FROM ADMIN LIST VIEW -->
+      <!-- सिर्फ database में रहेगा -->
+
+      <div>Status: <b>${d.status || "pending"}</b></div>
+
+      <button class="btn approve" onclick="approve('${id}')">✔ Approve</button>
+      <button class="btn reject" onclick="reject('${id}')">✖ Reject</button>
+      <button class="btn delete" onclick="del('${id}')">🗑 Delete</button>
+
+    </div>`;
+  });
+
+  document.getElementById("list").innerHTML =
+    html || "<p style='text-align:center'>No Data Found</p>";
+}
+
+function approve(id){
+  db.ref("payments/"+id).update({status:"approved"});
+}
+
+function reject(id){
+  db.ref("payments/"+id).update({status:"rejected"});
+}
+
+function del(id){
+  if(confirm("Delete this record?")){
+    db.ref("payments/"+id).remove();
+  }
+}
 
 </script>
 
