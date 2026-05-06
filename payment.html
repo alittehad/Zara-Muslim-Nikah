@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Registration Payment</title>
+<title>Payment</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -13,89 +13,68 @@
 body{
   font-family:sans-serif;
   background:#f4f6f9;
-  padding:20px;
+  padding:15px;
 }
 
 .box{
   max-width:420px;
   margin:auto;
-  background:white;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-h2{
-  text-align:center;
-  color:#0f766e;
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
 }
 
 input,button{
   width:100%;
   padding:10px;
-  margin:8px 0;
+  margin:6px 0;
   border-radius:8px;
+  border:1px solid #ddd;
 }
 
 button{
   background:#0f766e;
   color:white;
   border:none;
-  cursor:pointer;
 }
 
-/* CARD */
 .card{
-  background:white;
+  background:#fff;
   margin-top:10px;
   padding:10px;
   border-radius:10px;
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
-  font-size:13px;
 }
 
-/* IMAGE FIX */
 .card img{
   width:100%;
-  height:130px;
+  height:120px;
   object-fit:cover;
   border-radius:8px;
 }
 
-/* STATUS */
-.ok{
-  color:green;
-  font-weight:bold;
-}
-
-.wait{
-  color:orange;
-  font-weight:bold;
-}
+.ok{color:green;font-weight:bold;}
+.wait{color:orange;font-weight:bold;}
 </style>
 </head>
 
 <body>
 
 <div class="box">
-
-<h2>💍 Registration Payment</h2>
+<h3>💍 Registration Payment</h3>
 
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
 <input id="phone" placeholder="Phone">
-
 <input type="file" id="file">
 
-<button onclick="submit()">Send Payment</button>
-
+<button onclick="send()">Send Payment</button>
 </div>
 
 <div id="list"></div>
 
 <script>
 
-/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -108,9 +87,8 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-/* IMAGE UPLOAD (IMGBB) */
-async function uploadImg(file){
-
+/* IMG UPLOAD */
+async function upload(file){
   let form = new FormData();
   form.append("image", file);
 
@@ -123,17 +101,16 @@ async function uploadImg(file){
   return data.data.url;
 }
 
-/* SUBMIT */
-async function submit(){
+/* SEND PAYMENT */
+async function send(){
 
-  const user = auth.currentUser;
-
+  let user = auth.currentUser;
   if(!user){
-    alert("Login first");
+    alert("Login required");
     return;
   }
 
-  let name = document.getElementById("name").value;
+  let name = name = document.getElementById("name").value;
   let age = document.getElementById("age").value;
   let phone = document.getElementById("phone").value;
   let file = document.getElementById("file").files[0];
@@ -145,61 +122,54 @@ async function submit(){
 
   alert("Uploading...");
 
-  let img = await uploadImg(file);
+  let img = await upload(file);
 
   db.ref("payments").push({
-    uid: user.uid,
+    uid:user.uid,
     name,
     age,
     phone,
-    screenshot: img,
-    status: "pending",
-    time: Date.now()
+    screenshot:img,
+    status:"pending"
   });
 
-  alert("✔ Sent for approval");
+  alert("Sent ✔");
 }
 
 /* SHOW ONLY USER DATA */
 auth.onAuthStateChanged(user=>{
 
   if(!user){
-    document.getElementById("list").innerHTML =
-      "<p style='text-align:center'>Login Required</p>";
+    document.getElementById("list").innerHTML = "<p>Login required</p>";
     return;
   }
 
-  db.ref("payments").on("value", snap=>{
+  db.ref("payments").on("value",snap=>{
 
     let html="";
 
     snap.forEach(c=>{
 
-      let d = c.val();
+      let d=c.val();
 
       if(d.uid !== user.uid) return;
 
       html += `
       <div class="card">
-
         <b>${d.name}</b><br>
         📱 ${d.phone}<br>
 
         <img src="${d.screenshot}">
 
-        ${
-          d.status === "approved"
+        ${d.status === "approved"
           ? `<p class="ok">✔ आप registered हो गए हैं</p>`
           : `<p class="wait">⏳ Wait for approval</p>`
         }
-
       </div>`;
     });
 
-    document.getElementById("list").innerHTML =
-      html || "<p>No Payment Found</p>";
+    document.getElementById("list").innerHTML = html || "No data";
   });
-
 });
 
 </script>
