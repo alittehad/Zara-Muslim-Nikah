@@ -21,28 +21,39 @@ body{
 header{
   background:linear-gradient(90deg,#0f766e,#14b8a6);
   color:white;
-  text-align:center;
   padding:14px;
   font-weight:900;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-/* TOPBAR */
+/* RIGHT BUTTONS */
+.header-btns{
+  display:flex;
+  gap:8px;
+}
+
+/* BUTTON */
+.btn{
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:12px;
+}
+
+.my{background:#111;}
+.logout{background:#dc2626;}
+
 .topbar{
   display:flex;
   justify-content:center;
   gap:10px;
   padding:10px;
   flex-wrap:wrap;
-}
-
-/* BUTTON */
-.btn{
-  padding:10px 16px;
-  border:none;
-  border-radius:10px;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
 }
 
 .add{background:#1d4ed8;}
@@ -56,7 +67,6 @@ header{
   padding:15px;
 }
 
-/* CARD */
 .card{
   background:white;
   border-radius:12px;
@@ -76,16 +86,6 @@ header{
   padding:10px;
 }
 
-.card-body button{
-  margin:4px;
-  padding:6px 10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  color:white;
-}
-
-/* BUTTON COLORS */
 .like{background:#16a34a;}
 .edit{background:#1d4ed8;}
 .delete{background:#dc2626;}
@@ -112,19 +112,14 @@ header{
 
 <body>
 
-<header>🕋 Zara Nikah Service 🕌</header>
-  <div style="position:absolute;right:10px;top:10px;">
-  <button onclick="goMyProfile()" style="
-    background:#111;
-    color:white;
-    padding:8px 12px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-  ">
-  👤 My Profile
-  </button>
-</div>
+<header>
+  🕋 Zara Nikah Service 🕌
+
+  <div class="header-btns">
+    <button class="btn my" onclick="goMyProfile()">👤 My Profile</button>
+    <button class="btn logout" onclick="logout()">🚪 Logout</button>
+  </div>
+</header>
 
 <div class="topbar">
   <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
@@ -136,12 +131,6 @@ header{
   <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">
     ➕ Admin Add
   </button>
-
-   <!-- ✅ NEW LOGOUT BUTTON -->
-  <button class="btn admin" onclick="logout()">
-    🚪 Logout
-  </button>
-
 </div>
 
 <div class="grid" id="grid"></div>
@@ -156,24 +145,20 @@ header{
 
 <script>
 
-/* 🔥 Firebase Config */
-const firebaseConfig = {
+/* Firebase */
+firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
-};
-
-firebase.initializeApp(firebaseConfig);
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
+});
 
 const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
-
 let isAdmin = false;
 
-/* 🔐 LOGIN CHECK */
+/* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(user){
 
@@ -191,7 +176,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* 📥 LOAD DATA */
+/* LOAD DATA */
 function loadProfiles(){
 
   db.ref("profiles").on("value",snap=>{
@@ -210,15 +195,11 @@ function loadProfiles(){
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
-          <!-- 💍 RISHTA BUTTON -->
-          <button class="like" onclick="goPayment()">
-            💍 रिश्ता करें
-          </button>
+          <button class="btn like" onclick="goPayment()">💍 रिश्ता करें</button>
 
-          <!-- 👑 ADMIN BUTTON -->
           ${isAdmin ? `
-            <button class="edit" onclick="editProfile('${child.key}')">✏ Edit</button>
-            <button class="delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
+            <button class="btn edit" onclick="editProfile('${child.key}')">✏ Edit</button>
+            <button class="btn delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
           ` : ""}
 
         </div>
@@ -229,24 +210,23 @@ function loadProfiles(){
   });
 }
 
-/* 💍 GO TO PAYMENT */
-function goPayment(){
-  window.location.href = "payment.html";
-}
+/* FUNCTIONS */
+function goPayment(){ window.location="payment.html"; }
+function goAdd(){ window.location="profile-submit.html"; }
+function goAdmin(){ window.location="admin.html"; }
+function goAdminAdd(){ window.location="admin-add.html"; }
+function goMyProfile(){ window.location="my-profile.html"; }
 
-/* 🗑 DELETE */
 function deleteProfile(id){
   if(confirm("Delete profile?")){
     db.ref("profiles/"+id).remove();
   }
 }
 
-/* ✏ EDIT */
 function editProfile(id){
   window.location = "admin-add.html?id=" + id;
 }
 
-/* 📄 MODAL */
 function openModal(id){
   db.ref("profiles/"+id).once("value").then(snap=>{
     let d = snap.val();
@@ -256,7 +236,7 @@ function openModal(id){
       <img src="${d.photo}" style="width:100%;border-radius:10px;">
       <p><b>Age:</b> ${d.age}</p>
       <p><b>City:</b> ${d.city}</p>
-      <p>${d.description || ""}</p>
+      <p>${d.bio || ""}</p>
     `;
 
     document.getElementById("modal").style.display="flex";
@@ -267,21 +247,14 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* NAVIGATION */
-function goAdd(){ window.location="profile-submit.html"; }
-function goAdmin(){ window.location="admin.html"; }
-function goAdminAdd(){ window.location="admin-add.html"; }
-function goMyProfile(){
-  window.location = "my-profile.html";
-}
-
+/* LOGOUT */
 function logout(){
-  firebase.auth().signOut().then(()=>{
+  auth.signOut().then(()=>{
     alert("Logout Successfully");
-    window.location = "index.html";
+    window.location="index.html";
   });
 }
-  
+
 </script>
 
 </body>
