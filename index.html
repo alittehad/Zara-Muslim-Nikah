@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -17,7 +16,6 @@ body{
   background:#f4f6f9;
 }
 
-/* HEADER */
 header{
   background:linear-gradient(90deg,#0f766e,#14b8a6);
   color:white;
@@ -28,9 +26,7 @@ header{
   align-items:center;
 }
 
-.logo{
-  font-size:16px;
-}
+.logo{font-size:16px;}
 
 .header-btns{
   display:flex;
@@ -79,7 +75,6 @@ header{
   width:100%;
   height:200px;
   object-fit:cover;
-  cursor:pointer;
 }
 
 .card-body{
@@ -109,10 +104,7 @@ header{
 }
 
 @media(max-width:600px){
-  header{
-    flex-direction:column;
-    gap:8px;
-  }
+  header{flex-direction:column;gap:8px;}
 }
 </style>
 </head>
@@ -121,7 +113,6 @@ header{
 
 <header>
   <div class="logo">🕋 Zara Nikah Service 🕌</div>
-
   <div class="header-btns">
     <button class="btn my" onclick="goMyProfile()">👤 My Profile</button>
     <button class="btn logout" onclick="logout()">🚪 Logout</button>
@@ -131,18 +122,12 @@ header{
 <div class="topbar">
   <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
 
-  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">
-    👑 Admin Panel
-  </button>
-
-  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">
-    ➕ Admin Add
-  </button>
+  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">👑 Admin Panel</button>
+  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">➕ Admin Add</button>
 </div>
 
 <div class="grid" id="grid"></div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
@@ -152,11 +137,10 @@ header{
 
 <script>
 
-/* Firebase */
 firebase.initializeApp({
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
+  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain:"zara-muslim-nikah.firebaseapp.com",
+  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com"
 });
 
 const auth = firebase.auth();
@@ -164,16 +148,13 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let isAdmin = false;
-let loaded = false;
+let profileRef = null;
 
 /* LOGIN FIX */
 auth.onAuthStateChanged(user=>{
 
-  if(loaded) return;
-  loaded = true;
-
   if(!user){
-    window.location.replace("index.html"); // clean redirect
+    window.location.replace("index.html"); // NO LOOP
     return;
   }
 
@@ -187,10 +168,16 @@ auth.onAuthStateChanged(user=>{
   loadProfiles();
 });
 
-/* LOAD DATA */
+/* LOAD DATA WITH CLEAN LISTENER */
 function loadProfiles(){
 
-  db.ref("profiles").on("value",snap=>{
+  if(profileRef){
+    profileRef.off(); // remove old listener
+  }
+
+  profileRef = db.ref("profiles");
+
+  profileRef.on("value",snap=>{
 
     let html="";
 
@@ -212,7 +199,6 @@ function loadProfiles(){
             <button class="btn edit" onclick="editProfile('${child.key}')">✏ Edit</button>
             <button class="btn delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
           ` : ""}
-
         </div>
       </div>`;
     });
@@ -258,10 +244,15 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* LOGOUT FINAL FIX */
+/* FINAL LOGOUT */
 function logout(){
+
+  if(profileRef){
+    profileRef.off(); // STOP listener (important)
+  }
+
   auth.signOut().then(()=>{
-    window.location.replace("index.html"); // no blink
+    window.location.replace("index.html"); // NO REFRESH BUG
   });
 }
 
