@@ -12,6 +12,7 @@ body{
   background:#f4f6f9;
 }
 
+/* HEADER */
 header{
   background:linear-gradient(90deg,#0f766e,#14b8a6);
   color:white;
@@ -29,6 +30,7 @@ header{
   flex-wrap:wrap;
 }
 
+/* 3D BUTTON */
 .btn{
   padding:10px 16px;
   border:none;
@@ -36,16 +38,20 @@ header{
   color:white;
   font-weight:bold;
   cursor:pointer;
-  box-shadow:0 5px 0 rgba(0,0,0,0.2);
+  box-shadow:0 5px 0 rgba(0,0,0,0.25);
+  transition:0.2s;
 }
 
 .btn:active{
   transform:translateY(3px);
+  box-shadow:0 2px 0 rgba(0,0,0,0.25);
 }
 
-.admin{background:#000;}
+.admin{background:#111;}
 .add{background:#1d4ed8;}
+.logout{background:#dc2626;}
 
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -53,11 +59,18 @@ header{
   padding:15px;
 }
 
+/* CARD */
 .card{
   background:white;
   border-radius:12px;
   overflow:hidden;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.card:hover{
+  transform:scale(1.03);
 }
 
 .card img{
@@ -70,6 +83,24 @@ header{
   text-align:center;
   padding:10px;
 }
+
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.6);
+}
+
+.modal-content{
+  background:white;
+  width:90%;
+  max-width:400px;
+  padding:20px;
+  border-radius:10px;
+}
 </style>
 </head>
 
@@ -78,28 +109,49 @@ header{
 <header>🕋 Zara Nikah Service 🕌</header>
 
 <div class="topbar">
-  <button class="btn admin" onclick="goAdmin()">👑 Admin Add</button>
+
+  <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
+
+  <button class="btn admin" id="adminBtn" onclick="goAdmin()" style="display:none">
+    👑 Admin Add
+  </button>
+
 </div>
 
 <div class="grid" id="grid"></div>
 
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
 <script>
 
-/* LOAD DATA */
+/* ADMIN LOGIN CHECK (simple demo) */
+let isAdmin = localStorage.getItem("admin") === "true";
+
+/* show admin button */
+if(isAdmin){
+  document.getElementById("adminBtn").style.display="inline-block";
+}
+
+/* LOAD PROFILES */
 function load(){
+
   let data = JSON.parse(localStorage.getItem("profiles") || "[]");
 
   let html="";
 
-  data.forEach(p=>{
+  data.forEach((p,i)=>{
     html+=`
-    <div class="card">
+    <div class="card" onclick="openModal(${i})">
       <img src="${p.photo}">
       <div class="card-body">
         <h3>${p.name}</h3>
-        <p>Age: ${p.age}</p>
-        <p>City: ${p.city}</p>
-        <p>${p.desc}</p>
+        <p>${p.city}</p>
       </div>
     </div>`;
   });
@@ -108,6 +160,32 @@ function load(){
 }
 
 load();
+
+/* OPEN MODAL */
+function openModal(i){
+
+  let data = JSON.parse(localStorage.getItem("profiles") || "[]");
+  let p = data[i];
+
+  document.getElementById("modalBody").innerHTML=`
+    <h2>${p.name}</h2>
+    <img src="${p.photo}" style="width:100%;border-radius:10px;">
+    <p><b>Age:</b> ${p.age}</p>
+    <p><b>City:</b> ${p.city}</p>
+    <p>${p.desc}</p>
+  `;
+
+  document.getElementById("modal").style.display="flex";
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+/* NAV */
+function goAdd(){
+  window.location="profile-submit.html";
+}
 
 function goAdmin(){
   window.location="admin-add.html";
