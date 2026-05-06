@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- ✅ Firebase -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -43,7 +43,6 @@ header{
   color:white;
   font-weight:bold;
   cursor:pointer;
-  box-shadow:0 5px 0 rgba(0,0,0,0.25);
 }
 
 .add{background:#1d4ed8;}
@@ -156,7 +155,7 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
 let isAdmin = false;
 
-/* 🔐 Auth */
+/* 🔐 LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
   if(user){
 
@@ -174,7 +173,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* 📥 Load Profiles */
+/* 📥 LOAD DATA */
 function loadProfiles(){
 
   db.ref("profiles").on("value",snap=>{
@@ -193,12 +192,12 @@ function loadProfiles(){
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
-          <!-- 💍 Rishta Button -->
-          <button class="like" onclick="goPayment('${child.key}')">
+          <!-- 💍 RISHTA BUTTON -->
+          <button class="like" onclick="goPayment()">
             💍 रिश्ता करें
           </button>
 
-          <!-- 👑 Admin Buttons -->
+          <!-- 👑 ADMIN BUTTON -->
           ${isAdmin ? `
             <button class="edit" onclick="editProfile('${child.key}')">✏ Edit</button>
             <button class="delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
@@ -212,9 +211,9 @@ function loadProfiles(){
   });
 }
 
-/* 💍 PAYMENT PAGE */
-function goPayment(id){
-  window.location = "payment.html?id=" + id;
+/* 💍 GO TO PAYMENT */
+function goPayment(){
+  window.location.href = "payment.html";
 }
 
 /* 🗑 DELETE */
@@ -250,7 +249,7 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* 🔗 NAV */
+/* NAVIGATION */
 function goAdd(){ window.location="profile-submit.html"; }
 function goAdmin(){ window.location="admin.html"; }
 function goAdminAdd(){ window.location="admin-add.html"; }
