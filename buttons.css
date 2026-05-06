@@ -1,0 +1,44 @@
+/* 🔥 COMMON BUTTON BASE */
+.btn{
+  padding:12px 18px;
+  border:none;
+  border-radius:10px;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.2s;
+  box-shadow:0 6px 0 rgba(0,0,0,0.3);
+}
+
+/* 🔥 COLORS */
+.btn-home{
+  background:linear-gradient(145deg,#14b8a6,#0f766e);
+  box-shadow:0 6px 0 #0b5e57;
+}
+
+.btn-add{
+  background:linear-gradient(145deg,#3b82f6,#1d4ed8);
+  box-shadow:0 6px 0 #1e40af;
+}
+
+.btn-admin{
+  background:linear-gradient(145deg,#000,#333);
+  box-shadow:0 6px 0 #111;
+}
+
+.btn-logout{
+  background:linear-gradient(145deg,#ef4444,#dc2626);
+  box-shadow:0 6px 0 #991b1b;
+}
+
+.btn-like{
+  background:linear-gradient(145deg,#f43f5e,#e11d48);
+  box-shadow:0 6px 0 #9f1239;
+  width:100%;
+}
+
+/* 🔥 CLICK EFFECT */
+.btn:active{
+  transform:translateY(4px);
+  box-shadow:0 2px 0 rgba(0,0,0,0.4);
+}
