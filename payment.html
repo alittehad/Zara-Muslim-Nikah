@@ -38,17 +38,6 @@ h2{
   margin-bottom:10px;
 }
 
-.qr{
-  text-align:center;
-  margin:10px 0;
-}
-
-.qr img{
-  width:200px;
-  border-radius:10px;
-  border:1px solid #ddd;
-}
-
 input{
   width:100%;
   padding:10px;
@@ -67,10 +56,17 @@ button{
   font-size:16px;
 }
 
-.preview{
-  width:100%;
+.card{
+  background:white;
+  padding:10px;
   margin-top:10px;
   border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card img{
+  width:100%;
+  border-radius:8px;
 }
 </style>
 </head>
@@ -81,33 +77,68 @@ button{
 
 <h2>💍 रिश्ता रजिस्ट्रेशन</h2>
 
-<!-- 🔥 HINDI MESSAGE -->
 <div class="msg">
-👉 रिश्ता करने के लिए Registration Fees भरना अनिवार्य है<br>
-👉 Scan करें और Payment करें
+👉 Payment approve होने के बाद ही आप registered होंगे ✔️
 </div>
 
-<!-- QR -->
-<div class="qr">
-  <p><b>📸 QR को स्कैन करें</b></p>
-  <img src="https://i.ibb.co/6RkksFjc/qr.png">
-</div>
-
-<!-- FORM -->
-<input id="name" placeholder="नाम लिखें">
-<input id="age" placeholder="उम्र लिखें">
+<input id="name" placeholder="नाम">
+<input id="age" placeholder="उम्र">
 <input id="phone" placeholder="मोबाइल नंबर">
-
-<p><b>📷 Payment का Screenshot Upload करें</b></p>
 <input type="file" id="image">
-
-<img id="preview" class="preview" style="display:none;">
 
 <button onclick="submitPayment()">📩 Send करें</button>
 
 </div>
 
+<!-- RESULT AREA -->
+<div id="list"></div>
+
 <script>
+
+/* FIREBASE */
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* SUBMIT */
+function submitPayment(){
+
+  let name = document.getElementById("name").value;
+  let age = document.getElementById("age").value;
+  let phone = document.getElementById("phone").value;
+  let file = document.getElementById("image").files[0];
+
+  if(!name || !age || !phone || !file){
+    alert("सब fill करें");
+    return;
+  }
+
+  let reader = new FileReader();
+
+  reader.onload = function(){
+
+    db.ref("payments").push({
+      name,
+      age,
+      phone,
+      image: reader.result,
+      status:"pending",
+      time:Date.now()
+    });
+
+    alert("✔️ Payment भेज दिया गया");
+  }
+
+  reader.readAsDataURL(file);
+}
+
+/* SHOW DATA */
 db.ref("payments").on("value", snap => {
 
   let html = "";
@@ -122,14 +153,12 @@ db.ref("payments").on("value", snap => {
         <b>👤 Name:</b> ${d.name}<br>
         <b>📱 Phone:</b> ${d.phone}<br>
 
-        <img src="${d.image}" style="width:100%;border-radius:8px;">
+        <img src="${d.image}">
 
-        <p>Status: ${d.status}</p>
+        <p>Status: <b>${d.status}</b></p>
 
-        ${d.status === "approved" ? 
-          `<p style="color:green;font-weight:bold">
-            ${d.message || "आप registered हो गए हैं ✔️"}
-          </p>` 
+        ${d.status === "approved" 
+          ? `<p style="color:green;font-weight:bold">✔ आप registered हो गए हैं</p>`
           : `<p style="color:orange">Waiting for approval...</p>`
         }
 
@@ -138,7 +167,9 @@ db.ref("payments").on("value", snap => {
   });
 
   document.getElementById("list").innerHTML = html;
+
 });
+
 </script>
 
 </body>
