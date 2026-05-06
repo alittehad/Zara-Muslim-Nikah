@@ -44,6 +44,11 @@ header{
   overflow:hidden;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
   cursor:pointer;
+  transition:0.2s;
+}
+
+.card:hover{
+  transform:scale(1.03);
 }
 
 .card img{
@@ -92,7 +97,7 @@ header{
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
@@ -113,8 +118,8 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-let currentUser=null;
-let currentProfileId=null;
+let currentUser = null;
+let currentProfileId = null;
 
 /* 🔥 LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
@@ -123,30 +128,38 @@ auth.onAuthStateChanged(user=>{
     return;
   }
 
-  currentUser=user;
+  currentUser = user;
   document.getElementById("topbar").style.display="flex";
 
-  if((user.email||"").toLowerCase()===ADMIN_EMAIL){
+  // ADMIN CHECK
+  if((user.email || "").toLowerCase() === ADMIN_EMAIL){
     document.getElementById("adminBtn").style.display="inline-block";
   }
 
   loadProfiles();
 });
 
-/* 🔥 LOAD ADMIN PROFILES */
+/* 🔥 LOAD PROFILES */
 function loadProfiles(){
   db.ref("profiles").once("value").then(snap=>{
-    const grid=document.getElementById("profileGrid");
-    grid.innerHTML="";
+    const grid = document.getElementById("profileGrid");
+    grid.innerHTML = "";
+
+    if(!snap.exists()){
+      grid.innerHTML = "<p style='text-align:center;'>No profiles available</p>";
+      return;
+    }
 
     snap.forEach(child=>{
-      const d=child.val();
+      const d = child.val();
 
-      grid.innerHTML+=`
+      if(!d) return;
+
+      grid.innerHTML += `
       <div class="card" onclick="openModal('${child.key}')">
         <img src="${d.photo || 'https://via.placeholder.com/300'}">
         <div class="card-body">
-          <h3>${d.name || ''}</h3>
+          <h3>${d.name || 'No Name'}</h3>
           <p>${d.city || ''}</p>
         </div>
       </div>`;
@@ -156,32 +169,41 @@ function loadProfiles(){
 
 /* 🔥 OPEN PROFILE */
 function openModal(id){
-  currentProfileId=id;
+  currentProfileId = id;
 
   db.ref("profiles/"+id).once("value").then(snap=>{
-    const d=snap.val();
+    const d = snap.val();
 
-    document.getElementById("modalBody").innerHTML=`
-      <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%;border-radius:10px;">
-      <p>Age: ${d.age}</p>
-      <p>City: ${d.city}</p>
+    if(!d){
+      alert("Profile not found");
+      return;
+    }
+
+    document.getElementById("modalBody").innerHTML = `
+      <h2>${d.name || ''}</h2>
+      <img src="${d.photo || ''}" style="width:100%;border-radius:10px;">
+      <p><b>Age:</b> ${d.age || ''}</p>
+      <p><b>City:</b> ${d.city || ''}</p>
 
       <button class="btn btn-like" onclick="goPayment()">❤️ रिश्ता पसंद है</button>
     `;
 
-    document.getElementById("modal").style.display="flex";
+    document.getElementById("modal").style.display = "flex";
   });
 }
 
-/* 🔥 GO PAYMENT */
+/* 🔥 GO PAYMENT (FIXED) */
 function goPayment(){
-  localStorage.setItem("selectedProfile", currentProfileId);
-  window.location.href="payment.html";
+  if(!currentProfileId){
+    alert("No profile selected");
+    return;
+  }
+
+  window.location.href = "payment.html?profile=" + currentProfileId;
 }
 
 function closeModal(){
-  document.getElementById("modal").style.display="none";
+  document.getElementById("modal").style.display = "none";
 }
 
 function logout(){
@@ -189,11 +211,11 @@ function logout(){
 }
 
 function goAdd(){
-  window.location="profile-submit.html";
+  window.location = "profile-submit.html";
 }
 
 function goAdmin(){
-  window.location="admin-add.html";
+  window.location = "admin-add.html";
 }
 
 </script>
