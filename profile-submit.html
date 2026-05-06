@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile Submit</title>
+<title>Marriage Profile Form</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -22,6 +22,12 @@ body{
   background:white;
   padding:15px;
   border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h2{
+  text-align:center;
+  color:#0f766e;
 }
 
 input,select,textarea{
@@ -44,13 +50,13 @@ button{
   cursor:pointer;
 }
 
-/* IMAGE PREVIEW SMALL */
 #preview{
   width:90px;
   height:90px;
   object-fit:cover;
   border-radius:8px;
   display:none;
+  margin-top:5px;
 }
 </style>
 </head>
@@ -59,15 +65,25 @@ button{
 
 <div class="box">
 
-<h2>💍 Profile Submit</h2>
+<h2>💍 शादी प्रोफाइल फॉर्म</h2>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="phone" placeholder="Phone">
-<input id="city" placeholder="City">
-<input id="job" placeholder="Job">
+<!-- FULL FORM -->
+<input id="name" placeholder="पूरा नाम">
+<input id="age" placeholder="उम्र">
+<select id="gender">
+  <option value="">Gender चुनें</option>
+  <option>Male</option>
+  <option>Female</option>
+</select>
 
-<p>📷 Photo</p>
+<input id="phone" placeholder="मोबाइल नंबर">
+<input id="city" placeholder="शहर">
+<input id="religion" placeholder="धर्म">
+<input id="education" placeholder="शिक्षा">
+<input id="job" placeholder="नौकरी">
+<textarea id="about" placeholder="अपने बारे में लिखें"></textarea>
+
+<p>📷 फोटो अपलोड करें</p>
 <input type="file" id="file">
 <img id="preview">
 
@@ -89,7 +105,7 @@ const db = firebase.database();
 
 let imageURL = "";
 
-/* PREVIEW */
+/* IMAGE PREVIEW */
 document.getElementById("file").onchange = function(e){
   let reader = new FileReader();
   reader.onload = function(){
@@ -100,7 +116,7 @@ document.getElementById("file").onchange = function(e){
   reader.readAsDataURL(e.target.files[0]);
 };
 
-/* IMG UPLOAD */
+/* IMGBB UPLOAD */
 async function uploadImg(file){
 
   let form = new FormData();
@@ -115,46 +131,61 @@ async function uploadImg(file){
   return data.data.url;
 }
 
-/* SAVE PROFILE */
+/* SAVE PROFILE (FIXED) */
 async function saveProfile(){
 
-  const user = auth.currentUser;
+  let user = auth.currentUser;
 
   if(!user){
-    alert("Login required");
+    alert("Login करें");
+    return;
+  }
+
+  // validation
+  if(
+    !name.value ||
+    !age.value ||
+    !gender.value ||
+    !phone.value ||
+    !city.value ||
+    !religion.value ||
+    !education.value ||
+    !job.value ||
+    !about.value
+  ){
+    alert("❗ सभी fields भरें");
     return;
   }
 
   let file = document.getElementById("file").files[0];
 
   if(!file){
-    alert("Photo जरूरी है");
+    alert("❗ Photo जरूरी है");
     return;
   }
 
-  if(!name.value || !age.value || !phone.value || !city.value){
-    alert("Required fields fill करें");
-    return;
-  }
-
-  alert("Saving profile...");
+  alert("Uploading image...");
 
   imageURL = await uploadImg(file);
 
   await db.ref("profiles").push({
-    uid: user.uid,
-    name: name.value,
-    age: age.value,
-    phone: phone.value,
-    city: city.value,
-    job: job.value,
-    photo: imageURL,
-    time: Date.now()
+    uid:user.uid,
+    name:name.value,
+    age:age.value,
+    gender:gender.value,
+    phone:phone.value,
+    city:city.value,
+    religion:religion.value,
+    education:education.value,
+    job:job.value,
+    about:about.value,
+    photo:imageURL,
+    time:Date.now()
   });
 
-  alert("✔ Profile Saved");
+  alert("✔ Profile Saved Successfully");
 
-  // 🔥 IMPORTANT: redirect to payment page
+  // 🔥 redirect after save
   window.location.href = "payment.html";
 }
 
