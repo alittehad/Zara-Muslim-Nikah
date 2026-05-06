@@ -49,6 +49,13 @@ button:disabled{
   background:gray;
 }
 
+.preview{
+  width:100%;
+  border-radius:10px;
+  margin-top:10px;
+  display:none;
+}
+
 .qr{
   text-align:center;
   margin:10px 0;
@@ -60,14 +67,6 @@ button:disabled{
   border:1px solid #ddd;
 }
 
-.preview{
-  width:100%;
-  margin-top:10px;
-  border-radius:10px;
-  display:none;
-}
-
-/* CARD */
 .card{
   background:#fff;
   margin-top:10px;
@@ -85,30 +84,30 @@ button:disabled{
 
 <div class="box">
 
-<h2>💍 रिश्ता रजिस्ट्रेशन</h2>
+<h2>💍 Registration Payment</h2>
 
 <!-- MESSAGE -->
 <div style="background:#e0f2fe;padding:10px;border-radius:8px;text-align:center;font-weight:bold;margin-bottom:10px;">
-👉 रिश्ता करने के लिए Registration Fees जरूरी है
+👉 Registration Fees अनिवार्य है
 </div>
 
 <!-- SCANNER -->
 <div class="qr">
-  <p><b>📸 QR को स्कैन करें</b></p>
+  <p><b>📸 QR Scan करें</b></p>
   <img src="https://i.ibb.co/99Nb64Yk/OIP-1.jpg">
 </div>
 
 <!-- FORM -->
-<input id="name" placeholder="नाम लिखें">
-<input id="age" placeholder="उम्र">
-<input id="phone" placeholder="मोबाइल नंबर">
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="phone" placeholder="Phone">
 
-<p><b>📷 Payment Screenshot</b></p>
+<p>📷 Screenshot Upload</p>
 <input type="file" id="file">
 
 <img id="preview" class="preview">
 
-<button id="btn" onclick="submitPayment()">📩 Send Payment</button>
+<button id="btn" onclick="submit()">Send Payment</button>
 
 </div>
 
@@ -142,23 +141,36 @@ document.getElementById("file").onchange = function(e){
   reader.readAsDataURL(file);
 };
 
-/* UPLOAD IMAGE */
-async function upload(file){
+/* IMGBB UPLOAD */
+async function uploadImg(file){
 
   let form = new FormData();
   form.append("image", file);
 
-  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
-    method:"POST",
-    body:form
-  });
+  try{
 
-  let data = await res.json();
-  return data.data.url;
+    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
+      method:"POST",
+      body:form
+    });
+
+    let data = await res.json();
+
+    if(!data.success){
+      throw new Error("Upload failed");
+    }
+
+    return data.data.url;
+
+  }catch(err){
+    console.log(err);
+    alert("Image upload failed");
+    return null;
+  }
 }
 
 /* SUBMIT */
-async function submitPayment(){
+async function submit(){
 
   const user = auth.currentUser;
 
@@ -183,7 +195,13 @@ async function submitPayment(){
     return;
   }
 
-  let img = await upload(file);
+  let img = await uploadImg(file);
+
+  if(!img){
+    btn.disabled = false;
+    btn.innerText = "Send Payment";
+    return;
+  }
 
   await db.ref("payments").push({
     uid:user.uid,
@@ -200,7 +218,7 @@ async function submitPayment(){
   btn.style.display="none";
 }
 
-/* SHOW USER ONLY */
+/* SHOW USER DATA ONLY */
 auth.onAuthStateChanged(user=>{
 
   if(!user){
