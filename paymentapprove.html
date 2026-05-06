@@ -3,132 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Payment Approve</title>
+<title>Admin Approval</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  font-family:sans-serif;
-  margin:0;
-  background:#f4f6f9;
-}
-
-/* HEADER */
-header{
-  background:#0f766e;
-  color:white;
-  text-align:center;
-  padding:12px;
-  font-weight:bold;
-}
-
-/* GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:10px;
-  padding:10px;
-}
-
-/* CARD SMALL */
+body{font-family:sans-serif;background:#f4f6f9;padding:10px;}
 .card{
-  background:white;
-  border-radius:10px;
+  background:#fff;
   padding:10px;
-  font-size:13px;
+  margin:10px 0;
+  border-radius:10px;
   box-shadow:0 2px 8px rgba(0,0,0,0.1);
+  font-size:14px;
 }
-
-.card img{
-  width:100%;
-  height:120px;
-  object-fit:cover;
-  border-radius:8px;
-}
-
-/* BUTTONS */
-.btn{
+img{width:100%;border-radius:8px;}
+button{
   width:48%;
   padding:8px;
+  margin-top:5px;
   border:none;
   border-radius:6px;
-  color:white;
-  font-size:12px;
 }
-
-.approve{background:green;}
-.reject{background:red;}
-
-.row{
-  display:flex;
-  justify-content:space-between;
-  margin-top:8px;
-}
+.approve{background:green;color:white;}
+.reject{background:red;color:white;}
 </style>
 </head>
 
 <body>
 
-<header>💰 Payment Approval Panel</header>
+<h3>👑 Payment Approval Panel</h3>
 
-<div class="grid" id="list"></div>
+<div id="list"></div>
 
 <script>
 
-/* FIREBASE */
-const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
-};
-
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp({
+  apiKey:"YOUR_KEY",
+  authDomain:"YOUR_DOMAIN",
+  databaseURL:"YOUR_DB"
+});
 
 const db = firebase.database();
 
-/* LOAD PAYMENTS */
 db.ref("payments").on("value",snap=>{
-
   let html="";
 
-  snap.forEach(child=>{
-    let d = child.val();
-    let key = child.key;
+  snap.forEach(c=>{
+    let d = c.val();
 
-    if(d.status === "approved") return;
-
-    html += `
+    html+=`
     <div class="card">
+      <b>${d.name}</b> | Age: ${d.age}<br>
       <img src="${d.screenshot}">
-      <b>${d.name}</b><br>
-      Age: ${d.age}<br>
-      Amount: ₹${d.amount}<br>
+      <p>Status: <b>${d.status}</b></p>
 
-      <div class="row">
-        <button class="btn approve" onclick="approve('${key}')">Approve</button>
-        <button class="btn reject" onclick="reject('${key}')">Reject</button>
-      </div>
+      <button class="approve" onclick="approve('${c.key}')">Approve</button>
+      <button class="reject" onclick="reject('${c.key}')">Reject</button>
     </div>`;
   });
 
-  document.getElementById("list").innerHTML = html;
-
+  document.getElementById("list").innerHTML=html;
 });
 
-/* APPROVE */
 function approve(id){
-  db.ref("payments/"+id).update({
-    status:"approved"
-  });
+  db.ref("payments/"+id).update({status:"approved"});
 }
 
-/* REJECT */
 function reject(id){
-  db.ref("payments/"+id).remove();
+  db.ref("payments/"+id).update({status:"rejected"});
 }
 
 </script>
