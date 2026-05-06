@@ -33,34 +33,21 @@ input,button{
 
 button{
   background:#0f766e;
-  color:#fff;
+  color:white;
   border:none;
+  cursor:pointer;
 }
 
 .card{
   background:#fff;
-  padding:10px;
   margin-top:10px;
+  padding:10px;
   border-radius:10px;
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.card img{
-  width:100%;
-  height:140px;
-  object-fit:cover;
-  border-radius:8px;
-}
-
-.wait{
-  color:orange;
-  font-weight:bold;
-}
-
-.ok{
-  color:green;
-  font-weight:bold;
-}
+.ok{color:green;font-weight:bold;}
+.wait{color:orange;font-weight:bold;}
 </style>
 </head>
 
@@ -75,7 +62,7 @@ button{
 
 <input type="file" id="file">
 
-<button id="sendBtn" onclick="submit()">Send Payment</button>
+<button id="btn" onclick="submit()">Send Payment</button>
 </div>
 
 <div id="list"></div>
@@ -94,8 +81,9 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-/* IMG UPLOAD */
-async function uploadImg(file){
+/* UPLOAD IMAGE (IMGBB - YOUR KEY) */
+async function upload(file){
+
   let form = new FormData();
   form.append("image", file);
 
@@ -112,6 +100,7 @@ async function uploadImg(file){
 async function submit(){
 
   let user = auth.currentUser;
+
   if(!user){
     alert("Login required");
     return;
@@ -127,9 +116,9 @@ async function submit(){
     return;
   }
 
-  document.getElementById("sendBtn").style.display="none";
+  document.getElementById("btn").innerText = "Uploading...";
 
-  let img = await uploadImg(file);
+  let img = await upload(file);
 
   db.ref("payments").push({
     uid:user.uid,
@@ -141,10 +130,12 @@ async function submit(){
     time:Date.now()
   });
 
-  alert("Payment Sent ✔");
+  alert("✔ Payment Sent");
+
+  document.getElementById("btn").style.display="none";
 }
 
-/* SHOW ONLY USER DATA */
+/* SHOW ONLY USER DATA (NO SCREENSHOT) */
 auth.onAuthStateChanged(user=>{
 
   if(!user){
@@ -164,10 +155,11 @@ auth.onAuthStateChanged(user=>{
 
       html+=`
       <div class="card">
-        <b>${d.name}</b><br>
-        ${d.age} | ${d.phone}<br>
 
-        <img src="${d.screenshot}">
+        <b>${d.name}</b><br>
+        📱 ${d.phone}<br>
+
+        <!-- ❌ SCREENSHOT HIDDEN (IMPORTANT FIX) -->
 
         ${
           d.status==="approved"
@@ -178,7 +170,7 @@ auth.onAuthStateChanged(user=>{
       </div>`;
     });
 
-    document.getElementById("list").innerHTML=html;
+    document.getElementById("list").innerHTML = html;
   });
 
 });
