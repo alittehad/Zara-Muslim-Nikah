@@ -29,6 +29,7 @@ input,button{
   padding:10px;
   margin:6px 0;
   border-radius:8px;
+  box-sizing:border-box;
 }
 
 button{
@@ -36,6 +37,10 @@ button{
   color:white;
   border:none;
   cursor:pointer;
+}
+
+button:disabled{
+  background:gray;
 }
 
 .card{
@@ -46,14 +51,15 @@ button{
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.ok{color:green;font-weight:bold;}
-.wait{color:orange;font-weight:bold;}
-
 .preview{
   width:100%;
-  margin-top:10px;
   border-radius:10px;
+  margin-top:8px;
+  display:none;
 }
+
+.ok{color:green;font-weight:bold;}
+.wait{color:orange;font-weight:bold;}
 </style>
 </head>
 
@@ -66,11 +72,9 @@ button{
 <input id="age" placeholder="Age">
 <input id="phone" placeholder="Phone">
 
-<p>📷 Payment Screenshot (Scanner)</p>
+<p>📷 Screenshot (Scanner)</p>
 <input type="file" id="file">
-
-<!-- 🔥 IMAGE PREVIEW (SCANNER) -->
-<img id="preview" class="preview" style="display:none;">
+<img id="preview" class="preview">
 
 <button id="btn" onclick="submit()">Send Payment</button>
 </div>
@@ -91,17 +95,21 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-/* 🔥 SCANNER PREVIEW (IMGBB INPUT SUPPORT) */
+/* IMAGE PREVIEW */
 document.getElementById("file").onchange = function(e){
+  let file = e.target.files[0];
+  if(!file) return;
+
   let reader = new FileReader();
   reader.onload = function(){
-    document.getElementById("preview").src = reader.result;
-    document.getElementById("preview").style.display = "block";
-  }
-  reader.readAsDataURL(e.target.files[0]);
+    let img = document.getElementById("preview");
+    img.src = reader.result;
+    img.style.display = "block";
+  };
+  reader.readAsDataURL(file);
 };
 
-/* 🔥 UPLOAD TO IMGBB (YOUR SCANNER KEY) */
+/* UPLOAD */
 async function upload(file){
 
   let form = new FormData();
@@ -119,12 +127,16 @@ async function upload(file){
 /* SUBMIT */
 async function submit(){
 
-  let user = auth.currentUser;
+  const user = auth.currentUser;
 
   if(!user){
     alert("Login required");
     return;
   }
+
+  let btn = document.getElementById("btn");
+  btn.disabled = true;
+  btn.innerText = "Uploading...";
 
   let name = document.getElementById("name").value;
   let age = document.getElementById("age").value;
@@ -133,14 +145,14 @@ async function submit(){
 
   if(!name || !age || !phone || !file){
     alert("Fill all fields");
+    btn.disabled = false;
+    btn.innerText = "Send Payment";
     return;
   }
 
-  document.getElementById("btn").innerText = "Uploading...";
-
   let img = await upload(file);
 
-  db.ref("payments").push({
+  await db.ref("payments").push({
     uid:user.uid,
     name,
     age,
@@ -150,12 +162,12 @@ async function submit(){
     time:Date.now()
   });
 
-  alert("✔ Payment Sent (Waiting Approval)");
+  alert("✔ Sent Successfully");
 
-  document.getElementById("btn").style.display="none";
+  btn.style.display="none";
 }
 
-/* SHOW USER DATA (NO SCREENSHOT SHOWN) */
+/* SHOW USER ONLY */
 auth.onAuthStateChanged(user=>{
 
   if(!user){
@@ -178,8 +190,6 @@ auth.onAuthStateChanged(user=>{
 
         <b>${d.name}</b><br>
         📱 ${d.phone}<br>
-
-        <!-- ❌ SCREENSHOT HIDDEN FROM USER -->
 
         ${
           d.status==="approved"
