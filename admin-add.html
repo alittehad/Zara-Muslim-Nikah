@@ -5,35 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Add</title>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
 <style>
-body{
-  font-family:sans-serif;
-  background:#f4f6f9;
-  padding:20px;
-}
-
-.box{
-  max-width:400px;
-  margin:auto;
-  background:white;
-  padding:20px;
-  border-radius:12px;
-}
-
-input,textarea{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-}
-
-button{
-  width:100%;
-  padding:12px;
-  background:#0f766e;
-  color:white;
-  border:none;
-  border-radius:8px;
-}
+body{font-family:sans-serif;background:#f4f6f9;padding:20px;}
+.box{max-width:400px;margin:auto;background:white;padding:20px;border-radius:12px;}
+input,textarea{width:100%;padding:10px;margin:8px 0;}
+button{width:100%;padding:12px;background:#0f766e;color:white;border:none;border-radius:8px;}
 </style>
 </head>
 
@@ -45,33 +26,72 @@ button{
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
 <input id="city" placeholder="City">
-<input id="photo" placeholder="Photo URL">
 <textarea id="desc" placeholder="Description"></textarea>
+
+<input type="file" id="photo">
 
 <button onclick="save()">Save Profile</button>
 </div>
 
 <script>
 
-function save(){
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  databaseURL: "YOUR_DB",
+  projectId: "YOUR_ID",
+  storageBucket: "YOUR_BUCKET"
+};
 
-  let profile = {
-    name: document.getElementById("name").value,
-    age: document.getElementById("age").value,
-    city: document.getElementById("city").value,
-    photo: document.getElementById("photo").value,
-    desc: document.getElementById("desc").value
-  };
+firebase.initializeApp(firebaseConfig);
 
-  let data = JSON.parse(localStorage.getItem("profiles") || "[]");
+const auth = firebase.auth();
+const db = firebase.database();
+const storage = firebase.storage();
 
-  data.push(profile);
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-  localStorage.setItem("profiles", JSON.stringify(data));
+/* ADMIN CHECK */
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.location="login.html";
+    return;
+  }
 
-  alert("Profile Added ✔️");
+  if(user.email !== ADMIN_EMAIL){
+    alert("Only admin allowed");
+    window.location="index.html";
+  }
+});
 
-  window.location.href="index.html";
+async function save(){
+
+  let name = document.getElementById("name").value;
+  let age = document.getElementById("age").value;
+  let city = document.getElementById("city").value;
+  let desc = document.getElementById("desc").value;
+  let file = document.getElementById("photo").files[0];
+
+  if(!file){
+    alert("Photo required");
+    return;
+  }
+
+  let ref = storage.ref("profiles/" + Date.now() + file.name);
+  await ref.put(file);
+
+  let url = await ref.getDownloadURL();
+
+  await db.ref("profiles").push({
+    name,
+    age,
+    city,
+    desc,
+    photo: url
+  });
+
+  alert("Added ✔️");
+  window.location="index.html";
 }
 
 </script>
