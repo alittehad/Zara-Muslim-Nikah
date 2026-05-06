@@ -3,178 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zara Nikah Service</title>
-
-<link rel="stylesheet" href="buttons.css">
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<title>Admin Add</title>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f4f6f9;}
-
-header{
-  background:linear-gradient(90deg,#0f766e,#14b8a6);
-  color:white;
-  text-align:center;
-  padding:14px;
-  font-weight:900;
+body{
+  font-family:sans-serif;
+  background:#f4f6f9;
+  padding:20px;
 }
 
-.topbar{
-  display:none;
-  justify-content:center;
-  gap:10px;
-  padding:10px;
-  flex-wrap:wrap;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:15px;
-  padding:15px;
-}
-
-.card{
+.box{
+  max-width:400px;
+  margin:auto;
   background:white;
+  padding:20px;
   border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
-.card img{
+input,textarea{
   width:100%;
-  height:200px;
-  object-fit:cover;
-}
-
-.card-body{
-  text-align:center;
   padding:10px;
+  margin:8px 0;
 }
 
-.btn{
-  padding:8px;
-  margin:5px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
+button{
+  width:100%;
+  padding:12px;
+  background:#0f766e;
   color:white;
+  border:none;
+  border-radius:8px;
 }
-
-.edit{background:#2563eb;}
-.del{background:#dc2626;}
-.like{background:#e11d48;}
 </style>
 </head>
 
 <body>
 
-<header>🕋 Zara Nikah Service</header>
+<div class="box">
+<h2>👑 Admin Add Profile</h2>
 
-<div class="topbar" id="topbar">
-  <button onclick="goAdd()">➕ Add</button>
-  <button onclick="logout()">Logout</button>
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="city" placeholder="City">
+<input id="photo" placeholder="Photo URL">
+<textarea id="desc" placeholder="Description"></textarea>
+
+<button onclick="save()">Save Profile</button>
 </div>
-
-<div class="grid" id="grid"></div>
 
 <script>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-};
+function save(){
 
-firebase.initializeApp(firebaseConfig);
+  let profile = {
+    name: document.getElementById("name").value,
+    age: document.getElementById("age").value,
+    city: document.getElementById("city").value,
+    photo: document.getElementById("photo").value,
+    desc: document.getElementById("desc").value
+  };
 
-const auth = firebase.auth();
-const db = firebase.database();
+  let data = JSON.parse(localStorage.getItem("profiles") || "[]");
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
+  data.push(profile);
 
-let currentUser=null;
+  localStorage.setItem("profiles", JSON.stringify(data));
 
-auth.onAuthStateChanged(user=>{
-  if(!user){
-    window.location="login.html";
-    return;
-  }
+  alert("Profile Added ✔️");
 
-  currentUser=user;
-  document.getElementById("topbar").style.display="flex";
-  load();
-});
-
-function load(){
-  db.ref("profiles").on("value",snap=>{
-    let html="";
-
-    snap.forEach(child=>{
-      let v=child.val();
-      let id=child.key;
-
-      html+=`
-      <div class="card">
-        <img src="${v.photo || ''}">
-        <div class="card-body">
-          <h3>${v.name || ''}</h3>
-          <p>${v.city || ''}</p>
-
-          <button class="btn like" onclick="whatsapp('${v.name}','${v.age}','${v.city}')">
-            ❤️ Like
-          </button>
-
-          ${isAdmin()?`
-            <button class="btn edit" onclick="edit('${id}')">Edit</button>
-            <button class="btn del" onclick="del('${id}')">Delete</button>
-          `:""}
-        </div>
-      </div>`;
-    });
-
-    document.getElementById("grid").innerHTML=html;
-  });
-}
-
-function isAdmin(){
-  return currentUser && (currentUser.email || "").toLowerCase() === ADMIN_EMAIL;
-}
-
-/* WHATSAPP */
-function whatsapp(name,age,city){
-  let msg=`Hi, I liked profile:
-Name: ${name}
-Age: ${age}
-City: ${city}`;
-
-  window.open("https://wa.me/7378342192?text="+encodeURIComponent(msg));
-}
-
-/* DELETE */
-function del(id){
-  if(confirm("Delete profile?")){
-    db.ref("profiles/"+id).remove();
-  }
-}
-
-/* EDIT */
-function edit(id){
-  let newName=prompt("New Name");
-  if(newName){
-    db.ref("profiles/"+id).update({name:newName});
-  }
-}
-
-function logout(){
-  auth.signOut();
-}
-
-function goAdd(){
-  window.location="admin-add.html";
+  window.location.href="index.html";
 }
 
 </script>
