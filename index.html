@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
+<!-- 🔥 BUTTON CSS -->
+<link rel="stylesheet" href="buttons.css">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -28,20 +31,6 @@ header{
   flex-wrap:wrap;
 }
 
-.topbar button{
-  padding:10px 14px;
-  border:none;
-  border-radius:8px;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-#homeBtn{background:#0f766e;}
-#addPostBtn{background:#1d4ed8;}
-#adminAddBtn{background:#000;}
-#logoutBtn{background:#dc2626;}
-
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -57,8 +46,16 @@ header{
   cursor:pointer;
 }
 
-.card img{width:100%;height:200px;object-fit:cover;}
-.card-body{text-align:center;padding:10px;}
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
+
+.card-body{
+  text-align:center;
+  padding:10px;
+}
 
 .modal{
   position:fixed;
@@ -76,18 +73,6 @@ header{
   padding:20px;
   border-radius:10px;
 }
-
-.btn{
-  width:100%;
-  margin-top:10px;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-  background:#e11d48;
-  color:white;
-}
 </style>
 </head>
 
@@ -96,15 +81,15 @@ header{
 <header>🕋 Zara Nikah Service 🕌</header>
 
 <div class="topbar" id="topbar">
-  <button onclick="location.reload()">Home</button>
-  <button onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button id="adminAddBtn" style="display:none" onclick="goAdminAdd()">➕ Add Profile</button>
-  <button onclick="logout()">Logout</button>
+  <button class="btn btn-home" onclick="location.reload()">Home</button>
+  <button class="btn btn-add" onclick="goAdd()">रिश्ता जोड़ें</button>
+  <button class="btn btn-admin" id="adminBtn" style="display:none" onclick="goAdmin()">Admin Panel</button>
+  <button class="btn btn-logout" onclick="logout()">Logout</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
 
-<!-- VIEW PROFILE -->
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
@@ -128,29 +113,28 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-let currentUser = null;
-let currentProfileId = null;
+let currentUser=null;
+let currentProfileId=null;
 
-/* 🔐 LOGIN CHECK */
+/* 🔥 LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
-  currentUser = user;
-
   if(!user){
     window.location.href="login.html";
     return;
   }
 
+  currentUser=user;
   document.getElementById("topbar").style.display="flex";
 
   if((user.email||"").toLowerCase()===ADMIN_EMAIL){
-    document.getElementById("adminAddBtn").style.display="inline-block";
+    document.getElementById("adminBtn").style.display="inline-block";
   }
 
-  loadPosts();
+  loadProfiles();
 });
 
-/* 📦 LOAD PROFILES */
-function loadPosts(){
+/* 🔥 LOAD ADMIN PROFILES */
+function loadProfiles(){
   db.ref("profiles").once("value").then(snap=>{
     const grid=document.getElementById("profileGrid");
     grid.innerHTML="";
@@ -158,13 +142,11 @@ function loadPosts(){
     snap.forEach(child=>{
       const d=child.val();
 
-      if(!d) return;
-
       grid.innerHTML+=`
       <div class="card" onclick="openModal('${child.key}')">
         <img src="${d.photo || 'https://via.placeholder.com/300'}">
         <div class="card-body">
-          <h3>${d.name || 'No Name'}</h3>
+          <h3>${d.name || ''}</h3>
           <p>${d.city || ''}</p>
         </div>
       </div>`;
@@ -172,17 +154,12 @@ function loadPosts(){
   });
 }
 
-/* 👁️ OPEN PROFILE */
+/* 🔥 OPEN PROFILE */
 function openModal(id){
   currentProfileId=id;
 
   db.ref("profiles/"+id).once("value").then(snap=>{
     const d=snap.val();
-
-    if(!d){
-      alert("Profile not found");
-      return;
-    }
 
     document.getElementById("modalBody").innerHTML=`
       <h2>${d.name}</h2>
@@ -190,37 +167,33 @@ function openModal(id){
       <p>Age: ${d.age}</p>
       <p>City: ${d.city}</p>
 
-      <button class="btn" onclick="goPayment()">❤️ रिश्ता पसंद है</button>
+      <button class="btn btn-like" onclick="goPayment()">❤️ रिश्ता पसंद है</button>
     `;
 
     document.getElementById("modal").style.display="flex";
   });
 }
 
-/* 💳 PAYMENT */
+/* 🔥 GO PAYMENT */
 function goPayment(){
   localStorage.setItem("selectedProfile", currentProfileId);
   window.location.href="payment.html";
 }
 
-/* 👑 ADMIN PAGE */
-function goAdminAdd(){
-  window.location.href="admin-add.html";
-}
-
-/* ❌ CLOSE MODAL */
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* 🚪 LOGOUT */
 function logout(){
   auth.signOut();
 }
 
-/* ➕ USER ADD PAGE */
 function goAdd(){
   window.location="profile-submit.html";
+}
+
+function goAdmin(){
+  window.location="admin-add.html";
 }
 
 </script>
