@@ -16,6 +16,7 @@ body{
   padding:20px;
 }
 
+/* BOX */
 .box{
   max-width:420px;
   margin:auto;
@@ -25,11 +26,18 @@ body{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
+h2{
+  text-align:center;
+  color:#0f766e;
+}
+
+/* INPUT */
 input,button{
   width:100%;
   padding:10px;
   margin:8px 0;
   border-radius:8px;
+  border:1px solid #ddd;
 }
 
 button{
@@ -39,6 +47,7 @@ button{
   cursor:pointer;
 }
 
+/* PREVIEW */
 .preview{
   width:100%;
   height:160px;
@@ -46,8 +55,10 @@ button{
   margin-top:10px;
   border-radius:10px;
   display:none;
+  border:1px solid #ddd;
 }
 
+/* CARD */
 .card{
   background:white;
   margin-top:10px;
@@ -101,37 +112,51 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-/* PREVIEW */
+/* IMAGE PREVIEW */
 document.getElementById("file").onchange = function(e){
-  let file = e.target.files[0];
 
+  let file = e.target.files[0];
   if(!file) return;
 
   let reader = new FileReader();
+
   reader.onload = function(){
     let img = document.getElementById("preview");
     img.src = reader.result;
     img.style.display = "block";
-  }
+  };
+
   reader.readAsDataURL(file);
 };
 
 /* IMGBB UPLOAD */
 async function uploadImg(file){
 
-  let form = new FormData();
-  form.append("image", file);
+  try{
 
-  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
-    method:"POST",
-    body:form
-  });
+    let form = new FormData();
+    form.append("image", file);
 
-  let data = await res.json();
-  return data.data.url;
+    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
+      method:"POST",
+      body:form
+    });
+
+    let data = await res.json();
+
+    if(!data.success){
+      throw new Error("Upload Failed");
+    }
+
+    return data.data.url;
+
+  }catch(err){
+    alert("Image upload error");
+    throw err;
+  }
 }
 
-/* SUBMIT */
+/* SUBMIT PAYMENT */
 async function submit(){
 
   const user = auth.currentUser;
@@ -151,28 +176,35 @@ async function submit(){
     return;
   }
 
-  alert("Uploading...");
+  try{
 
-  let imgUrl = await uploadImg(file);
+    alert("Uploading...");
 
-  db.ref("payments").push({
-    uid: user.uid,
-    name,
-    age,
-    phone,
-    screenshot: imgUrl,
-    status:"pending",
-    time:Date.now()
-  });
+    let imgUrl = await uploadImg(file);
 
-  alert("✔ Payment sent (waiting approval)");
+    await db.ref("payments").push({
+      uid: user.uid,
+      name,
+      age,
+      phone,
+      screenshot: imgUrl,
+      status: "pending",
+      time: Date.now()
+    });
+
+    alert("✔ Payment sent (waiting approval)");
+
+  }catch(e){
+    console.log(e);
+  }
 }
 
 /* SHOW ONLY LOGGED USER DATA */
 auth.onAuthStateChanged(user=>{
 
   if(!user){
-    document.getElementById("list").innerHTML = "<p>Login Required</p>";
+    document.getElementById("list").innerHTML =
+      "<p style='text-align:center'>Login Required</p>";
     return;
   }
 
@@ -182,9 +214,8 @@ auth.onAuthStateChanged(user=>{
 
     snap.forEach(c=>{
 
-      let d=c.val();
+      let d = c.val();
 
-      // 🔥 ONLY OWN DATA
       if(d.uid !== user.uid) return;
 
       html+=`
@@ -194,24 +225,13 @@ auth.onAuthStateChanged(user=>{
 
         <img src="${d.screenshot}">
 
-        <div style="margin-top:8px;">
-      `;
+        ${
+          d.status === "approved"
+          ? `<p style="color:green;font-weight:bold;">✔️ आप रजिस्टर हो गए हैं</p>`
+          : `<p style="color:orange;font-weight:bold;">⏳ Wait for approval</p>`
+        }
 
-      if(d.status === "approved"){
-        html+=`
-          <p style="color:green;font-weight:bold;">
-            ✔️ आप रजिस्टर हो गए हैं
-          </p>
-        `;
-      }else{
-        html+=`
-          <p style="color:orange;font-weight:bold;">
-            ⏳ Wait for approval
-          </p>
-        `;
-      }
-
-      html+=`</div></div>`;
+      </div>`;
     });
 
     document.getElementById("list").innerHTML =
