@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstaticjs.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstaticjs.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstaticjs.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
 body{
@@ -50,15 +50,14 @@ button{
 
 <div class="box">
 
-<h2>👑 Admin - Add Profile</h2>
+<h2>👑 Admin Add Profile</h2>
 
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
 <input id="city" placeholder="City">
+<textarea id="desc" placeholder="Description"></textarea>
 
-<!-- 🔥 NEW DESCRIPTION -->
-<textarea id="desc" placeholder="Description / About Profile"></textarea>
-
+<p>Upload Photo:</p>
 <input type="file" id="photo">
 
 <button onclick="addProfile()">Add Profile</button>
@@ -67,25 +66,36 @@ button{
 
 <script>
 
-firebase.initializeApp({
+// 🔥 Firebase Config
+const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  storageBucket: "zara-muslim-nikah.appspot.com"
-});
+  projectId: "zara-muslim-nikah",
+  storageBucket: "zara-muslim-nikah.appspot.com",
+  messagingSenderId: "690336186269",
+  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
+};
 
+firebase.initializeApp(firebaseConfig);
+
+// 🔥 SERVICES
 const auth = firebase.auth();
 const db = firebase.database();
 const storage = firebase.storage();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-/* 🔥 LOGIN CHECK */
+let currentUser = null;
+
+/* 🔥 ADMIN CHECK */
 auth.onAuthStateChanged(user=>{
   if(!user){
     window.location.href="login.html";
     return;
   }
+
+  currentUser = user;
 
   if((user.email || "").toLowerCase() !== ADMIN_EMAIL){
     alert("Only admin allowed");
@@ -93,7 +103,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* 🔥 ADD PROFILE (FULL FIX) */
+/* 🔥 ADD PROFILE FUNCTION (FIXED 100%) */
 async function addProfile(){
 
   const name = document.getElementById("name").value.trim();
@@ -114,12 +124,14 @@ async function addProfile(){
 
   try{
 
-    // 🔥 UPLOAD IMAGE
-    const ref = storage.ref("profiles/" + Date.now() + "_" + file.name);
-    await ref.put(file);
-    const url = await ref.getDownloadURL();
+    // 🔥 Upload image first
+    const fileRef = storage.ref("profiles/" + Date.now() + "_" + file.name);
 
-    // 🔥 SAVE DATA
+    await fileRef.put(file);
+
+    const url = await fileRef.getDownloadURL();
+
+    // 🔥 Save data in database
     await db.ref("profiles").push({
       name,
       age,
