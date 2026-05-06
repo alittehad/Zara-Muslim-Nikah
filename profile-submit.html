@@ -26,7 +26,6 @@ body{
   font-weight:bold;
   cursor:pointer;
   box-shadow:0 5px 0 #0b5c56;
-  transition:0.1s;
   width:100%;
 }
 
@@ -44,7 +43,7 @@ body{
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* BUTTONS */
+/* BUTTON */
 button{
   margin:5px 0;
   padding:8px;
@@ -53,10 +52,18 @@ button{
   cursor:pointer;
 }
 
+/* MSG */
 .lock-msg{
   color:red;
   font-weight:bold;
   margin:10px 0;
+}
+
+/* EMPTY */
+.empty{
+  text-align:center;
+  color:gray;
+  margin-top:20px;
 }
 </style>
 </head>
@@ -70,9 +77,9 @@ button{
 💰 रजिस्ट्रेशन फीस जमा करें
 </button>
 
-<!-- 🔒 MESSAGE -->
 <div id="payMsg" class="lock-msg"></div>
 
+<!-- 🔥 IMPORTANT FIX: container always exists -->
 <div id="receivedList"></div>
 
 <script>
@@ -94,7 +101,7 @@ function goPayment(){
   window.location="payment.html";
 }
 
-/* CHECK PAYMENT STATUS */
+/* CHECK PAYMENT */
 function checkPayment(uid){
 
   db.ref("payments").orderByChild("uid").equalTo(uid).on("value",snap=>{
@@ -108,17 +115,14 @@ function checkPayment(uid){
       }
     });
 
-    if(!isPaid){
-      document.getElementById("payMsg").innerText =
-      "👉 पहले Registration Fees जमा करें, उसके बाद ही आगे बढ़ सकते हैं";
-    }else{
-      document.getElementById("payMsg").innerText =
-      "✔ Payment Verified";
-    }
+    document.getElementById("payMsg").innerText =
+      isPaid
+      ? "✔ Payment Verified"
+      : "👉 पहले Registration Fees जमा करें";
   });
 }
 
-/* LOGIN CHECK */
+/* LOGIN */
 auth.onAuthStateChanged(user=>{
 
  if(!user){
@@ -141,8 +145,8 @@ auth.onAuthStateChanged(user=>{
        html+=`
        <div class="card">
 
-         <b>From:</b> ${d.senderId}<br>
-         <b>Status:</b> ${d.status}<br>
+         <b>From:</b> ${d.senderId || "Unknown"}<br>
+         <b>Status:</b> ${d.status || "pending"}<br>
 
          <button onclick="accept('${child.key}')">✔ Accept</button>
          <button onclick="reject('${child.key}')">✖ Reject</button>
@@ -155,24 +159,22 @@ auth.onAuthStateChanged(user=>{
      }
    });
 
-   document.getElementById("receivedList").innerHTML=
-   html || "<p>No Requests</p>";
+   document.getElementById("receivedList").innerHTML =
+     html || "<div class='empty'>No Requests Found</div>";
  });
 });
 
 /* ACCEPT */
 function accept(id){
  db.ref("interests/"+id).update({status:"accepted"});
- alert("Accepted");
 }
 
 /* REJECT */
 function reject(id){
  db.ref("interests/"+id).update({status:"rejected"});
- alert("Rejected");
 }
 
-/* SUBMIT WITH LOCK */
+/* SUBMIT LOCK */
 function submitProfile(id){
 
  if(!isPaid){
