@@ -12,58 +12,45 @@
 <style>
 body{
   font-family:sans-serif;
-  padding:10px;
   background:#f4f6f9;
+  padding:10px;
 }
 
-/* 3D BUTTON */
 .btn3d{
+  width:100%;
+  padding:12px;
   background:#0f766e;
   color:white;
-  padding:12px;
   border:none;
   border-radius:10px;
   font-weight:bold;
-  cursor:pointer;
   box-shadow:0 5px 0 #0b5c56;
-  width:100%;
 }
 
-.btn3d:active{
-  transform:translateY(3px);
-  box-shadow:0 2px 0 #0b5c56;
-}
-
-/* CARD */
 .card{
-  background:white;
-  border-radius:10px;
-  padding:10px;
+  background:#fff;
   margin-top:10px;
+  padding:10px;
+  border-radius:10px;
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* BUTTON */
 button{
-  margin:5px 0;
-  padding:8px;
+  padding:7px;
+  margin-top:5px;
   border:none;
   border-radius:6px;
   cursor:pointer;
 }
 
-/* MSG */
-.lock-msg{
+.lock{
   color:red;
   font-weight:bold;
   margin:10px 0;
 }
-
-/* EMPTY */
-.empty{
-  text-align:center;
-  color:gray;
-  margin-top:20px;
+.ok{
+  color:green;
+  font-weight:bold;
 }
 </style>
 </head>
@@ -72,15 +59,12 @@ button{
 
 <h2>Received Interests</h2>
 
-<!-- 💰 PAYMENT BUTTON -->
-<button class="btn3d" onclick="goPayment()">
+<button class="btn3d" onclick="window.location='payment.html'">
 💰 रजिस्ट्रेशन फीस जमा करें
 </button>
 
-<div id="payMsg" class="lock-msg"></div>
-
-<!-- 🔥 IMPORTANT FIX: container always exists -->
-<div id="receivedList"></div>
+<div id="msg" class="lock"></div>
+<div id="list"></div>
 
 <script>
 
@@ -91,100 +75,96 @@ firebase.initializeApp({
  projectId:"zara-muslim-nikah"
 });
 
-const auth=firebase.auth();
-const db=firebase.database();
+const auth = firebase.auth();
+const db = firebase.database();
 
-let isPaid=false;
-
-/* PAYMENT PAGE */
-function goPayment(){
-  window.location="payment.html";
-}
+let paid = false;
 
 /* CHECK PAYMENT */
 function checkPayment(uid){
 
-  db.ref("payments").orderByChild("uid").equalTo(uid).on("value",snap=>{
+  db.ref("payments").on("value",snap=>{
 
-    isPaid=false;
+    paid = false;
 
-    snap.forEach(c=>{
-      let d=c.val();
-      if(d.status==="approved"){
-        isPaid=true;
+    snap.forEach(s=>{
+      let d = s.val();
+      if(d.uid === uid && d.status === "approved"){
+        paid = true;
       }
     });
 
-    document.getElementById("payMsg").innerText =
-      isPaid
-      ? "✔ Payment Verified"
-      : "👉 पहले Registration Fees जमा करें";
+    document.getElementById("msg").innerHTML =
+      paid ? "✔ आप registered हो गए हैं" : "👉 पहले registration fees जमा करें";
   });
 }
 
-/* LOGIN */
-auth.onAuthStateChanged(user=>{
+/* LOAD INTERESTS */
+function loadInterests(uid){
 
- if(!user){
-   window.location="index.html";
-   return;
- }
+  db.ref("interests").on("value",snap=>{
 
- checkPayment(user.uid);
+    let html = "";
+    let found = false;
 
- db.ref("interests").on("value",snap=>{
+    snap.forEach(s=>{
 
-   let html="";
+      let d = s.val();
 
-   snap.forEach(child=>{
+      if(!d || !d.receiverId) return;
 
-     let d=child.val();
+      if(d.receiverId === uid){
+        found = true;
 
-     if(d.receiverId===user.uid){
+        html += `
+        <div class="card">
+          <b>From:</b> ${d.senderId || "Unknown"}<br>
+          <b>Status:</b> ${d.status || "pending"}<br>
 
-       html+=`
-       <div class="card">
+          <button onclick="accept('${s.key}')">✔ Accept</button>
+          <button onclick="reject('${s.key}')">✖ Reject</button>
 
-         <b>From:</b> ${d.senderId || "Unknown"}<br>
-         <b>Status:</b> ${d.status || "pending"}<br>
+          <button onclick="submitProfile()">
+            📩 Submit Profile
+          </button>
+        </div>`;
+      }
+    });
 
-         <button onclick="accept('${child.key}')">✔ Accept</button>
-         <button onclick="reject('${child.key}')">✖ Reject</button>
+    document.getElementById("list").innerHTML =
+      found ? html : "<p>No Interests Found</p>";
+  });
+}
 
-         <button onclick="submitProfile('${child.key}')">
-           📩 Submit Profile
-         </button>
-
-       </div>`;
-     }
-   });
-
-   document.getElementById("receivedList").innerHTML =
-     html || "<div class='empty'>No Requests Found</div>";
- });
-});
-
-/* ACCEPT */
+/* ACTIONS */
 function accept(id){
  db.ref("interests/"+id).update({status:"accepted"});
 }
 
-/* REJECT */
 function reject(id){
  db.ref("interests/"+id).update({status:"rejected"});
 }
 
-/* SUBMIT LOCK */
-function submitProfile(id){
+function submitProfile(){
 
- if(!isPaid){
-   alert("❗ पहले Registration Fees जमा करें");
+ if(!paid){
+   alert("❗ पहले fees जमा करें");
    return;
  }
 
- alert("✔ Profile Submitted Successfully");
- db.ref("interests/"+id).update({submitted:true});
+ alert("✔ सबमिट हो गया");
 }
+
+/* AUTH */
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.location="index.html";
+    return;
+  }
+
+  checkPayment(user.uid);
+  loadInterests(user.uid);
+});
 
 </script>
 
