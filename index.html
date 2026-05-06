@@ -10,28 +10,18 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#f4f6f9;
-}
+body{margin:0;font-family:sans-serif;background:#f4f6f9;}
 
 header{
   background:linear-gradient(90deg,#0f766e,#14b8a6);
   color:white;
   padding:14px;
-  font-weight:900;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
-.logo{font-size:16px;}
-
-.header-btns{
-  display:flex;
-  gap:10px;
-}
+.header-btns{display:flex;gap:10px;}
 
 .btn{
   padding:8px 12px;
@@ -40,22 +30,10 @@ header{
   color:white;
   font-weight:bold;
   cursor:pointer;
-  font-size:12px;
 }
 
 .my{background:#111;}
 .logout{background:#dc2626;}
-
-.topbar{
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  padding:10px;
-  flex-wrap:wrap;
-}
-
-.add{background:#1d4ed8;}
-.admin{background:#111;}
 
 .grid{
   display:grid;
@@ -77,66 +55,28 @@ header{
   object-fit:cover;
 }
 
-.card-body{
-  text-align:center;
-  padding:10px;
-}
+.card-body{text-align:center;padding:10px;}
 
 .like{background:#16a34a;}
-.edit{background:#1d4ed8;}
-.delete{background:#dc2626;}
-
-.modal{
-  position:fixed;
-  inset:0;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  background:rgba(0,0,0,0.6);
-}
-
-.modal-content{
-  background:white;
-  width:90%;
-  max-width:400px;
-  padding:20px;
-  border-radius:10px;
-}
-
-@media(max-width:600px){
-  header{flex-direction:column;gap:8px;}
-}
 </style>
 </head>
 
 <body>
 
 <header>
-  <div class="logo">🕋 Zara Nikah Service 🕌</div>
+  <div>🕋 Zara Nikah Service 🕌</div>
+
   <div class="header-btns">
     <button class="btn my" onclick="goMyProfile()">👤 My Profile</button>
     <button class="btn logout" onclick="logout()">🚪 Logout</button>
   </div>
 </header>
 
-<div class="topbar">
-  <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
-
-  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">👑 Admin Panel</button>
-  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">➕ Admin Add</button>
-</div>
-
 <div class="grid" id="grid"></div>
-
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
-    <div id="modalBody"></div>
-  </div>
-</div>
 
 <script>
 
+/* Firebase */
 firebase.initializeApp({
   apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain:"zara-muslim-nikah.firebaseapp.com",
@@ -146,33 +86,26 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.database();
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
-let isAdmin = false;
 let profileRef = null;
 
-/* LOGIN FIX */
+/* LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
 
   if(!user){
-    window.location.replace("index.html"); // NO LOOP
+    // IMPORTANT: replace → back नहीं आएगा
+    window.location.replace("index.html");
     return;
-  }
-
-  isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
-
-  if(isAdmin){
-    document.getElementById("adminPanelBtn").style.display="inline-block";
-    document.getElementById("adminAddBtn").style.display="inline-block";
   }
 
   loadProfiles();
 });
 
-/* LOAD DATA WITH CLEAN LISTENER */
+/* LOAD DATA */
 function loadProfiles(){
 
+  // 🔥 OLD LISTENER REMOVE
   if(profileRef){
-    profileRef.off(); // remove old listener
+    profileRef.off();
   }
 
   profileRef = db.ref("profiles");
@@ -186,19 +119,13 @@ function loadProfiles(){
 
       html+=`
       <div class="card">
-
-        <img src="${d.photo || 'https://via.placeholder.com/300'}" onclick="openModal('${child.key}')">
+        <img src="${d.photo || 'https://via.placeholder.com/300'}">
 
         <div class="card-body">
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
-          <button class="btn like" onclick="goPayment()">💍 रिश्ता करें</button>
-
-          ${isAdmin ? `
-            <button class="btn edit" onclick="editProfile('${child.key}')">✏ Edit</button>
-            <button class="btn delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
-          ` : ""}
+          <button class="btn like">💍 रिश्ता करें</button>
         </div>
       </div>`;
     });
@@ -207,52 +134,33 @@ function loadProfiles(){
   });
 }
 
-/* FUNCTIONS */
-function goPayment(){ window.location="payment.html"; }
-function goAdd(){ window.location="profile-submit.html"; }
-function goAdmin(){ window.location="admin.html"; }
-function goAdminAdd(){ window.location="admin-add.html"; }
-function goMyProfile(){ window.location="my-profile.html"; }
-
-function deleteProfile(id){
-  if(confirm("Delete profile?")){
-    db.ref("profiles/"+id).remove();
-  }
+/* NAVIGATION */
+function goMyProfile(){
+  window.location = "my-profile.html";
 }
 
-function editProfile(id){
-  window.location = "admin-add.html?id=" + id;
-}
-
-function openModal(id){
-  db.ref("profiles/"+id).once("value").then(snap=>{
-    let d = snap.val();
-
-    document.getElementById("modalBody").innerHTML=`
-      <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%;border-radius:10px;">
-      <p><b>Age:</b> ${d.age}</p>
-      <p><b>City:</b> ${d.city}</p>
-      <p>${d.bio || ""}</p>
-    `;
-
-    document.getElementById("modal").style.display="flex";
-  });
-}
-
-function closeModal(){
-  document.getElementById("modal").style.display="none";
-}
-
-/* FINAL LOGOUT */
+/* ✅ FINAL LOGOUT FIX */
 function logout(){
 
+  // 🔥 STEP 1: listener बंद
   if(profileRef){
-    profileRef.off(); // STOP listener (important)
+    profileRef.off();
   }
 
+  // 🔥 STEP 2: auth observer बंद
+  auth.onAuthStateChanged(()=>{}); 
+
+  // 🔥 STEP 3: signout
   auth.signOut().then(()=>{
-    window.location.replace("index.html"); // NO REFRESH BUG
+
+    // 🔥 STEP 4: redirect without reload loop
+    setTimeout(()=>{
+      window.location.replace("index.html");
+    },300);
+
+  }).catch(err=>{
+    alert("Logout error");
+    console.log(err);
   });
 }
 
