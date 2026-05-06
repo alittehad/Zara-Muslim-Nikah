@@ -6,7 +6,6 @@
 <title>Payment Page</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
@@ -17,16 +16,19 @@ body{
 }
 
 .box{
-  max-width:400px;
+  max-width:420px;
   margin:auto;
   background:white;
   padding:20px;
   border-radius:12px;
 }
 
-img{
+input{
   width:100%;
-  border-radius:10px;
+  padding:10px;
+  margin:8px 0;
+  border:1px solid #ddd;
+  border-radius:8px;
 }
 
 button{
@@ -36,7 +38,13 @@ button{
   color:white;
   border:none;
   border-radius:8px;
+  font-size:16px;
+}
+
+.preview{
+  width:100%;
   margin-top:10px;
+  border-radius:10px;
 }
 </style>
 </head>
@@ -44,18 +52,24 @@ button{
 <body>
 
 <div class="box">
-<h2>💳 Payment Page</h2>
 
-<!-- your image -->
-<img src="https://i.ibb.co/6RkksFjc/image.jpg">
+<h2>💍 Rishta Payment</h2>
 
-<p>👉 Rishta Confirm karne ke liye payment kare</p>
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="phone" placeholder="Phone">
 
-<button onclick="submitPayment()">Rishta Kare 💖</button>
+<input type="file" id="image">
+
+<img id="preview" class="preview" style="display:none;">
+
+<button onclick="submitPayment()">Send Request 💖</button>
+
 </div>
 
 <script>
 
+/* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -64,27 +78,64 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
-const auth = firebase.auth();
 
-/* SAVE PAYMENT */
-function submitPayment(){
+/* PREVIEW IMAGE */
+document.getElementById("image").onchange = function(e){
+  let file = e.target.files[0];
+  let reader = new FileReader();
 
-  let user = auth.currentUser;
+  reader.onload = function(){
+    document.getElementById("preview").src = reader.result;
+    document.getElementById("preview").style.display = "block";
+  }
 
-  if(!user){
-    alert("Please login first");
+  reader.readAsDataURL(file);
+};
+
+/* UPLOAD TO IMGBB */
+async function uploadToImgBB(file){
+
+  let form = new FormData();
+  form.append("image", file);
+
+  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
+    method: "POST",
+    body: form
+  });
+
+  let data = await res.json();
+
+  return data.data.url;
+}
+
+/* SUBMIT */
+async function submitPayment(){
+
+  let name = document.getElementById("name").value;
+  let age = document.getElementById("age").value;
+  let phone = document.getElementById("phone").value;
+  let file = document.getElementById("image").files[0];
+
+  if(!name || !age || !phone || !file){
+    alert("All fields required");
     return;
   }
 
+  alert("Uploading image...");
+
+  let imageUrl = await uploadToImgBB(file);
+
   db.ref("payments").push({
-    uid: user.uid,
+    name,
+    age,
+    phone,
+    image: imageUrl,
     status: "pending",
     time: Date.now()
   });
 
-  alert("Payment Submitted ✔️ (Waiting Approval)");
+  alert("Payment Sent ✔️ (Waiting Approval)");
 
   window.location = "index.html";
 }
