@@ -44,9 +44,16 @@ header{
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
-.card img{width:100%;height:200px;object-fit:cover;}
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
 
-.card-body{text-align:center;padding:10px;}
+.card-body{
+  text-align:center;
+  padding:10px;
+}
 
 .btn{
   padding:8px;
@@ -106,21 +113,24 @@ function load(){
   db.ref("profiles").on("value",snap=>{
     let html="";
 
-    snap.forEach(d=>{
-      let v=d.val();
+    snap.forEach(child=>{
+      let v=child.val();
+      let id=child.key;
 
       html+=`
       <div class="card">
-        <img src="${v.photo}">
+        <img src="${v.photo || ''}">
         <div class="card-body">
-          <h3>${v.name}</h3>
-          <p>${v.city}</p>
+          <h3>${v.name || ''}</h3>
+          <p>${v.city || ''}</p>
 
-          <button class="btn like" onclick="whatsapp('${v.name}','${v.age}','${v.city}')">❤️ Like</button>
+          <button class="btn like" onclick="whatsapp('${v.name}','${v.age}','${v.city}')">
+            ❤️ Like
+          </button>
 
           ${isAdmin()?`
-            <button class="btn edit" onclick="edit('${d.key}')">Edit</button>
-            <button class="btn del" onclick="del('${d.key}')">Delete</button>
+            <button class="btn edit" onclick="edit('${id}')">Edit</button>
+            <button class="btn del" onclick="del('${id}')">Delete</button>
           `:""}
         </div>
       </div>`;
@@ -131,22 +141,24 @@ function load(){
 }
 
 function isAdmin(){
-  return currentUser.email===ADMIN_EMAIL;
+  return currentUser && (currentUser.email || "").toLowerCase() === ADMIN_EMAIL;
 }
 
 /* WHATSAPP */
 function whatsapp(name,age,city){
   let msg=`Hi, I liked profile:
-Name:${name}
-Age:${age}
-City:${city}`;
+Name: ${name}
+Age: ${age}
+City: ${city}`;
 
   window.open("https://wa.me/7378342192?text="+encodeURIComponent(msg));
 }
 
 /* DELETE */
 function del(id){
-  db.ref("profiles/"+id).remove();
+  if(confirm("Delete profile?")){
+    db.ref("profiles/"+id).remove();
+  }
 }
 
 /* EDIT */
