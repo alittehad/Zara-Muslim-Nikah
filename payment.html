@@ -13,14 +13,14 @@
 body{
   font-family:sans-serif;
   background:#f4f6f9;
-  padding:20px;
+  padding:15px;
 }
 
 .box{
   max-width:420px;
   margin:auto;
   background:white;
-  padding:20px;
+  padding:18px;
   border-radius:12px;
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
@@ -30,11 +30,27 @@ h2{
   color:#0f766e;
 }
 
+/* SCANNER */
+.scanner{
+  text-align:center;
+  background:#e0f2fe;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+
+.scanner img{
+  width:160px;
+  border-radius:10px;
+}
+
+/* INPUT */
 input,button{
   width:100%;
   padding:10px;
   margin:8px 0;
   border-radius:8px;
+  border:1px solid #ddd;
 }
 
 button{
@@ -51,13 +67,16 @@ button{
   padding:10px;
   border-radius:10px;
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
+  font-size:14px;
 }
 
+/* IMAGE FIX (IMPORTANT) */
 .card img{
   width:100%;
-  height:150px;
+  height:140px;
   object-fit:cover;
   border-radius:8px;
+  margin-top:5px;
 }
 
 /* STATUS */
@@ -71,6 +90,12 @@ button{
 <div class="box">
 
 <h2>💍 Registration Payment</h2>
+
+<!-- 🔥 SCANNER ADDED -->
+<div class="scanner">
+  <p><b>📷 Scan QR & Pay</b></p>
+  <img src="https://i.ibb.co/6RkksFjc/qr.png">
+</div>
 
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
@@ -98,7 +123,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-/* UPLOAD IMAGE */
+/* IMG UPLOAD */
 async function uploadImg(file){
 
   let form = new FormData();
@@ -171,8 +196,9 @@ auth.onAuthStateChanged(user=>{
 
       html+=`
       <div class="card">
-        <b>${d.name}</b><br>
-        ${d.age} | ${d.phone}<br>
+
+        <b>👤 ${d.name}</b><br>
+        📞 ${d.phone}<br>
 
         <img src="${d.screenshot}">
 
