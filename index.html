@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- 🔥 BUTTON CSS -->
+<!-- BUTTON CSS -->
 <link rel="stylesheet" href="buttons.css">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -13,8 +13,13 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f4f6f9;}
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f4f6f9;
+}
 
+/* HEADER */
 header{
   background:linear-gradient(90deg,#0f766e,#14b8a6);
   color:white;
@@ -23,6 +28,7 @@ header{
   font-weight:900;
 }
 
+/* TOPBAR */
 .topbar{
   display:none;
   justify-content:center;
@@ -31,6 +37,7 @@ header{
   flex-wrap:wrap;
 }
 
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -38,6 +45,7 @@ header{
   padding:15px;
 }
 
+/* CARD */
 .card{
   background:white;
   border-radius:12px;
@@ -62,6 +70,7 @@ header{
   padding:10px;
 }
 
+/* MODAL */
 .modal{
   position:fixed;
   inset:0;
@@ -104,6 +113,7 @@ header{
 
 <script>
 
+// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -121,7 +131,7 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 let currentProfileId = null;
 
-/* 🔥 LOGIN CHECK */
+/* ✅ LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
   if(!user){
     window.location.href="login.html";
@@ -139,9 +149,9 @@ auth.onAuthStateChanged(user=>{
   loadProfiles();
 });
 
-/* 🔥 LOAD PROFILES */
+/* ✅ LOAD PROFILES */
 function loadProfiles(){
-  db.ref("profiles").once("value").then(snap=>{
+  db.ref("profiles").on("value",snap=>{
     const grid = document.getElementById("profileGrid");
     grid.innerHTML = "";
 
@@ -152,7 +162,6 @@ function loadProfiles(){
 
     snap.forEach(child=>{
       const d = child.val();
-
       if(!d) return;
 
       grid.innerHTML += `
@@ -167,7 +176,7 @@ function loadProfiles(){
   });
 }
 
-/* 🔥 OPEN PROFILE */
+/* ✅ OPEN PROFILE */
 function openModal(id){
   currentProfileId = id;
 
@@ -192,24 +201,28 @@ function openModal(id){
   });
 }
 
-/* 🔥 GO PAYMENT (FIXED) */
+/* ✅ GO PAYMENT (IMPORTANT FIX) */
 function goPayment(){
   if(!currentProfileId){
     alert("No profile selected");
     return;
   }
 
+  // 🔥 direct profile id pass
   window.location.href = "payment.html?profile=" + currentProfileId;
 }
 
+/* CLOSE MODAL */
 function closeModal(){
   document.getElementById("modal").style.display = "none";
 }
 
+/* LOGOUT */
 function logout(){
   auth.signOut();
 }
 
+/* NAVIGATION */
 function goAdd(){
   window.location = "profile-submit.html";
 }
