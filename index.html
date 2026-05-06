@@ -69,6 +69,7 @@ header{
   width:100%;
   height:200px;
   object-fit:cover;
+  cursor:pointer;
 }
 
 .card-body{
@@ -131,7 +132,7 @@ header{
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;">✖</span>
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
@@ -169,7 +170,7 @@ auth.onAuthStateChanged(user=>{
     loadProfiles();
 
   }else{
-    document.getElementById("grid").innerHTML = "Login Required";
+    document.getElementById("grid").innerHTML = "<p style='text-align:center'>Login Required</p>";
   }
 });
 
@@ -192,9 +193,9 @@ function loadProfiles(){
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
-          <!-- ❤️ Like -->
-          <button class="like" onclick="likeProfile('${child.key}')">
-            ❤️ पसंद करें
+          <!-- 💍 Rishta Button -->
+          <button class="like" onclick="goPayment('${child.key}')">
+            💍 रिश्ता करें
           </button>
 
           <!-- 👑 Admin Buttons -->
@@ -211,9 +212,9 @@ function loadProfiles(){
   });
 }
 
-/* ❤️ LIKE */
-function likeProfile(id){
-  alert("❤️ आपने रिश्ता पसंद किया");
+/* 💍 PAYMENT PAGE */
+function goPayment(id){
+  window.location = "payment.html?id=" + id;
 }
 
 /* 🗑 DELETE */
@@ -235,7 +236,7 @@ function openModal(id){
 
     document.getElementById("modalBody").innerHTML=`
       <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%">
+      <img src="${d.photo}" style="width:100%;border-radius:10px;">
       <p><b>Age:</b> ${d.age}</p>
       <p><b>City:</b> ${d.city}</p>
       <p>${d.description || ""}</p>
