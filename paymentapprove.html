@@ -3,103 +3,130 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Approval</title>
+<title>Payment Approval Panel</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{font-family:sans-serif;background:#f4f6f9;padding:10px;}
-
-.card{
-  background:#fff;
-  padding:10px;
-  margin:10px 0;
-  border-radius:10px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
-  font-size:14px;
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f4f6f9;
 }
 
-img{
-  width:100%;
-  border-radius:8px;
-  margin-top:5px;
-}
-
-.btns{
-  display:flex;
-  gap:10px;
-  margin-top:8px;
-}
-
-button{
-  flex:1;
-  padding:10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
+header{
+  background:#111;
+  color:white;
+  text-align:center;
+  padding:12px;
   font-weight:bold;
 }
 
-.approve{background:green;color:white;}
-.reject{background:red;color:white;}
+.container{
+  padding:10px;
+}
+
+.card{
+  background:white;
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:12px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.1);
+  font-size:14px;
+}
+
+.card img{
+  width:100%;
+  max-height:180px;
+  object-fit:cover;
+  border-radius:8px;
+}
+
+.btn{
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  margin-top:6px;
+  cursor:pointer;
+  color:white;
+  font-size:12px;
+}
+
+.approve{background:green;}
+.reject{background:red;}
+.status{
+  font-weight:bold;
+  margin-top:5px;
+}
 </style>
 </head>
 
 <body>
 
-<h3>👑 Payment Approval Panel</h3>
+<header>👑 Payment Approval Panel</header>
 
-<div id="list"></div>
+<div class="container" id="list"></div>
 
 <script>
 
-/* 🔥 REAL CONFIG DALNA */
-firebase.initializeApp({
-  apiKey:"YOUR_KEY",
-  authDomain:"YOUR_DOMAIN",
-  databaseURL:"YOUR_DB"
-});
+/* 🔥 Firebase Config */
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah"
+};
+
+firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database();
 
-/* LOAD */
-db.ref("payments").on("value",snap=>{
+/* 🔥 LOAD PAYMENTS */
+db.ref("payments").on("value", snap => {
 
-  let html="";
+  let html = "";
 
-  snap.forEach(c=>{
+  snap.forEach(child => {
 
-    let d = c.val();
-    let id = c.key;
+    let d = child.val();
+    let id = child.key;
 
-    html+=`
-    <div class="card">
-      <b>नाम:</b> ${d.name || ""}<br>
-      <b>Age:</b> ${d.age || ""}<br>
+    html += `
+      <div class="card">
 
-      ${d.screenshot ? `<img src="${d.screenshot}">` : ""}
+        <b>👤 Name:</b> ${d.name || ""}<br>
+        <b>🎂 Age:</b> ${d.age || ""}<br>
+        <b>💰 Fee:</b> ₹${d.amount || "N/A"}<br>
 
-      <p>Status: <b>${d.status || "pending"}</b></p>
+        ${d.screenshot ? `<img src="${d.screenshot}">` : ""}
 
-      <div class="btns">
-        <button class="approve" onclick="approve('${id}')">Approve</button>
-        <button class="reject" onclick="reject('${id}')">Reject</button>
+        <div class="status">Status: ${d.status || "pending"}</div>
+
+        <button class="btn approve" onclick="approve('${id}')">✔ Approve</button>
+        <button class="btn reject" onclick="reject('${id}')">✖ Reject</button>
+
       </div>
-
-    </div>`;
+    `;
   });
 
-  document.getElementById("list").innerHTML=html || "<p>No data</p>";
+  document.getElementById("list").innerHTML =
+    html || "<p>No Payments Found</p>";
 });
 
-/* ACTION */
+/* ✔ APPROVE */
 function approve(id){
-  db.ref("payments/"+id).update({status:"approved"});
+  db.ref("payments/"+id).update({
+    status:"approved"
+  });
 }
 
+/* ✖ REJECT */
 function reject(id){
-  db.ref("payments/"+id).update({status:"rejected"});
+  db.ref("payments/"+id).update({
+    status:"rejected"
+  });
 }
 
 </script>
