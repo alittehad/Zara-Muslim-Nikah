@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marriage Profile Submit</title>
+<title>Profile Submit</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -25,7 +25,7 @@ body{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-input,select,textarea{
+input{
   width:100%;
   padding:10px;
   margin:6px 0;
@@ -42,6 +42,7 @@ input,select,textarea{
   border-radius:10px;
   font-weight:bold;
   box-shadow:0 5px 0 #0b5c56;
+  cursor:pointer;
 }
 
 .submitBtn{
@@ -53,13 +54,26 @@ input,select,textarea{
   font-weight:bold;
 }
 
-.locked{background:gray;color:white;}
-.unlocked{background:green;color:white;}
+.locked{background:gray;color:white;cursor:not-allowed;}
+.unlocked{background:green;color:white;cursor:pointer;}
 
 .msg{
   text-align:center;
   font-weight:bold;
   margin:10px 0;
+}
+
+.card{
+  background:white;
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card img{
+  width:100%;
+  border-radius:10px;
 }
 </style>
 </head>
@@ -68,24 +82,19 @@ input,select,textarea{
 
 <div class="box">
 
-<h2>💍 शादी प्रोफाइल फॉर्म</h2>
+<h2>👤 Profile Submit</h2>
 
 <input id="name" placeholder="पूरा नाम">
 <input id="age" placeholder="उम्र">
-<select id="gender">
-  <option value="">Gender चुनें</option>
-  <option>Male</option>
-  <option>Female</option>
-</select>
-
 <input id="phone" placeholder="मोबाइल नंबर">
 <input id="city" placeholder="शहर">
-<input id="religion" placeholder="धर्म">
-<input id="education" placeholder="शिक्षा">
-<input id="job" placeholder="नौकरी / काम">
-<textarea id="bio" placeholder="अपने बारे में लिखें"></textarea>
 
-<!-- PAYMENT -->
+<p>📷 Profile Photo</p>
+<input type="file" id="file">
+
+<img id="preview" style="width:100%;display:none;border-radius:10px;margin-top:5px;">
+
+<!-- PAYMENT BUTTON -->
 <button class="btn3d" onclick="goPayment()">
 💰 Registration Fees जमा करें
 </button>
@@ -97,6 +106,9 @@ input,select,textarea{
 </button>
 
 </div>
+
+<!-- USER DATA -->
+<div id="list"></div>
 
 <script>
 
@@ -111,29 +123,60 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 let isPaid = false;
+let imageURL = "";
 
 /* PAYMENT PAGE */
 function goPayment(){
-  window.location="payment.html";
+  window.location = "payment.html";
+}
+
+/* IMAGE PREVIEW */
+document.getElementById("file").onchange = function(e){
+  let reader = new FileReader();
+  reader.onload = function(){
+    document.getElementById("preview").src = reader.result;
+    document.getElementById("preview").style.display="block";
+  }
+  reader.readAsDataURL(e.target.files[0]);
+};
+
+/* IMGBB UPLOAD */
+async function uploadToImgBB(file){
+
+  let form = new FormData();
+  form.append("image", file);
+
+  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
+    method:"POST",
+    body:form
+  });
+
+  let data = await res.json();
+  return data.data.url;
 }
 
 /* CHECK PAYMENT */
 function checkPayment(uid){
 
-  db.ref("payments").on("value",snap=>{
+  db.ref("payments").on("value", snap=>{
+
     isPaid = false;
 
     snap.forEach(s=>{
       let d = s.val();
+
       if(d.uid === uid && d.status === "approved"){
         isPaid = true;
       }
     });
 
     if(isPaid){
-      document.getElementById("status").innerHTML = "✔ आप registered हैं";
+      document.getElementById("status").innerHTML =
+      "✔ आप registered हैं";
+
       document.getElementById("submitBtn").classList.remove("locked");
       document.getElementById("submitBtn").classList.add("unlocked");
+
     }else{
       document.getElementById("status").innerHTML =
       "❗ पहले registration fees जमा करें";
@@ -141,8 +184,8 @@ function checkPayment(uid){
   });
 }
 
-/* SUBMIT PROFILE (ONLY ADMIN DATA) */
-function submitProfile(){
+/* SUBMIT PROFILE */
+async function submitProfile(){
 
   if(!isPaid){
     alert("❗ पहले payment करें");
@@ -151,39 +194,72 @@ function submitProfile(){
 
   let user = auth.currentUser;
 
-  let data = {
-    uid: user.uid,
-    name: name.value,
-    age: age.value,
-    gender: gender.value,
-    phone: phone.value,
-    city: city.value,
-    religion: religion.value,
-    education: education.value,
-    job: job.value,
-    bio: bio.value,
-    visibility: "admin",   // 👈 IMPORTANT (index में show नहीं होगा)
-    time: Date.now()
-  };
+  let name = document.getElementById("name").value;
+  let age = document.getElementById("age").value;
+  let phone = document.getElementById("phone").value;
+  let city = document.getElementById("city").value;
+  let file = document.getElementById("file").files[0];
 
-  if(!data.name || !data.age || !data.phone){
+  if(!name || !age || !phone || !city || !file){
     alert("Required fields fill करें");
     return;
   }
 
-  db.ref("profiles_admin").push(data);
+  alert("Image upload हो रहा है...");
 
-  alert("✔ Profile Admin को भेज दिया गया है");
+  imageURL = await uploadToImgBB(file);
+
+  db.ref("profiles_admin").push({
+    uid: user.uid,
+    name,
+    age,
+    phone,
+    city,
+    image: imageURL,
+    time: Date.now()
+  });
+
+  alert("✔ Profile Submit हो गया");
 }
 
-/* LOGIN */
+/* SHOW ONLY OWN DATA */
 auth.onAuthStateChanged(user=>{
+
   if(!user){
     window.location="index.html";
     return;
   }
 
   checkPayment(user.uid);
+
+  db.ref("profiles_admin").on("value", snap=>{
+
+    let html = "";
+
+    snap.forEach(c=>{
+
+      let d = c.val();
+
+      // 🔒 ONLY OWN USER DATA
+      if(d.uid !== user.uid) return;
+
+      html += `
+      <div class="card">
+
+        <img src="${d.image}">
+
+        <b>${d.name}</b><br>
+        🎂 ${d.age}<br>
+        📱 ${d.phone}<br>
+        🏙 ${d.city}<br>
+
+      </div>`;
+    });
+
+    document.getElementById("list").innerHTML =
+    html || "<p style='text-align:center'>No Data Found</p>";
+  });
+
 });
 
 </script>
