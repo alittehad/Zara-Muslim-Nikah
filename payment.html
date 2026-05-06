@@ -3,143 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zara Nikah Service</title>
+<title>Payment - Rishta Kare</title>
 
-<!-- ✅ Firebase -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
 body{
-  margin:0;
   font-family:sans-serif;
   background:#f4f6f9;
-}
-
-/* HEADER */
-header{
-  background:linear-gradient(90deg,#0f766e,#14b8a6);
-  color:white;
-  text-align:center;
-  padding:14px;
-  font-weight:900;
-}
-
-/* TOPBAR */
-.topbar{
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  padding:10px;
-  flex-wrap:wrap;
-}
-
-/* BUTTON */
-.btn{
-  padding:10px 16px;
-  border:none;
-  border-radius:10px;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-  box-shadow:0 5px 0 rgba(0,0,0,0.25);
-}
-
-.add{background:#1d4ed8;}
-.admin{background:#111;}
-
-/* GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:15px;
-  padding:15px;
-}
-
-/* CARD */
-.card{
-  background:white;
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-  cursor:pointer;
-}
-
-.card-body{
-  text-align:center;
-  padding:10px;
-}
-
-.card-body button{
-  margin:4px;
-  padding:6px 10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  color:white;
-}
-
-/* BUTTON COLORS */
-.like{background:#16a34a;}
-.edit{background:#1d4ed8;}
-.delete{background:#dc2626;}
-
-/* MODAL */
-.modal{
-  position:fixed;
-  inset:0;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  background:rgba(0,0,0,0.6);
-}
-
-.modal-content{
-  background:white;
-  width:90%;
-  max-width:400px;
+  margin:0;
   padding:20px;
-  border-radius:10px;
+}
+
+.box{
+  max-width:400px;
+  margin:auto;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h2{
+  text-align:center;
+  color:#0f766e;
+}
+
+.info{
+  background:#e0f2fe;
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:10px;
+  text-align:center;
+}
+
+input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border:1px solid #ddd;
+  border-radius:8px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  background:#0f766e;
+  color:white;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
 }
 </style>
 </head>
 
 <body>
 
-<header>🕋 Zara Nikah Service 🕌</header>
+<div class="box">
 
-<div class="topbar">
-  <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
+<h2>💍 Rishta Payment</h2>
 
-  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">
-    👑 Admin Panel
-  </button>
-
-  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">
-    ➕ Admin Add
-  </button>
+<div class="info">
+  UPI ID: <b>zara@upi</b><br>
+  ₹500 Registration Fee
 </div>
 
-<div class="grid" id="grid"></div>
+<input type="text" id="name" placeholder="Your Name">
+<input type="text" id="phone" placeholder="Phone Number">
+<input type="file" id="screenshot">
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
-    <div id="modalBody"></div>
-  </div>
+<button onclick="submitPayment()">Submit Payment</button>
+
 </div>
 
 <script>
 
-/* 🔥 Firebase Config */
+/* Firebase Config */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -149,111 +90,46 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
 const db = firebase.database();
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
+/* GET PROFILE ID */
+const params = new URLSearchParams(window.location.search);
+const profileId = params.get("id");
 
-let isAdmin = false;
+/* SUBMIT */
+function submitPayment(){
 
-/* 🔐 Auth */
-auth.onAuthStateChanged(user=>{
-  if(user){
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const file = document.getElementById("screenshot").files[0];
 
-    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
-
-    if(isAdmin){
-      document.getElementById("adminPanelBtn").style.display="inline-block";
-      document.getElementById("adminAddBtn").style.display="inline-block";
-    }
-
-    loadProfiles();
-
-  }else{
-    document.getElementById("grid").innerHTML = "<p style='text-align:center'>Login Required</p>";
+  if(!name || !phone || !file){
+    alert("All fields required");
+    return;
   }
-});
 
-/* 📥 Load Profiles */
-function loadProfiles(){
+  const reader = new FileReader();
 
-  db.ref("profiles").on("value",snap=>{
+  reader.onload = function(){
 
-    let html="";
+    const screenshotBase64 = reader.result;
 
-    snap.forEach(child=>{
-      let d = child.val();
-
-      html+=`
-      <div class="card">
-
-        <img src="${d.photo}" onclick="openModal('${child.key}')">
-
-        <div class="card-body">
-          <h3>${d.name}</h3>
-          <p>${d.city}</p>
-
-          <!-- 💍 Rishta Button -->
-          <button class="like" onclick="goPayment('${child.key}')">
-            💍 रिश्ता करें
-          </button>
-
-          <!-- 👑 Admin Buttons -->
-          ${isAdmin ? `
-            <button class="edit" onclick="editProfile('${child.key}')">✏ Edit</button>
-            <button class="delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
-          ` : ""}
-
-        </div>
-      </div>`;
+    db.ref("payments").push({
+      name,
+      phone,
+      profileId: profileId || "none",
+      screenshot: screenshotBase64,
+      status: "pending",
+      time: Date.now()
     });
 
-    document.getElementById("grid").innerHTML = html;
-  });
-}
+    alert("Payment Submitted ✔️ (Waiting Approval)");
 
-/* 💍 PAYMENT PAGE */
-function goPayment(id){
-  window.location = "payment.html?id=" + id;
-}
-
-/* 🗑 DELETE */
-function deleteProfile(id){
-  if(confirm("Delete profile?")){
-    db.ref("profiles/"+id).remove();
+    window.location = "index.html";
   }
+
+  reader.readAsDataURL(file);
 }
-
-/* ✏ EDIT */
-function editProfile(id){
-  window.location = "admin-add.html?id=" + id;
-}
-
-/* 📄 MODAL */
-function openModal(id){
-  db.ref("profiles/"+id).once("value").then(snap=>{
-    let d = snap.val();
-
-    document.getElementById("modalBody").innerHTML=`
-      <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%;border-radius:10px;">
-      <p><b>Age:</b> ${d.age}</p>
-      <p><b>City:</b> ${d.city}</p>
-      <p>${d.description || ""}</p>
-    `;
-
-    document.getElementById("modal").style.display="flex";
-  });
-}
-
-function closeModal(){
-  document.getElementById("modal").style.display="none";
-}
-
-/* 🔗 NAV */
-function goAdd(){ window.location="profile-submit.html"; }
-function goAdmin(){ window.location="admin.html"; }
-function goAdminAdd(){ window.location="admin-add.html"; }
 
 </script>
 
