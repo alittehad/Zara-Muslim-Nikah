@@ -1,35 +1,95 @@
-<script>
-const db = firebase.database();
-const storage = firebase.storage();
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Page</title>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  font-family:sans-serif;
+  background:#f4f6f9;
+  padding:20px;
+}
+
+.box{
+  max-width:400px;
+  margin:auto;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+}
+
+img{
+  width:100%;
+  border-radius:10px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  background:#0f766e;
+  color:white;
+  border:none;
+  border-radius:8px;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>💳 Payment Page</h2>
+
+<!-- your image -->
+<img src="https://i.ibb.co/6RkksFjc/image.jpg">
+
+<p>👉 Rishta Confirm karne ke liye payment kare</p>
+
+<button onclick="submitPayment()">Rishta Kare 💖</button>
+</div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+const auth = firebase.auth();
+
+/* SAVE PAYMENT */
 function submitPayment(){
 
-  const file = document.getElementById("screenshot").files[0];
-  const name = document.getElementById("name").value;
+  let user = auth.currentUser;
 
-  if(!file){
-    alert("Screenshot required");
+  if(!user){
+    alert("Please login first");
     return;
   }
 
-  const ref = storage.ref("payments/" + Date.now() + "_" + file.name);
-
-  ref.put(file).then(snap => {
-
-    snap.ref.getDownloadURL().then(url => {
-
-      db.ref("payments").push({
-        name: name,
-        screenshot: url,
-        status: "pending",
-        time: Date.now()
-      });
-
-      alert("Payment Submitted ✔️ (Waiting Approval)");
-      window.location = "index.html";
-    });
-
+  db.ref("payments").push({
+    uid: user.uid,
+    status: "pending",
+    time: Date.now()
   });
 
+  alert("Payment Submitted ✔️ (Waiting Approval)");
+
+  window.location = "index.html";
 }
+
 </script>
+
+</body>
+</html>
