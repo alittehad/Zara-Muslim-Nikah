@@ -15,6 +15,7 @@ body{
   padding:20px;
 }
 
+/* BOX */
 .box{
   max-width:420px;
   margin:auto;
@@ -37,12 +38,18 @@ button{
   border:none;
 }
 
+/* 🔥 PREVIEW FIX */
 .preview{
   width:100%;
+  height:160px;
+  object-fit:cover;
   margin-top:10px;
   border-radius:10px;
+  display:none;
+  border:1px solid #ddd;
 }
 
+/* CARD */
 .card{
   background:white;
   margin-top:10px;
@@ -51,8 +58,11 @@ button{
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
+/* 🔥 IMAGE FIX (MAIN PROBLEM SOLVED) */
 .card img{
   width:100%;
+  height:160px;
+  object-fit:cover;
   border-radius:8px;
 }
 </style>
@@ -71,7 +81,8 @@ button{
 <p>📷 Screenshot Upload</p>
 <input type="file" id="file">
 
-<img id="preview" class="preview" style="display:none;">
+<!-- PREVIEW FIXED -->
+<img id="preview" class="preview">
 
 <button onclick="submit()">Send</button>
 
@@ -81,7 +92,6 @@ button{
 
 <script>
 
-/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -92,17 +102,24 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* PREVIEW */
+/* PREVIEW FIX */
 document.getElementById("file").onchange = function(e){
+  let file = e.target.files[0];
+
+  if(!file) return;
+
   let reader = new FileReader();
+
   reader.onload = function(){
-    document.getElementById("preview").src = reader.result;
-    document.getElementById("preview").style.display = "block";
+    let img = document.getElementById("preview");
+    img.src = reader.result;
+    img.style.display = "block";
   }
-  reader.readAsDataURL(e.target.files[0]);
+
+  reader.readAsDataURL(file);
 };
 
-/* IMGBB UPLOAD */
+/* IMGBB */
 async function uploadImg(file){
 
   let form = new FormData();
@@ -143,10 +160,9 @@ async function submit(){
     time:Date.now()
   });
 
-  alert("✔ Payment sent (waiting approval)");
+  alert("✔ Payment sent");
 }
 
-/* SHOW */
 db.ref("payments").on("value", snap=>{
 
   let html="";
@@ -167,7 +183,6 @@ db.ref("payments").on("value", snap=>{
   });
 
   document.getElementById("list").innerHTML=html;
-
 });
 
 </script>
