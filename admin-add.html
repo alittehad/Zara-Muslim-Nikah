@@ -1,225 +1,119 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<style>
-body{font-family:sans-serif;background:#f4f6f9;margin:0;}
-
-header{
-  background:#0f766e;
-  color:white;
-  text-align:center;
-  padding:12px;
-}
-
-.container{
-  max-width:900px;
-  margin:auto;
-  padding:15px;
-}
-
-input,textarea{
-  width:100%;
-  padding:10px;
-  margin:6px 0;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
-button{
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  color:white;
-  cursor:pointer;
-}
-
-.save{background:#16a34a;}
-.delete{background:#dc2626;}
-.edit{background:#2563eb;}
-
-.card{
-  background:white;
-  padding:10px;
-  margin:10px 0;
-  border-radius:10px;
-}
-
-img{
-  width:100%;
-  max-height:200px;
-  object-fit:cover;
-  border-radius:8px;
-}
-</style>
-</head>
-
-<body>
-
-<header>👑 Admin Panel</header>
-
-<div class="container">
-
-<h3>Add / Edit Profile</h3>
-
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="city" placeholder="City">
-<textarea id="desc" placeholder="Description"></textarea>
-
-<input type="file" id="photo">
-
-<img id="preview" style="display:none;">
-
-<button class="save" onclick="save()">Save Profile</button>
-
-<hr>
-
-<h3>All Profiles</h3>
-<div id="list"></div>
-
-</div>
-
 <script>
 
-/* 🔥 Firebase Config */
+let editId = null; // ✅ FIX
+
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  databaseURL: "YOUR_DB",
-  projectId: "YOUR_ID"
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com/",
+  projectId: "zara-muslim-nikah",
+  storageBucket: "zara-muslim-nikah.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database();
 
-let editId = null;
-
-/* 📸 Image Preview */
-document.getElementById("photo").onchange = function(e){
-  const file = e.target.files[0];
-  if(file){
-    const reader = new FileReader();
-    reader.onload = function(){
-      document.getElementById("preview").src = reader.result;
-      document.getElementById("preview").style.display = "block";
-    }
-    reader.readAsDataURL(file);
-  }
-};
-
-/* 💾 SAVE */
-function save(){
+/* SAVE / UPDATE */
+async function save(){
 
   const name = document.getElementById("name").value;
   const age = document.getElementById("age").value;
   const city = document.getElementById("city").value;
   const desc = document.getElementById("desc").value;
-
-  const file = document.getElementById("photo").files[0];
+  const photo = document.getElementById("photo").files[0];
 
   if(!name || !age || !city || !desc){
-    alert("All fields required");
+    alert("Fill all fields");
     return;
   }
 
-  let photo = document.getElementById("preview").src || "";
+  let photoURL = "";
 
-  const data = {
+  if(photo){
+    // 🔥 ImgBB upload
+    let formData = new FormData();
+    formData.append("image", photo);
+
+    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
+      method: "POST",
+      body: formData
+    });
+
+    let data = await res.json();
+    photoURL = data.data.url;
+  }
+
+  let profile = {
     name,
     age,
     city,
-    description: desc,
-    photo,
+    desc,
+    photo: photoURL,
     time: Date.now()
   };
 
   if(editId){
-    db.ref("profiles/" + editId).update(data);
+    await db.ref("profiles/" + editId).update(profile);
+    alert("Updated ✔️");
     editId = null;
   }else{
-    db.ref("profiles").push(data);
+    await db.ref("profiles").push(profile);
+    alert("Added ✔️");
   }
 
-  alert("Saved ✔️");
-  clearForm();
-  load();
+  window.location.reload();
 }
 
-/* 📥 LOAD */
+/* LOAD DATA */
 function load(){
 
   db.ref("profiles").on("value", snap=>{
 
     let html = "";
 
-    snap.forEach(s=>{
-      let p = s.val();
+    snap.forEach(child=>{
+      let p = child.val();
+      let id = child.key;
 
       html += `
-      <div class="card">
-        <img src="${p.photo}">
+      <div style="background:#fff;margin:10px;padding:10px;border-radius:10px;">
+        <img src="${p.photo}" style="width:100%;height:150px;object-fit:cover">
         <h3>${p.name}</h3>
         <p>${p.city}</p>
 
-        <button class="edit" onclick="edit('${s.key}')">Edit</button>
-        <button class="delete" onclick="del('${s.key}')">Delete</button>
-      </div>`;
+        <button onclick="edit('${id}','${p.name}','${p.age}','${p.city}','${p.desc}')">
+          Edit
+        </button>
+
+        <button onclick="del('${id}')">
+          Delete
+        </button>
+      </div>
+      `;
     });
 
-    document.getElementById("list").innerHTML = html;
-
+    document.body.innerHTML += html;
   });
+}
+
+/* EDIT */
+function edit(id,name,age,city,desc){
+  editId = id;
+
+  document.getElementById("name").value = name;
+  document.getElementById("age").value = age;
+  document.getElementById("city").value = city;
+  document.getElementById("desc").value = desc;
+}
+
+/* DELETE */
+function del(id){
+  if(confirm("Delete?")){
+    db.ref("profiles/" + id).remove();
+  }
 }
 
 load();
 
-/* ✏️ EDIT */
-function edit(id){
-
-  db.ref("profiles/" + id).once("value", snap=>{
-    let p = snap.val();
-
-    document.getElementById("name").value = p.name;
-    document.getElementById("age").value = p.age;
-    document.getElementById("city").value = p.city;
-    document.getElementById("desc").value = p.description;
-
-    document.getElementById("preview").src = p.photo;
-    document.getElementById("preview").style.display = "block";
-
-    editId = id;
-  });
-}
-
-/* 🗑 DELETE */
-function del(id){
-
-  if(confirm("Delete?")){
-    db.ref("profiles/" + id).remove();
-  }
-
-}
-
-/* 🧹 CLEAR */
-function clearForm(){
-  document.getElementById("name").value="";
-  document.getElementById("age").value="";
-  document.getElementById("city").value="";
-  document.getElementById("desc").value="";
-  document.getElementById("photo").value="";
-  document.getElementById("preview").style.display="none";
-}
-
 </script>
-
-</body>
-</html>
