@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Payment Approval Panel</title>
+<title>Payment Admin Panel</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -25,66 +25,93 @@ header{
   font-weight:bold;
 }
 
-/* GRID RESPONSIVE */
-.container{
+/* SEARCH + FILTER */
+.topbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
   padding:10px;
-  display:grid;
-  grid-template-columns:repeat(1,1fr);
-  gap:10px;
 }
 
-@media(min-width:768px){
+input{
+  flex:1;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+
+.filter-btn{
+  padding:8px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+  background:#ddd;
+}
+
+/* CONTAINER GRID */
+.container{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  padding:10px;
+}
+
+/* MOBILE */
+@media(max-width:768px){
   .container{
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:1fr;
   }
 }
 
 /* CARD */
 .card{
   background:white;
-  border-radius:8px;
+  border-radius:10px;
   padding:8px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
   font-size:13px;
 }
 
 /* IMAGE FIX */
 .card img{
   width:100%;
-  height:120px;
+  height:140px;
   object-fit:cover;
-  border-radius:6px;
+  border-radius:8px;
   margin-top:5px;
-}
-
-/* STATUS */
-.status{
-  margin-top:5px;
-  font-size:12px;
-  font-weight:bold;
 }
 
 /* BUTTONS */
 .btn{
-  padding:5px 7px;
+  padding:6px 8px;
   border:none;
   border-radius:5px;
-  margin-top:6px;
-  margin-right:3px;
+  margin-top:5px;
   cursor:pointer;
-  color:white;
   font-size:11px;
+  color:white;
 }
 
 .approve{background:green;}
 .reject{background:red;}
-.delete{background:#444;}
+.delete{background:black;}
 </style>
 </head>
 
 <body>
 
-<header>👑 Payment Approval Panel</header>
+<header>👑 Payment Admin Panel</header>
+
+<!-- SEARCH + FILTER -->
+<div class="topbar">
+  <input type="text" id="search" placeholder="🔍 Name / Mobile search..." onkeyup="render()">
+
+  <button class="filter-btn" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" onclick="setFilter('pending')">Request</button>
+  <button class="filter-btn" onclick="setFilter('approved')">Approved</button>
+  <button class="filter-btn" onclick="setFilter('rejected')">Rejected</button>
+</div>
 
 <div class="container" id="list"></div>
 
@@ -101,50 +128,69 @@ firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database();
 
-/* LOAD PAYMENTS */
-db.ref("payments").on("value", snap => {
+let payments = {};
+let currentFilter = "all";
 
+/* LOAD DATA */
+db.ref("payments").on("value", snap=>{
+  payments = snap.val() || {};
+  render();
+});
+
+/* FILTER */
+function setFilter(f){
+  currentFilter = f;
+  render();
+}
+
+/* RENDER */
+function render(){
+
+  let search = document.getElementById("search").value.toLowerCase();
   let html = "";
 
-  snap.forEach(child => {
+  Object.keys(payments).forEach(id=>{
 
-    let d = child.val();
-    let id = child.key;
+    let d = payments[id];
+
+    let text = (d.name + " " + (d.mobile||"") + " " + (d.age||"")).toLowerCase();
+
+    if(search && !text.includes(search)) return;
+
+    if(currentFilter !== "all" && (d.status||"pending") !== currentFilter) return;
 
     html += `
-      <div class="card">
+    <div class="card">
 
-        <b>👤 Name:</b> ${d.name || ""}<br>
-        <b>🎂 Age:</b> ${d.age || ""}<br>
-        <b>💰 Fee:</b> ₹${d.amount || "N/A"}<br>
+      <b>👤 ${d.name || ""}</b><br>
+      📱 ${d.mobile || "N/A"}<br>
+      🎂 ${d.age || ""}<br>
+      💰 ₹${d.amount || "0"}<br>
 
-        ${d.screenshot ? `<img src="${d.screenshot}">` : ""}
+      ${d.screenshot ? `<img src="${d.screenshot}">` : ""}
 
-        <div class="status">Status: ${d.status || "pending"}</div>
+      <div>Status: <b>${d.status || "pending"}</b></div>
 
-        <button class="btn approve" onclick="approve('${id}')">✔</button>
-        <button class="btn reject" onclick="reject('${id}')">✖</button>
-        <button class="btn delete" onclick="del('${id}')">🗑</button>
+      <button class="btn approve" onclick="approve('${id}')">✔ Approve</button>
+      <button class="btn reject" onclick="reject('${id}')">✖ Reject</button>
+      <button class="btn delete" onclick="del('${id}')">🗑 Delete</button>
 
-      </div>
-    `;
+    </div>`;
   });
 
   document.getElementById("list").innerHTML =
-    html || "<p style='text-align:center'>No Payments Found</p>";
-});
+    html || "<p style='text-align:center'>No Data Found</p>";
+}
 
-/* APPROVE */
+/* ACTIONS */
 function approve(id){
   db.ref("payments/"+id).update({status:"approved"});
 }
 
-/* REJECT */
 function reject(id){
   db.ref("payments/"+id).update({status:"rejected"});
 }
 
-/* DELETE */
 function del(id){
   if(confirm("Delete this record?")){
     db.ref("payments/"+id).remove();
