@@ -5,13 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- BUTTON CSS -->
-<link rel="stylesheet" href="buttons.css">
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <style>
 body{
   margin:0;
@@ -30,12 +23,34 @@ header{
 
 /* TOPBAR */
 .topbar{
-  display:none;
+  display:flex;
   justify-content:center;
-  gap:10px;
-  padding:10px;
+  gap:12px;
+  padding:12px;
   flex-wrap:wrap;
 }
+
+/* 3D BUTTON */
+.btn{
+  padding:10px 16px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  color:white;
+  font-weight:bold;
+  box-shadow:0 5px 0 rgba(0,0,0,0.2);
+  transition:0.2s;
+}
+
+.btn:active{
+  transform:translateY(4px);
+  box-shadow:0 2px 0 rgba(0,0,0,0.2);
+}
+
+.home{background:#10b981;}
+.add{background:#2563eb;}
+.admin{background:#f59e0b;}
+.logout{background:#ef4444;}
 
 /* GRID */
 .grid{
@@ -51,12 +66,6 @@ header{
   border-radius:12px;
   overflow:hidden;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  cursor:pointer;
-  transition:0.2s;
-}
-
-.card:hover{
-  transform:scale(1.03);
 }
 
 .card img{
@@ -70,22 +79,33 @@ header{
   padding:10px;
 }
 
+.card button{
+  margin:5px;
+  padding:8px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  color:white;
+}
+
+.like{background:#e11d48;}
+
 /* MODAL */
 .modal{
+  display:none;
   position:fixed;
   inset:0;
-  display:none;
+  background:rgba(0,0,0,0.6);
   justify-content:center;
   align-items:center;
-  background:rgba(0,0,0,0.6);
 }
 
 .modal-content{
   background:white;
-  width:90%;
-  max-width:400px;
   padding:20px;
   border-radius:10px;
+  width:90%;
+  max-width:400px;
 }
 </style>
 </head>
@@ -94,141 +114,111 @@ header{
 
 <header>🕋 Zara Nikah Service 🕌</header>
 
-<div class="topbar" id="topbar">
-  <button class="btn btn-home" onclick="location.reload()">Home</button>
-  <button class="btn btn-add" onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button class="btn btn-admin" id="adminBtn" style="display:none" onclick="goAdmin()">Admin Panel</button>
-  <button class="btn btn-logout" onclick="logout()">Logout</button>
+<div class="topbar">
+  <button class="btn home" onclick="location.reload()">Home</button>
+  <button class="btn add" onclick="goAdd()">➕ Add Profile</button>
+  <button class="btn admin" onclick="openAdmin()">👑 Admin Panel</button>
+  <button class="btn logout" onclick="logout()">Logout</button>
 </div>
 
-<div class="grid" id="profileGrid"></div>
+<div class="grid" id="grid"></div>
 
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
-    <div id="modalBody"></div>
+    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
+
+    <input id="name" placeholder="Name"><br>
+    <input id="age" placeholder="Age"><br>
+    <input id="city" placeholder="City"><br>
+    <input id="photo" placeholder="Photo URL"><br>
+
+    <button class="btn add" onclick="saveProfile()">Save Profile</button>
   </div>
 </div>
 
 <script>
 
-// 🔥 FIREBASE CONFIG
-const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
-};
+/* 🔥 LOAD DATA */
+function load(){
+  let data = JSON.parse(localStorage.getItem("profiles") || "[]");
 
-firebase.initializeApp(firebaseConfig);
+  let html = "";
 
-const auth = firebase.auth();
-const db = firebase.database();
+  data.forEach((p,i)=>{
+    html += `
+    <div class="card">
+      <img src="${p.photo}">
+      <div class="card-body">
+        <h3>${p.name}</h3>
+        <p>${p.age} | ${p.city}</p>
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
+        <button class="like" onclick="like('${p.name}','${p.age}','${p.city}')">
+          ❤️ Like
+        </button>
+      </div>
+    </div>`;
+  });
 
-let currentUser = null;
-let currentProfileId = null;
+  document.getElementById("grid").innerHTML = html;
+}
 
-/* ✅ LOGIN CHECK */
-auth.onAuthStateChanged(user=>{
-  if(!user){
-    window.location.href="login.html";
+load();
+
+/* 🔥 ADMIN OPEN */
+function openAdmin(){
+  document.getElementById("modal").style.display="flex";
+}
+
+/* 🔥 SAVE PROFILE (NO FIREBASE) */
+function saveProfile(){
+
+  let data = JSON.parse(localStorage.getItem("profiles") || "[]");
+
+  let obj = {
+    name: document.getElementById("name").value,
+    age: document.getElementById("age").value,
+    city: document.getElementById("city").value,
+    photo: document.getElementById("photo").value
+  };
+
+  if(!obj.name || !obj.photo){
+    alert("Fill all fields");
     return;
   }
 
-  currentUser = user;
-  document.getElementById("topbar").style.display="flex";
+  data.push(obj);
 
-  // ADMIN CHECK
-  if((user.email || "").toLowerCase() === ADMIN_EMAIL){
-    document.getElementById("adminBtn").style.display="inline-block";
-  }
+  localStorage.setItem("profiles", JSON.stringify(data));
 
-  loadProfiles();
-});
+  alert("Profile Added ✔️");
 
-/* ✅ LOAD PROFILES */
-function loadProfiles(){
-  db.ref("profiles").on("value",snap=>{
-    const grid = document.getElementById("profileGrid");
-    grid.innerHTML = "";
-
-    if(!snap.exists()){
-      grid.innerHTML = "<p style='text-align:center;'>No profiles available</p>";
-      return;
-    }
-
-    snap.forEach(child=>{
-      const d = child.val();
-      if(!d) return;
-
-      grid.innerHTML += `
-      <div class="card" onclick="openModal('${child.key}')">
-        <img src="${d.photo || 'https://via.placeholder.com/300'}">
-        <div class="card-body">
-          <h3>${d.name || 'No Name'}</h3>
-          <p>${d.city || ''}</p>
-        </div>
-      </div>`;
-    });
-  });
+  closeModal();
+  load();
 }
 
-/* ✅ OPEN PROFILE */
-function openModal(id){
-  currentProfileId = id;
-
-  db.ref("profiles/"+id).once("value").then(snap=>{
-    const d = snap.val();
-
-    if(!d){
-      alert("Profile not found");
-      return;
-    }
-
-    document.getElementById("modalBody").innerHTML = `
-      <h2>${d.name || ''}</h2>
-      <img src="${d.photo || ''}" style="width:100%;border-radius:10px;">
-      <p><b>Age:</b> ${d.age || ''}</p>
-      <p><b>City:</b> ${d.city || ''}</p>
-
-      <button class="btn btn-like" onclick="goPayment()">❤️ रिश्ता पसंद है</button>
-    `;
-
-    document.getElementById("modal").style.display = "flex";
-  });
-}
-
-/* ✅ GO PAYMENT (IMPORTANT FIX) */
-function goPayment(){
-  if(!currentProfileId){
-    alert("No profile selected");
-    return;
-  }
-
-  // 🔥 direct profile id pass
-  window.location.href = "payment.html?profile=" + currentProfileId;
-}
-
-/* CLOSE MODAL */
+/* CLOSE */
 function closeModal(){
-  document.getElementById("modal").style.display = "none";
+  document.getElementById("modal").style.display="none";
 }
 
-/* LOGOUT */
-function logout(){
-  auth.signOut();
+/* WHATSAPP */
+function like(name,age,city){
+  let msg = `I like this profile:
+Name:${name}
+Age:${age}
+City:${city}`;
+
+  window.open("https://wa.me/7378342192?text="+encodeURIComponent(msg));
 }
 
-/* NAVIGATION */
+/* NAV */
 function goAdd(){
-  window.location = "profile-submit.html";
+  alert("Admin panel se add kare");
 }
 
-function goAdmin(){
-  window.location = "admin-add.html";
+function logout(){
+  alert("Logged out");
 }
 
 </script>
