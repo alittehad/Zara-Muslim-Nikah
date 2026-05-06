@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  font-family:sans-serif;
+  background:#f4f6f9;
+  padding:15px;
+}
+
+.box{
+  max-width:420px;
+  margin:auto;
+  background:white;
+  padding:15px;
+  border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  text-align:center;
+}
+
+img{
+  width:150px;
+  height:150px;
+  object-fit:cover;
+  border-radius:12px;
+  margin-bottom:10px;
+}
+
+.btn{
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  margin-top:10px;
+  width:100%;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.home{background:#111;color:white;}
+.edit{background:#1d4ed8;color:white;}
+</style>
+</head>
+
+<body>
+
+<div class="box" id="profileBox">
+Loading...
+</div>
+
+<script>
+
+firebase.initializeApp({
+  apiKey:"AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain:"zara-muslim-nikah.firebaseapp.com",
+  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com"
+});
+
+const auth = firebase.auth();
+const db = firebase.database();
+
+/* LOGIN CHECK */
+auth.onAuthStateChanged(user=>{
+
+  if(!user){
+    window.location="index.html";
+    return;
+  }
+
+  loadMyProfile(user.uid);
+});
+
+/* LOAD ONLY MY PROFILE */
+function loadMyProfile(uid){
+
+  db.ref("profiles").on("value",snap=>{
+
+    let found = false;
+    let html = "";
+
+    snap.forEach(child=>{
+      let d = child.val();
+
+      if(d.uid === uid){
+        found = true;
+
+        html = `
+        <img src="${d.photo}">
+        <h2>${d.name}</h2>
+        <p><b>Age:</b> ${d.age}</p>
+        <p><b>City:</b> ${d.city}</p>
+        <p><b>Phone:</b> ${d.phone}</p>
+        <p><b>Education:</b> ${d.education}</p>
+        <p><b>Profession:</b> ${d.profession}</p>
+        <p>${d.bio || ""}</p>
+
+        <button class="btn edit" onclick="editProfile('${child.key}')">
+          ✏ Edit Profile
+        </button>
+
+        <button class="btn home" onclick="goHome()">
+          🏠 Home
+        </button>
+        `;
+      }
+    });
+
+    if(!found){
+      html = `
+      <p>No profile found</p>
+      <button class="btn home" onclick="goHome()">🏠 Home</button>
+      `;
+    }
+
+    document.getElementById("profileBox").innerHTML = html;
+
+  });
+}
+
+/* EDIT */
+function editProfile(id){
+  window.location = "admin-add.html?id=" + id;
+}
+
+/* HOME */
+function goHome(){
+  window.location = "index.html";
+}
+
+</script>
+
+</body>
+</html>
