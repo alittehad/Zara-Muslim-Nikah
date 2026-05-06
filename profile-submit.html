@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile Submit</title>
+<title>Marriage Profile Form</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -17,7 +17,7 @@ body{
 }
 
 .box{
-  max-width:420px;
+  max-width:450px;
   margin:auto;
   background:white;
   padding:15px;
@@ -25,16 +25,21 @@ body{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-input,select{
+h2{
+  text-align:center;
+  color:#0f766e;
+}
+
+input,select,textarea{
   width:100%;
   padding:10px;
   margin:6px 0;
-  border:1px solid #ddd;
   border-radius:8px;
+  border:1px solid #ddd;
 }
 
-/* 3D BUTTON */
-.btn3d{
+/* BUTTON */
+button{
   width:100%;
   padding:12px;
   background:#0f766e;
@@ -42,46 +47,24 @@ input,select{
   border:none;
   border-radius:10px;
   font-weight:bold;
-  box-shadow:0 5px 0 #0b5c56;
-  cursor:pointer;
+  margin-top:8px;
 }
 
-.btn3d:active{
-  transform:translateY(3px);
-  box-shadow:0 2px 0 #0b5c56;
-}
-
-/* SUBMIT */
-.submitBtn{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:10px;
+/* CARD */
+.card{
+  background:white;
   margin-top:10px;
-  font-weight:bold;
+  padding:10px;
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.locked{background:gray;color:white;}
-.unlocked{background:green;color:white;}
-
-/* MSG */
-.msg{
-  text-align:center;
-  font-weight:bold;
-  margin:10px 0;
-}
-.lock{color:red;}
-.ok{color:green;}
-
-/* IMAGE PREVIEW SMALL */
-#preview{
+/* IMAGE SMALL */
+.card img{
   width:90px;
   height:90px;
   object-fit:cover;
   border-radius:8px;
-  margin-top:5px;
-  display:none;
-  border:1px solid #ddd;
 }
 </style>
 </head>
@@ -90,29 +73,35 @@ input,select{
 
 <div class="box">
 
-<h3>👤 Profile Submit</h3>
+<h2>💍 शादी प्रोफाइल फॉर्म</h2>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="city" placeholder="City">
-<input id="phone" placeholder="Mobile Number">
+<!-- BASIC DETAILS -->
+<input id="name" placeholder="पूरा नाम">
+<input id="age" placeholder="उम्र">
+<select id="gender">
+  <option value="">Gender चुनें</option>
+  <option>Male</option>
+  <option>Female</option>
+</select>
 
-<p>📷 Photo Upload</p>
+<input id="phone" placeholder="मोबाइल नंबर">
+<input id="city" placeholder="शहर">
+<input id="religion" placeholder="धर्म">
+<input id="education" placeholder="शिक्षा">
+<input id="job" placeholder="नौकरी / काम">
+<textarea id="about" placeholder="अपने बारे में लिखें"></textarea>
+
+<!-- PHOTO -->
+<p>📷 Profile Photo</p>
 <input type="file" id="file">
-<img id="preview">
+<img id="preview" style="width:90px;height:90px;display:none;border-radius:8px;margin-top:5px;">
 
-<!-- PAYMENT -->
-<button class="btn3d" onclick="goPayment()">
-💰 Registration Fees जमा करें
-</button>
-
-<div id="status" class="msg lock">Checking payment...</div>
-
-<button id="submitBtn" class="submitBtn locked" onclick="submitProfile()">
-🔒 Submit Profile
-</button>
+<button onclick="submitProfile()">💾 Save Profile</button>
 
 </div>
+
+<!-- USER DATA -->
+<div id="list"></div>
 
 <script>
 
@@ -126,24 +115,22 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.database();
 
-let isPaid = false;
+let imageURL = "";
 
-/* PREVIEW (SMALL) */
+/* PREVIEW */
 document.getElementById("file").onchange = function(e){
-  let file = e.target.files[0];
   let reader = new FileReader();
-
   reader.onload = function(){
     let img = document.getElementById("preview");
     img.src = reader.result;
-    img.style.display = "block";
+    img.style.display="block";
   };
-
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(e.target.files[0]);
 };
 
 /* IMGBB UPLOAD */
 async function uploadImg(file){
+
   let form = new FormData();
   form.append("image", file);
 
@@ -156,83 +143,85 @@ async function uploadImg(file){
   return data.data.url;
 }
 
-/* PAYMENT PAGE */
-function goPayment(){
-  window.location="payment.html";
-}
-
-/* CHECK PAYMENT */
-function checkPayment(uid){
-
-  db.ref("payments").on("value", snap=>{
-
-    isPaid = false;
-
-    snap.forEach(s=>{
-      let d = s.val();
-
-      if(d.uid === uid && d.status === "approved"){
-        isPaid = true;
-      }
-    });
-
-    if(isPaid){
-      document.getElementById("status").innerHTML = "✔ आप registered हो गए हैं";
-      document.getElementById("status").className="msg ok";
-
-      document.getElementById("submitBtn").classList.remove("locked");
-      document.getElementById("submitBtn").classList.add("unlocked");
-
-    }else{
-      document.getElementById("status").innerHTML = "⏳ Wait for approval";
-      document.getElementById("submitBtn").classList.add("locked");
-    }
-  });
-}
-
 /* SUBMIT */
 async function submitProfile(){
 
-  if(!isPaid){
-    alert("पहले payment करें");
-    return;
-  }
-
   let user = auth.currentUser;
 
-  let name = document.getElementById("name").value;
-  let age = document.getElementById("age").value;
-  let city = document.getElementById("city").value;
-  let phone = document.getElementById("phone").value;
-  let file = document.getElementById("file").files[0];
-
-  if(!name || !age || !city || !phone || !file){
-    alert("Required fields fill करें");
+  if(!user){
+    alert("Login करें");
     return;
   }
 
-  let imgUrl = await uploadImg(file);
+  let file = document.getElementById("file").files[0];
 
-  db.ref("profiles").push({
+  if(!file){
+    alert("Photo जरूरी है");
+    return;
+  }
+
+  imageURL = await uploadImg(file);
+
+  let data = {
     uid:user.uid,
-    name,
-    age,
-    city,
-    phone,
-    photo:imgUrl,
+    name:name.value,
+    age:age.value,
+    gender:gender.value,
+    phone:phone.value,
+    city:city.value,
+    religion:religion.value,
+    education:education.value,
+    job:job.value,
+    about:about.value,
+    photo:imageURL,
     time:Date.now()
-  });
+  };
 
-  alert("✔ Profile Submitted");
+  db.ref("profiles").push(data);
+
+  alert("✔ Profile Saved Successfully");
 }
 
-/* LOGIN */
+/* LOAD (NO DELETE ON REFRESH) */
 auth.onAuthStateChanged(user=>{
+
   if(!user){
     window.location="index.html";
     return;
   }
-  checkPayment(user.uid);
+
+  db.ref("profiles").on("value", snap=>{
+
+    let html="";
+
+    snap.forEach(c=>{
+
+      let d=c.val();
+
+      // ONLY USER DATA
+      if(d.uid !== user.uid) return;
+
+      html+=`
+      <div class="card">
+
+        <img src="${d.photo}">
+
+        <b>${d.name}</b><br>
+        🎂 ${d.age}<br>
+        🚻 ${d.gender}<br>
+        📱 ${d.phone}<br>
+        🏙 ${d.city}<br>
+        📚 ${d.education}<br>
+        💼 ${d.job}<br>
+        ❤️ ${d.about}<br>
+
+      </div>`;
+    });
+
+    document.getElementById("list").innerHTML =
+    html || "<p style='text-align:center'>No Profile Found</p>";
+  });
+
 });
 
 </script>
