@@ -7,29 +7,17 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstaticjs.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  font-family:sans-serif;
-  background:#f4f6f9;
-  padding:15px;
-}
+body{font-family:sans-serif;background:#f4f6f9;padding:15px;}
+.box{max-width:420px;margin:auto;background:white;padding:15px;border-radius:12px;}
 
-.box{
-  max-width:420px;
-  margin:auto;
-  background:white;
-  padding:15px;
-  border-radius:12px;
-}
-
-input,select,button{
+input,select,textarea,button{
   width:100%;
   padding:10px;
   margin:8px 0;
   border-radius:8px;
-  border:1px solid #ddd;
 }
 
 button{
@@ -37,14 +25,15 @@ button{
   color:white;
   border:none;
   font-weight:bold;
+  cursor:pointer;
 }
 
 .preview{
-  width:100%;
-  max-height:150px;
+  width:120px;
+  height:120px;
   object-fit:cover;
-  border-radius:8px;
-  margin-top:10px;
+  border-radius:10px;
+  display:none;
 }
 </style>
 </head>
@@ -53,30 +42,28 @@ button{
 
 <div class="box">
 
-<h2>👤 Marriage Profile Form</h2>
+<h2>👤 Profile Form</h2>
 
-<input id="name" placeholder="पूरा नाम">
-<input id="age" placeholder="उम्र">
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
 
-<!-- 🔥 GENDER DROPDOWN -->
 <select id="gender">
-  <option value="">लिंग चुनें</option>
-  <option value="Male">पुरुष</option>
-  <option value="Female">महिला</option>
+  <option value="">Select Gender</option>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
 </select>
 
-<input id="city" placeholder="शहर">
-<input id="phone" placeholder="मोबाइल नंबर">
-<input id="education" placeholder="शिक्षा">
-<input id="profession" placeholder="पेशा">
-<textarea id="bio" placeholder="अपने बारे में लिखें"></textarea>
+<input id="city" placeholder="City">
+<input id="phone" placeholder="Phone">
+<input id="education" placeholder="Education">
+<input id="profession" placeholder="Profession">
+<textarea id="bio" placeholder="Bio"></textarea>
 
-<!-- IMAGE -->
-<p>📷 फोटो अपलोड करें</p>
+<p>📷 Image Upload</p>
 <input type="file" id="file">
-<img id="preview" class="preview" style="display:none;">
+<img id="preview" class="preview">
 
-<button onclick="submitProfile()">📩 Submit & Continue Payment</button>
+<button onclick="submitProfile()">Submit & Go Payment</button>
 
 </div>
 
@@ -93,7 +80,7 @@ const db = firebase.database();
 
 let user = null;
 
-/* LOGIN CHECK */
+/* LOGIN */
 auth.onAuthStateChanged(u=>{
   if(!u){
     window.location="index.html";
@@ -104,30 +91,45 @@ auth.onAuthStateChanged(u=>{
 
 /* IMAGE PREVIEW */
 document.getElementById("file").onchange = function(e){
+  let file = e.target.files[0];
   let reader = new FileReader();
+
   reader.onload = function(){
-    document.getElementById("preview").src = reader.result;
-    document.getElementById("preview").style.display="block";
+    let img = document.getElementById("preview");
+    img.src = reader.result;
+    img.style.display="block";
   }
-  reader.readAsDataURL(e.target.files[0]);
+
+  reader.readAsDataURL(file);
 };
 
-/* IMGBB UPLOAD */
-async function upload(file){
+/* IMGBB UPLOAD FIXED */
+async function uploadImage(file){
 
-  let form = new FormData();
-  form.append("image", file);
+  try{
+    let form = new FormData();
+    form.append("image", file);
 
-  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
-    method:"POST",
-    body:form
-  });
+    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
+      method:"POST",
+      body:form
+    });
 
-  let data = await res.json();
-  return data.data.url;
+    let data = await res.json();
+
+    if(!data || !data.data){
+      throw "Upload failed";
+    }
+
+    return data.data.url;
+
+  }catch(err){
+    alert("Image upload failed");
+    return "";
+  }
 }
 
-/* SUBMIT */
+/* SUBMIT FIXED */
 async function submitProfile(){
 
   if(!user){
@@ -135,22 +137,36 @@ async function submitProfile(){
     return;
   }
 
-  let file = document.getElementById("file").files[0];
+  let name = document.getElementById("name").value;
+  let age = document.getElementById("age").value;
+  let gender = document.getElementById("gender").value;
+  let city = document.getElementById("city").value;
+  let phone = document.getElementById("phone").value;
 
-  if(!file){
-    alert("Image required");
+  if(!name || !age || !gender || !city || !phone){
+    alert("❗ सभी fields भरें");
     return;
   }
 
-  let imgUrl = await upload(file);
+  let file = document.getElementById("file").files[0];
+
+  if(!file){
+    alert("Image जरूरी है");
+    return;
+  }
+
+  alert("Uploading image...");
+
+  let imgUrl = await uploadImage(file);
+
+  if(!imgUrl){
+    alert("Submit failed (image issue)");
+    return;
+  }
 
   let data = {
     uid:user.uid,
-    name:document.getElementById("name").value,
-    age:document.getElementById("age").value,
-    gender:document.getElementById("gender").value,
-    city:document.getElementById("city").value,
-    phone:document.getElementById("phone").value,
+    name,age,gender,city,phone,
     education:document.getElementById("education").value,
     profession:document.getElementById("profession").value,
     bio:document.getElementById("bio").value,
@@ -160,9 +176,8 @@ async function submitProfile(){
 
   db.ref("profiles").push(data);
 
-  alert("✔ Profile Saved");
+  alert("✔ Profile Saved Successfully");
 
-  // 🔥 GO PAYMENT PAGE
   window.location="payment.html";
 }
 
