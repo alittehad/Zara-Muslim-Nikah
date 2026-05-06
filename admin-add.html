@@ -2,49 +2,32 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Add Profile</title>
+<title>Admin Panel</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
 body{font-family:sans-serif;background:#f4f6f9;padding:20px;}
-.box{max-width:420px;margin:auto;background:#fff;padding:20px;border-radius:12px;}
-input,textarea{
-  width:100%;
+.card{
+  background:white;
   padding:10px;
-  margin:8px 0;
-  border:1px solid #ddd;
-  border-radius:8px;
+  margin:10px 0;
+  border-radius:10px;
 }
-button{
-  width:100%;
-  padding:12px;
-  background:#0f766e;
-  color:white;
-  border:none;
-  border-radius:8px;
-  font-size:16px;
-}
+img{width:100%;height:200px;object-fit:cover;}
+button{margin:5px;padding:8px 12px;border:none;border-radius:6px;color:white;}
+.approve{background:green;}
+.delete{background:red;}
+.edit{background:blue;}
 </style>
 </head>
 
 <body>
 
-<div class="box">
-<h2>👑 Admin Add Profile</h2>
+<h2>👑 Admin Panel</h2>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="city" placeholder="City">
-<textarea id="desc" placeholder="Description"></textarea>
-
-<input type="file" id="photo">
-
-<button onclick="save()">Save Profile</button>
-</div>
+<div id="list"></div>
 
 <script>
 
@@ -57,85 +40,56 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
 const db = firebase.database();
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
+function load(){
 
-/* ADMIN CHECK */
-auth.onAuthStateChanged(user=>{
-  if(!user){
-    window.location = "login.html";
-    return;
+  db.ref("profiles").on("value",snap=>{
+    let html="";
+
+    snap.forEach(child=>{
+      let d = child.val();
+
+      html+=`
+      <div class="card">
+        <img src="${d.photo}">
+        <h3>${d.name}</h3>
+        <p>${d.city}</p>
+        <p>Status: ${d.status}</p>
+
+        <button class="approve" onclick="approve('${child.key}')">Approve</button>
+        <button class="edit" onclick="edit('${child.key}')">Edit</button>
+        <button class="delete" onclick="del('${child.key}')">Delete</button>
+      </div>`;
+    });
+
+    document.getElementById("list").innerHTML = html;
+  });
+
+}
+
+load();
+
+/* APPROVE */
+function approve(id){
+  db.ref("profiles/"+id).update({status:"approved"});
+}
+
+/* DELETE */
+function del(id){
+  if(confirm("Delete?")){
+    db.ref("profiles/"+id).remove();
   }
+}
 
-  if((user.email || "").toLowerCase() !== ADMIN_EMAIL){
-    alert("Only admin allowed");
-    window.location = "index.html";
-  }
-});
+/* EDIT */
+function edit(id){
 
-/* 🔥 ImgBB Upload + Save */
-async function save(){
+  let name = prompt("New Name");
+  let city = prompt("New City");
 
-  const name = document.getElementById("name").value.trim();
-  const age = document.getElementById("age").value.trim();
-  const city = document.getElementById("city").value.trim();
-  const desc = document.getElementById("desc").value.trim();
-  const file = document.getElementById("photo").files[0];
-
-  if(!name || !age || !city || !desc || !file){
-    alert("All fields required");
-    return;
-  }
-
-  try{
-
-    // 👉 Convert image to base64
-    const reader = new FileReader();
-
-    reader.onloadend = async function(){
-
-      const base64 = reader.result.split(',')[1];
-
-      // 🔥 Upload to ImgBB
-      const formData = new FormData();
-      formData.append("key", "368731d88d58b4fa0bdd5abdd2c47f72");
-      formData.append("image", base64);
-
-      const res = await fetch("https://api.imgbb.com/1/upload", {
-        method: "POST",
-        body: formData
-      });
-
-      const data = await res.json();
-
-      if(!data.success){
-        alert("Image upload failed");
-        return;
-      }
-
-      const imageUrl = data.data.url;
-
-      // 🔥 Save in Firebase DB
-      await db.ref("profiles").push({
-        name,
-        age,
-        city,
-        description: desc,
-        photo: imageUrl,
-        time: Date.now()
-      });
-
-      alert("Profile Added ✔️");
-      window.location = "index.html";
-    };
-
-    reader.readAsDataURL(file);
-
-  }catch(err){
-    console.log(err);
-    alert("Error: " + err.message);
+  if(name && city){
+    db.ref("profiles/"+id).update({name,city});
   }
 }
 
