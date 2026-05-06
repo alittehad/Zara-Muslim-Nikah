@@ -8,7 +8,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
 body{font-family:sans-serif;background:#f4f6f9;padding:20px;}
@@ -53,15 +52,13 @@ const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah",
-  storageBucket: "zara-muslim-nikah.appspot.com"
+  projectId: "zara-muslim-nikah"
 };
 
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.database();
-const storage = firebase.storage();   // ✅ IMPORTANT FIX
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
@@ -78,7 +75,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* SAVE FUNCTION */
+/* 🔥 ImgBB Upload + Save */
 async function save(){
 
   const name = document.getElementById("name").value.trim();
@@ -94,28 +91,51 @@ async function save(){
 
   try{
 
-    const fileRef = storage.ref("profiles/" + Date.now() + "_" + file.name);
+    // 👉 Convert image to base64
+    const reader = new FileReader();
 
-    await fileRef.put(file);
+    reader.onloadend = async function(){
 
-    const url = await fileRef.getDownloadURL();
+      const base64 = reader.result.split(',')[1];
 
-    await db.ref("profiles").push({
-      name,
-      age,
-      city,
-      description: desc,
-      photo: url,
-      time: Date.now()
-    });
+      // 🔥 Upload to ImgBB
+      const formData = new FormData();
+      formData.append("key", "368731d88d58b4fa0bdd5abdd2c47f72");
+      formData.append("image", base64);
 
-    alert("Profile Added ✔️");
+      const res = await fetch("https://api.imgbb.com/1/upload", {
+        method: "POST",
+        body: formData
+      });
 
-    window.location = "index.html";
+      const data = await res.json();
+
+      if(!data.success){
+        alert("Image upload failed");
+        return;
+      }
+
+      const imageUrl = data.data.url;
+
+      // 🔥 Save in Firebase DB
+      await db.ref("profiles").push({
+        name,
+        age,
+        city,
+        description: desc,
+        photo: imageUrl,
+        time: Date.now()
+      });
+
+      alert("Profile Added ✔️");
+      window.location = "index.html";
+    };
+
+    reader.readAsDataURL(file);
 
   }catch(err){
     console.log(err);
-    alert("Upload Failed: " + err.message);
+    alert("Error: " + err.message);
   }
 }
 
