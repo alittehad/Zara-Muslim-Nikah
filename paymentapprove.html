@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Approve Panel</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  font-family:sans-serif;
+  background:#f4f6f9;
+  padding:20px;
+}
+
+h2{
+  text-align:center;
+  color:#0f766e;
+}
+
+.card{
+  background:white;
+  padding:15px;
+  margin:10px 0;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+img{
+  width:100%;
+  border-radius:10px;
+  margin-top:10px;
+}
+
+button{
+  padding:10px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  color:white;
+  cursor:pointer;
+}
+
+.approve{background:green;}
+.reject{background:red;}
+</style>
+</head>
+
+<body>
+
+<h2>👑 Payment Approval Panel</h2>
+
+<div id="list"></div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* LOAD PAYMENTS */
+db.ref("payments").on("value", snap => {
+
+  let html = "";
+
+  snap.forEach(child => {
+
+    let d = child.val();
+
+    if(d.status === "pending"){
+
+      html += `
+        <div class="card">
+          <h3>नाम: ${d.name}</h3>
+          <p>उम्र: ${d.age}</p>
+          <p>मोबाइल: ${d.phone}</p>
+
+          <img src="${d.image}">
+
+          <button class="approve" onclick="approve('${child.key}')">Approve ✔️</button>
+          <button class="reject" onclick="reject('${child.key}')">Reject ❌</button>
+        </div>
+      `;
+    }
+  });
+
+  document.getElementById("list").innerHTML = html;
+});
+
+/* APPROVE */
+function approve(id){
+
+  db.ref("payments/" + id).update({
+    status: "approved"
+  });
+
+  alert("Approved ✔️");
+}
+
+/* REJECT */
+function reject(id){
+
+  db.ref("payments/" + id).update({
+    status: "rejected"
+  });
+
+  alert("Rejected ❌");
+}
+
+</script>
+
+</body>
+</html>
