@@ -113,6 +113,18 @@ header{
 <body>
 
 <header>🕋 Zara Nikah Service 🕌</header>
+  <div style="position:absolute;right:10px;top:10px;">
+  <button onclick="goMyProfile()" style="
+    background:#111;
+    color:white;
+    padding:8px 12px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+  ">
+  👤 My Profile
+  </button>
+</div>
 
 <div class="topbar">
   <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
@@ -253,7 +265,9 @@ function closeModal(){
 function goAdd(){ window.location="profile-submit.html"; }
 function goAdmin(){ window.location="admin.html"; }
 function goAdminAdd(){ window.location="admin-add.html"; }
-
+function goMyProfile(){
+  window.location = "my-profile.html";
+}
 </script>
 
 </body>
