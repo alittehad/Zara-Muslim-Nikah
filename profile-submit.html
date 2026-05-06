@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Received Interests</title>
+<title>Profile Submit</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -13,9 +13,28 @@
 body{
   font-family:sans-serif;
   background:#f4f6f9;
-  padding:10px;
+  padding:15px;
 }
 
+.box{
+  max-width:420px;
+  margin:auto;
+  background:white;
+  padding:15px;
+  border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* INPUT */
+input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #ddd;
+}
+
+/* 3D BUTTON */
 .btn3d{
   width:100%;
   padding:12px;
@@ -25,46 +44,77 @@ body{
   border-radius:10px;
   font-weight:bold;
   box-shadow:0 5px 0 #0b5c56;
-}
-
-.card{
-  background:#fff;
-  margin-top:10px;
-  padding:10px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-button{
-  padding:7px;
-  margin-top:5px;
-  border:none;
-  border-radius:6px;
   cursor:pointer;
+}
+
+.btn3d:active{
+  transform:translateY(3px);
+  box-shadow:0 2px 0 #0b5c56;
+}
+
+/* SUBMIT */
+.submitBtn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+  margin-top:10px;
+}
+
+.locked{
+  background:gray;
+  color:white;
+  cursor:not-allowed;
+}
+
+.unlocked{
+  background:green;
+  color:white;
+  cursor:pointer;
+}
+
+/* MSG */
+.msg{
+  text-align:center;
+  font-weight:bold;
+  margin:10px 0;
 }
 
 .lock{
   color:red;
-  font-weight:bold;
-  margin:10px 0;
 }
+
 .ok{
   color:green;
-  font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Received Interests</h2>
+<div class="box">
 
-<button class="btn3d" onclick="window.location='payment.html'">
-💰 रजिस्ट्रेशन फीस जमा करें
+<h2>👤 Profile Submit</h2>
+
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="city" placeholder="City">
+
+<!-- 💰 PAYMENT BUTTON -->
+<button class="btn3d" onclick="goPayment()">
+💰 Registration Fees जमा करें
 </button>
 
-<div id="msg" class="lock"></div>
-<div id="list"></div>
+<!-- STATUS -->
+<div id="status" class="msg lock">Checking payment...</div>
+
+<!-- SUBMIT -->
+<button id="submitBtn" class="submitBtn locked" onclick="submitProfile()">
+🔒 Submit Profile
+</button>
+
+</div>
 
 <script>
 
@@ -78,84 +128,73 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.database();
 
-let paid = false;
+let isPaid = false;
+
+/* PAYMENT PAGE */
+function goPayment(){
+  window.location = "payment.html";
+}
 
 /* CHECK PAYMENT */
 function checkPayment(uid){
 
-  db.ref("payments").on("value",snap=>{
+  db.ref("payments").on("value", snap=>{
 
-    paid = false;
+    isPaid = false;
 
     snap.forEach(s=>{
       let d = s.val();
+
       if(d.uid === uid && d.status === "approved"){
-        paid = true;
+        isPaid = true;
       }
     });
 
-    document.getElementById("msg").innerHTML =
-      paid ? "✔ आप registered हो गए हैं" : "👉 पहले registration fees जमा करें";
+    if(isPaid){
+      document.getElementById("status").innerHTML = "✔ आप registered हैं";
+      document.getElementById("status").className = "msg ok";
+
+      document.getElementById("submitBtn").classList.remove("locked");
+      document.getElementById("submitBtn").classList.add("unlocked");
+
+    }else{
+      document.getElementById("status").innerHTML =
+      "❗ पहले registration fees जमा करें";
+
+      document.getElementById("submitBtn").classList.add("locked");
+    }
   });
 }
 
-/* LOAD INTERESTS */
-function loadInterests(uid){
-
-  db.ref("interests").on("value",snap=>{
-
-    let html = "";
-    let found = false;
-
-    snap.forEach(s=>{
-
-      let d = s.val();
-
-      if(!d || !d.receiverId) return;
-
-      if(d.receiverId === uid){
-        found = true;
-
-        html += `
-        <div class="card">
-          <b>From:</b> ${d.senderId || "Unknown"}<br>
-          <b>Status:</b> ${d.status || "pending"}<br>
-
-          <button onclick="accept('${s.key}')">✔ Accept</button>
-          <button onclick="reject('${s.key}')">✖ Reject</button>
-
-          <button onclick="submitProfile()">
-            📩 Submit Profile
-          </button>
-        </div>`;
-      }
-    });
-
-    document.getElementById("list").innerHTML =
-      found ? html : "<p>No Interests Found</p>";
-  });
-}
-
-/* ACTIONS */
-function accept(id){
- db.ref("interests/"+id).update({status:"accepted"});
-}
-
-function reject(id){
- db.ref("interests/"+id).update({status:"rejected"});
-}
-
+/* SUBMIT */
 function submitProfile(){
 
- if(!paid){
-   alert("❗ पहले fees जमा करें");
-   return;
- }
+  if(!isPaid){
+    alert("❗ पहले payment करें");
+    return;
+  }
 
- alert("✔ सबमिट हो गया");
+  let name = document.getElementById("name").value;
+  let age = document.getElementById("age").value;
+  let city = document.getElementById("city").value;
+
+  if(!name || !age || !city){
+    alert("Fill all fields");
+    return;
+  }
+
+  alert("✔ Profile Submitted Successfully");
+
+  db.ref("profiles").push({
+    name,
+    age,
+    city,
+    uid: firebase.auth().currentUser.uid,
+    time: Date.now()
+  });
 }
 
-/* AUTH */
+/* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(!user){
     window.location="index.html";
@@ -163,7 +202,6 @@ auth.onAuthStateChanged(user=>{
   }
 
   checkPayment(user.uid);
-  loadInterests(user.uid);
 });
 
 </script>
