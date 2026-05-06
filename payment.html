@@ -18,7 +18,7 @@ body{
 }
 
 .box{
-  max-width:400px;
+  max-width:420px;
   margin:auto;
   background:white;
   padding:20px;
@@ -33,10 +33,22 @@ h2{
 
 .info{
   background:#e0f2fe;
-  padding:10px;
+  padding:12px;
   border-radius:8px;
-  margin-bottom:10px;
   text-align:center;
+  margin-bottom:15px;
+  font-weight:bold;
+}
+
+.qr{
+  text-align:center;
+  margin:10px 0;
+}
+
+.qr img{
+  width:220px;
+  border-radius:10px;
+  border:1px solid #ddd;
 }
 
 input{
@@ -55,6 +67,7 @@ button{
   border:none;
   border-radius:8px;
   font-size:16px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -66,8 +79,14 @@ button{
 <h2>💍 Rishta Payment</h2>
 
 <div class="info">
-  UPI ID: <b>zara@upi</b><br>
-  ₹500 Registration Fee
+UPI ID: <b>zara@upi</b><br>
+Amount: ₹500 Registration Fee
+</div>
+
+<!-- 🔥 QR SCANNER IMAGE -->
+<div class="qr">
+  <p><b>Scan & Pay</b></p>
+  <img src="https://i.ibb.co/6RkksFjc/qr.png" alt="QR Code">
 </div>
 
 <input type="text" id="name" placeholder="Your Name">
@@ -96,11 +115,11 @@ const db = firebase.database();
 const params = new URLSearchParams(window.location.search);
 const profileId = params.get("id");
 
-/* SUBMIT */
+/* SUBMIT PAYMENT */
 function submitPayment(){
 
-  const name = document.getElementById("name").value;
-  const phone = document.getElementById("phone").value;
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
   const file = document.getElementById("screenshot").files[0];
 
   if(!name || !phone || !file){
@@ -112,13 +131,11 @@ function submitPayment(){
 
   reader.onload = function(){
 
-    const screenshotBase64 = reader.result;
-
     db.ref("payments").push({
       name,
       phone,
       profileId: profileId || "none",
-      screenshot: screenshotBase64,
+      screenshot: reader.result,
       status: "pending",
       time: Date.now()
     });
