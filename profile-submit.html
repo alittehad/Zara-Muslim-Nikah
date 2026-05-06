@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile Submit</title>
+<title>Marriage Profile Submit</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -13,11 +13,11 @@
 body{
   font-family:sans-serif;
   background:#f4f6f9;
-  padding:15px;
+  padding:10px;
 }
 
 .box{
-  max-width:420px;
+  max-width:450px;
   margin:auto;
   background:white;
   padding:15px;
@@ -25,16 +25,14 @@ body{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-/* INPUT */
-input{
+input,select,textarea{
   width:100%;
   padding:10px;
-  margin:8px 0;
+  margin:6px 0;
   border-radius:8px;
   border:1px solid #ddd;
 }
 
-/* 3D BUTTON */
 .btn3d{
   width:100%;
   padding:12px;
@@ -44,49 +42,24 @@ input{
   border-radius:10px;
   font-weight:bold;
   box-shadow:0 5px 0 #0b5c56;
-  cursor:pointer;
 }
 
-.btn3d:active{
-  transform:translateY(3px);
-  box-shadow:0 2px 0 #0b5c56;
-}
-
-/* SUBMIT */
 .submitBtn{
   width:100%;
   padding:12px;
+  margin-top:10px;
   border:none;
   border-radius:10px;
   font-weight:bold;
-  margin-top:10px;
 }
 
-.locked{
-  background:gray;
-  color:white;
-  cursor:not-allowed;
-}
+.locked{background:gray;color:white;}
+.unlocked{background:green;color:white;}
 
-.unlocked{
-  background:green;
-  color:white;
-  cursor:pointer;
-}
-
-/* MSG */
 .msg{
   text-align:center;
   font-weight:bold;
   margin:10px 0;
-}
-
-.lock{
-  color:red;
-}
-
-.ok{
-  color:green;
 }
 </style>
 </head>
@@ -95,21 +68,30 @@ input{
 
 <div class="box">
 
-<h2>👤 Profile Submit</h2>
+<h2>💍 शादी प्रोफाइल फॉर्म</h2>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="city" placeholder="City">
+<input id="name" placeholder="पूरा नाम">
+<input id="age" placeholder="उम्र">
+<select id="gender">
+  <option value="">Gender चुनें</option>
+  <option>Male</option>
+  <option>Female</option>
+</select>
 
-<!-- 💰 PAYMENT BUTTON -->
+<input id="phone" placeholder="मोबाइल नंबर">
+<input id="city" placeholder="शहर">
+<input id="religion" placeholder="धर्म">
+<input id="education" placeholder="शिक्षा">
+<input id="job" placeholder="नौकरी / काम">
+<textarea id="bio" placeholder="अपने बारे में लिखें"></textarea>
+
+<!-- PAYMENT -->
 <button class="btn3d" onclick="goPayment()">
 💰 Registration Fees जमा करें
 </button>
 
-<!-- STATUS -->
-<div id="status" class="msg lock">Checking payment...</div>
+<div id="status" class="msg">Checking payment...</div>
 
-<!-- SUBMIT -->
 <button id="submitBtn" class="submitBtn locked" onclick="submitProfile()">
 🔒 Submit Profile
 </button>
@@ -132,19 +114,17 @@ let isPaid = false;
 
 /* PAYMENT PAGE */
 function goPayment(){
-  window.location = "payment.html";
+  window.location="payment.html";
 }
 
 /* CHECK PAYMENT */
 function checkPayment(uid){
 
-  db.ref("payments").on("value", snap=>{
-
+  db.ref("payments").on("value",snap=>{
     isPaid = false;
 
     snap.forEach(s=>{
       let d = s.val();
-
       if(d.uid === uid && d.status === "approved"){
         isPaid = true;
       }
@@ -152,21 +132,16 @@ function checkPayment(uid){
 
     if(isPaid){
       document.getElementById("status").innerHTML = "✔ आप registered हैं";
-      document.getElementById("status").className = "msg ok";
-
       document.getElementById("submitBtn").classList.remove("locked");
       document.getElementById("submitBtn").classList.add("unlocked");
-
     }else{
       document.getElementById("status").innerHTML =
       "❗ पहले registration fees जमा करें";
-
-      document.getElementById("submitBtn").classList.add("locked");
     }
   });
 }
 
-/* SUBMIT */
+/* SUBMIT PROFILE (ONLY ADMIN DATA) */
 function submitProfile(){
 
   if(!isPaid){
@@ -174,24 +149,31 @@ function submitProfile(){
     return;
   }
 
-  let name = document.getElementById("name").value;
-  let age = document.getElementById("age").value;
-  let city = document.getElementById("city").value;
+  let user = auth.currentUser;
 
-  if(!name || !age || !city){
-    alert("Fill all fields");
+  let data = {
+    uid: user.uid,
+    name: name.value,
+    age: age.value,
+    gender: gender.value,
+    phone: phone.value,
+    city: city.value,
+    religion: religion.value,
+    education: education.value,
+    job: job.value,
+    bio: bio.value,
+    visibility: "admin",   // 👈 IMPORTANT (index में show नहीं होगा)
+    time: Date.now()
+  };
+
+  if(!data.name || !data.age || !data.phone){
+    alert("Required fields fill करें");
     return;
   }
 
-  alert("✔ Profile Submitted Successfully");
+  db.ref("profiles_admin").push(data);
 
-  db.ref("profiles").push({
-    name,
-    age,
-    city,
-    uid: firebase.auth().currentUser.uid,
-    time: Date.now()
-  });
+  alert("✔ Profile Admin को भेज दिया गया है");
 }
 
 /* LOGIN */
