@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registration Payment</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  font-family:sans-serif;
+  background:#f4f6f9;
+  padding:15px;
+}
+
+.box{
+  max-width:420px;
+  margin:auto;
+  background:#fff;
+  padding:15px;
+  border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h2{
+  text-align:center;
+  color:#0f766e;
+}
+
+input,button{
+  width:100%;
+  padding:10px;
+  margin:6px 0;
+  border-radius:8px;
+  box-sizing:border-box;
+}
+
+button{
+  background:#0f766e;
+  color:white;
+  border:none;
+  cursor:pointer;
+}
+
+button:disabled{
+  background:gray;
+}
+
+.preview{
+  width:100%;
+  border-radius:10px;
+  margin-top:10px;
+  display:none;
+}
+
+.qr{
+  text-align:center;
+  margin:10px 0;
+}
+
+.qr img{
+  width:200px;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+
+.card{
+  background:#fff;
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.ok{color:green;font-weight:bold;}
+.wait{color:orange;font-weight:bold;}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>💍 Registration Payment</h2>
+
+<!-- MESSAGE -->
+<div style="background:#e0f2fe;padding:10px;border-radius:8px;text-align:center;font-weight:bold;margin-bottom:10px;">
+👉 Registration Fees अनिवार्य है
+</div>
+
+<!-- SCANNER -->
+<div class="qr">
+  <p><b>📸 QR Scan करें</b></p>
+  <img src="https://i.ibb.co/99Nb64Yk/OIP-1.jpg">
+</div>
+
+<!-- FORM -->
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="phone" placeholder="Phone">
+
+<p>📷 Screenshot Upload</p>
+<input type="file" id="file">
+
+<img id="preview" class="preview">
+
+<button id="btn" onclick="submit()">Send Payment</button>
+
+</div>
+
+<div id="list"></div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+const auth = firebase.auth();
+
+/* IMAGE PREVIEW */
+document.getElementById("file").onchange = function(e){
+  let file = e.target.files[0];
+  if(!file) return;
+
+  let reader = new FileReader();
+  reader.onload = function(){
+    let img = document.getElementById("preview");
+    img.src = reader.result;
+    img.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+};
+
+/* IMGBB UPLOAD */
+async function uploadImg(file){
+
+  let form = new FormData();
+  form.append("image", file);
+
+  try{
+
+    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
+      method:"POST",
+      body:form
+    });
+
+    let data = await res.json();
+
+    if(!data.success){
+      throw new Error("Upload failed");
+    }
+
+    return data.data.url;
+
+  }catch(err){
+    console.log(err);
+    alert("Image upload failed");
+    return null;
+  }
+}
+
+/* SUBMIT */
+async function submit(){
+
+  const user = auth.currentUser;
+
+  if(!user){
+    alert("Login required");
+    return;
+  }
+
+  let btn = document.getElementById("btn");
+  btn.disabled = true;
+  btn.innerText = "Uploading...";
+
+  let name = document.getElementById("name").value;
+  let age = document.getElementById("age").value;
+  let phone = document.getElementById("phone").value;
+  let file = document.getElementById("file").files[0];
+
+  if(!name || !age || !phone || !file){
+    alert("Fill all fields");
+    btn.disabled = false;
+    btn.innerText = "Send Payment";
+    return;
+  }
+
+  let img = await uploadImg(file);
+
+  if(!img){
+    btn.disabled = false;
+    btn.innerText = "Send Payment";
+    return;
+  }
+
+  await db.ref("payments").push({
+    uid:user.uid,
+    name,
+    age,
+    phone,
+    screenshot:img,
+    status:"pending",
+    time:Date.now()
+  });
+
+  alert("✔ Payment Sent (Waiting Approval)");
+
+  btn.style.display="none";
+}
+
+/* SHOW USER DATA ONLY */
+auth.onAuthStateChanged(user=>{
+
+  if(!user){
+    document.getElementById("list").innerHTML="Login Required";
+    return;
+  }
+
+  db.ref("payments").on("value",snap=>{
+
+    let html="";
+
+    snap.forEach(c=>{
+
+      let d=c.val();
+
+      if(d.uid !== user.uid) return;
+
+      html+=`
+      <div class="card">
+
+        <b>${d.name}</b><br>
+        📱 ${d.phone}<br>
+
+        ${
+          d.status==="approved"
+          ? `<p class="ok">✔ आप रजिस्टर हो गए हैं</p>`
+          : `<p class="wait">⏳ Wait for approval</p>`
+        }
+
+      </div>`;
+    });
+
+    document.getElementById("list").innerHTML = html;
+  });
+
+});
+
+</script>
+
+</body>
+</html>
