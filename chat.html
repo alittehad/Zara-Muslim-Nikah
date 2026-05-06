@@ -15,6 +15,21 @@ body{
   background:#f4f6f9;
 }
 
+/* 🔥 HOME BUTTON */
+.home-btn{
+  position:absolute;
+  top:15px;
+  left:15px;
+  background:#0f766e;
+  color:white;
+  padding:8px 14px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:14px;
+}
+
+/* BOX */
 .box{
   text-align:center;
   background:white;
@@ -52,6 +67,9 @@ button{
 
 <body>
 
+<!-- 🔥 HOME BUTTON -->
+<button class="home-btn" onclick="goHome()">🏠 Home</button>
+
 <div class="box">
 
 <h2>💳 Payment Done?</h2>
@@ -69,17 +87,18 @@ click below button and send PAYMENT SCREEN SHOT <br><br>
 
 <script>
 function openWhatsApp(){
-
   let number = "7378342192";
 
-  let message =
-`Hello,
-I have done payment.
-I want to continue chat.`;
+  let message = `Hello, I have done payment. I want to continue chat.`;
 
   let url = "https://wa.me/" + number + "?text=" + encodeURIComponent(message);
 
   window.open(url, "_blank");
+}
+
+/* 🔥 HOME FUNCTION */
+function goHome(){
+  window.location.href = "index.html"; // 👉 yaha apna home page link daal sakte ho
 }
 </script>
 
