@@ -77,6 +77,14 @@ header{
   border-radius:10px;
 }
 
+input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+
 .btn{
   width:100%;
   margin-top:10px;
@@ -96,18 +104,34 @@ header{
 <header>🕋 Zara Nikah Service 🕌</header>
 
 <div class="topbar" id="topbar">
-  <button id="homeBtn" onclick="location.reload()">Home</button>
-  <button id="addPostBtn" onclick="goAdd()">रिश्ता जोड़ें</button>
-  <button id="adminBtn" style="display:none" onclick="goAdmin()">Admin</button>
-  <button id="logoutBtn" onclick="logout()">Logout</button>
+  <button onclick="location.reload()">Home</button>
+  <button onclick="goAdd()">रिश्ता जोड़ें</button>
+  <button id="adminAddBtn" style="display:none" onclick="openAddModal()">➕ Add Profile</button>
+  <button onclick="logout()">Logout</button>
 </div>
 
 <div class="grid" id="profileGrid"></div>
 
+<!-- VIEW PROFILE -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
     <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ADMIN ADD PROFILE -->
+<div class="modal" id="addModal">
+  <div class="modal-content">
+    <span onclick="closeAddModal()" style="float:right;cursor:pointer">✖</span>
+    <h3>Add Profile</h3>
+
+    <input id="name" placeholder="Name">
+    <input id="age" placeholder="Age">
+    <input id="city" placeholder="City">
+    <input id="photo" placeholder="Photo URL">
+
+    <button class="btn" onclick="addProfile()">Submit</button>
   </div>
 </div>
 
@@ -140,59 +164,47 @@ auth.onAuthStateChanged(user=>{
 
   document.getElementById("topbar").style.display="flex";
 
+  // 🔥 ADMIN CHECK
   if((user.email||"").toLowerCase()===ADMIN_EMAIL){
-    document.getElementById("adminBtn").style.display="inline-block";
+    document.getElementById("adminAddBtn").style.display="inline-block";
   }
 
   loadPosts();
 });
 
 function loadPosts(){
-  db.ref("users").once("value").then(snap=>{
+  db.ref("profiles").once("value").then(snap=>{
     const grid=document.getElementById("profileGrid");
     grid.innerHTML="";
 
     snap.forEach(child=>{
       const d=child.val();
 
-      if(!d){
-        return;
-      }
-
-      if(d.status==="approved"){
-        grid.innerHTML+=`
-        <div class="card" onclick="openModal('${child.key}')">
-          <img src="${d.photo || 'https://via.placeholder.com/300'}">
-          <div class="card-body">
-            <h3>${d.name || 'No Name'}</h3>
-            <p>${d.city || ''}</p>
-          </div>
-        </div>`;
-      }
+      grid.innerHTML+=`
+      <div class="card" onclick="openModal('${child.key}')">
+        <img src="${d.photo}">
+        <div class="card-body">
+          <h3>${d.name}</h3>
+          <p>${d.city}</p>
+        </div>
+      </div>`;
     });
   });
 }
 
 function openModal(id){
-  currentProfileId = id;
+  currentProfileId=id;
 
-  db.ref("users/"+id).once("value").then(snap=>{
+  db.ref("profiles/"+id).once("value").then(snap=>{
     const d=snap.val();
 
-    if(!d){
-      alert("Profile not found");
-      return;
-    }
-
     document.getElementById("modalBody").innerHTML=`
-      <h2>${d.name || ''}</h2>
-      <img src="${d.photo || ''}" style="width:100%;border-radius:10px;">
-      <p>Age: ${d.age || ''}</p>
-      <p>City: ${d.city || ''}</p>
+      <h2>${d.name}</h2>
+      <img src="${d.photo}" style="width:100%;border-radius:10px;">
+      <p>Age: ${d.age}</p>
+      <p>City: ${d.city}</p>
 
-      <button class="btn" onclick="goPayment()">
-        ❤️ रिश्ता पसंद है
-      </button>
+      <button class="btn" onclick="goPayment()">❤️ रिश्ता पसंद है</button>
     `;
 
     document.getElementById("modal").style.display="flex";
@@ -200,12 +212,39 @@ function openModal(id){
 }
 
 function goPayment(){
-  if(!currentProfileId){
-    alert("No profile selected");
-    return;
-  }
   localStorage.setItem("selectedProfile", currentProfileId);
   window.location.href="payment.html";
+}
+
+/* 🔥 ADMIN ADD PROFILE */
+function openAddModal(){
+  document.getElementById("addModal").style.display="flex";
+}
+
+function closeAddModal(){
+  document.getElementById("addModal").style.display="none";
+}
+
+function addProfile(){
+
+  const data={
+    name: document.getElementById("name").value,
+    age: document.getElementById("age").value,
+    city: document.getElementById("city").value,
+    photo: document.getElementById("photo").value
+  };
+
+  if(!data.name){
+    alert("Name required");
+    return;
+  }
+
+  db.ref("profiles").push(data);
+
+  alert("Profile Added ✔️");
+
+  closeAddModal();
+  loadPosts();
 }
 
 function closeModal(){
@@ -218,10 +257,6 @@ function logout(){
 
 function goAdd(){
   window.location="profile-submit.html";
-}
-
-function goAdmin(){
-  window.location="admin.html";
 }
 
 </script>
