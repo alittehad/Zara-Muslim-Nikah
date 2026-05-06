@@ -10,26 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#f4f6f9;
-}
-
-header{
-  background:#111;
-  color:white;
-  text-align:center;
-  padding:10px;
-  font-weight:bold;
-  font-size:16px;
-}
-
-.container{
-  padding:8px;
-}
-
-/* 🔥 SMALL CARD */
 .card{
   background:white;
   border-radius:8px;
@@ -37,28 +17,27 @@ header{
   margin-bottom:10px;
   box-shadow:0 2px 6px rgba(0,0,0,0.08);
   font-size:13px;
+  overflow:hidden;
 }
 
-/* 🔥 SMALL IMAGE */
+/* 🔥 IMAGE FIX (MOST IMPORTANT) */
 .card img{
   width:100%;
-  max-height:120px;
-  object-fit:cover;
+  height:140px;        /* FIX HEIGHT */
+  object-fit:cover;    /* image crop but no stretch */
   border-radius:6px;
 }
 
 /* TEXT */
+.card-body{
+  padding:6px 0;
+}
+
 .card b{
-  font-size:12px;
+  font-size:13px;
 }
 
-.status{
-  font-weight:bold;
-  margin-top:4px;
-  font-size:12px;
-}
-
-/* 🔥 SMALL BUTTONS */
+/* BUTTON */
 .btn{
   padding:5px 8px;
   border:none;
