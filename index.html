@@ -39,7 +39,7 @@ header{
 
 #homeBtn{background:#0f766e;}
 #addPostBtn{background:#1d4ed8;}
-#adminBtn{background:#000;}
+#adminAddBtn{background:#000;}
 #logoutBtn{background:#dc2626;}
 
 .grid{
@@ -164,7 +164,6 @@ auth.onAuthStateChanged(user=>{
 
   document.getElementById("topbar").style.display="flex";
 
-  // 🔥 ADMIN CHECK
   if((user.email||"").toLowerCase()===ADMIN_EMAIL){
     document.getElementById("adminAddBtn").style.display="inline-block";
   }
@@ -172,6 +171,7 @@ auth.onAuthStateChanged(user=>{
   loadPosts();
 });
 
+/* 🔥 LOAD PROFILES */
 function loadPosts(){
   db.ref("profiles").once("value").then(snap=>{
     const grid=document.getElementById("profileGrid");
@@ -182,16 +182,17 @@ function loadPosts(){
 
       grid.innerHTML+=`
       <div class="card" onclick="openModal('${child.key}')">
-        <img src="${d.photo}">
+        <img src="${d.photo || 'https://via.placeholder.com/300'}">
         <div class="card-body">
-          <h3>${d.name}</h3>
-          <p>${d.city}</p>
+          <h3>${d.name || 'No Name'}</h3>
+          <p>${d.city || ''}</p>
         </div>
       </div>`;
     });
   });
 }
 
+/* 🔥 OPEN PROFILE */
 function openModal(id){
   currentProfileId=id;
 
@@ -211,21 +212,33 @@ function openModal(id){
   });
 }
 
+/* 🔥 PAYMENT PAGE */
 function goPayment(){
   localStorage.setItem("selectedProfile", currentProfileId);
   window.location.href="payment.html";
 }
 
-/* 🔥 ADMIN ADD PROFILE */
+/* 🔥 ADMIN ADD */
 function openAddModal(){
   document.getElementById("addModal").style.display="flex";
 }
 
 function closeAddModal(){
   document.getElementById("addModal").style.display="none";
+
+  // clear fields
+  document.getElementById("name").value="";
+  document.getElementById("age").value="";
+  document.getElementById("city").value="";
+  document.getElementById("photo").value="";
 }
 
 function addProfile(){
+
+  if(currentUser.email !== ADMIN_EMAIL){
+    alert("Only admin allowed");
+    return;
+  }
 
   const data={
     name: document.getElementById("name").value,
@@ -234,8 +247,8 @@ function addProfile(){
     photo: document.getElementById("photo").value
   };
 
-  if(!data.name){
-    alert("Name required");
+  if(!data.name || !data.age){
+    alert("Name & Age required");
     return;
   }
 
