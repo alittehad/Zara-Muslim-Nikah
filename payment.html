@@ -24,42 +24,29 @@ body{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-h2{
-  text-align:center;
-  color:#0f766e;
-}
-
-.msg{
-  background:#e0f2fe;
-  padding:10px;
-  border-radius:8px;
-  text-align:center;
-  font-weight:bold;
-  margin-bottom:10px;
-}
-
-input{
+input,button{
   width:100%;
   padding:10px;
   margin:8px 0;
-  border:1px solid #ddd;
   border-radius:8px;
 }
 
 button{
-  width:100%;
-  padding:12px;
   background:#0f766e;
   color:white;
   border:none;
-  border-radius:8px;
-  font-size:16px;
+}
+
+.preview{
+  width:100%;
+  margin-top:10px;
+  border-radius:10px;
 }
 
 .card{
   background:white;
-  padding:10px;
   margin-top:10px;
+  padding:10px;
   border-radius:10px;
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
@@ -75,22 +62,21 @@ button{
 
 <div class="box">
 
-<h2>💍 रिश्ता रजिस्ट्रेशन</h2>
+<h2>💍 Registration Payment</h2>
 
-<div class="msg">
-👉 Payment approve होने के बाद ही आप registered होंगे ✔️
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="phone" placeholder="Phone">
+
+<p>📷 Screenshot Upload</p>
+<input type="file" id="file">
+
+<img id="preview" class="preview" style="display:none;">
+
+<button onclick="submit()">Send</button>
+
 </div>
 
-<input id="name" placeholder="नाम">
-<input id="age" placeholder="उम्र">
-<input id="phone" placeholder="मोबाइल नंबर">
-<input type="file" id="image">
-
-<button onclick="submitPayment()">📩 Send करें</button>
-
-</div>
-
-<!-- RESULT AREA -->
 <div id="list"></div>
 
 <script>
@@ -106,67 +92,81 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+/* PREVIEW */
+document.getElementById("file").onchange = function(e){
+  let reader = new FileReader();
+  reader.onload = function(){
+    document.getElementById("preview").src = reader.result;
+    document.getElementById("preview").style.display = "block";
+  }
+  reader.readAsDataURL(e.target.files[0]);
+};
+
+/* IMGBB UPLOAD */
+async function uploadImg(file){
+
+  let form = new FormData();
+  form.append("image", file);
+
+  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
+    method:"POST",
+    body:form
+  });
+
+  let data = await res.json();
+  return data.data.url;
+}
+
 /* SUBMIT */
-function submitPayment(){
+async function submit(){
 
   let name = document.getElementById("name").value;
   let age = document.getElementById("age").value;
   let phone = document.getElementById("phone").value;
-  let file = document.getElementById("image").files[0];
+  let file = document.getElementById("file").files[0];
 
   if(!name || !age || !phone || !file){
-    alert("सब fill करें");
+    alert("Fill all fields");
     return;
   }
 
-  let reader = new FileReader();
+  alert("Uploading...");
 
-  reader.onload = function(){
+  let imgUrl = await uploadImg(file);
 
-    db.ref("payments").push({
-      name,
-      age,
-      phone,
-      image: reader.result,
-      status:"pending",
-      time:Date.now()
-    });
-
-    alert("✔️ Payment भेज दिया गया");
-  }
-
-  reader.readAsDataURL(file);
-}
-
-/* SHOW DATA */
-db.ref("payments").on("value", snap => {
-
-  let html = "";
-
-  snap.forEach(child => {
-
-    let d = child.val();
-
-    html += `
-      <div class="card">
-
-        <b>👤 Name:</b> ${d.name}<br>
-        <b>📱 Phone:</b> ${d.phone}<br>
-
-        <img src="${d.image}">
-
-        <p>Status: <b>${d.status}</b></p>
-
-        ${d.status === "approved" 
-          ? `<p style="color:green;font-weight:bold">✔ आप registered हो गए हैं</p>`
-          : `<p style="color:orange">Waiting for approval...</p>`
-        }
-
-      </div>
-    `;
+  db.ref("payments").push({
+    name,
+    age,
+    phone,
+    screenshot: imgUrl,
+    status:"pending",
+    time:Date.now()
   });
 
-  document.getElementById("list").innerHTML = html;
+  alert("✔ Payment sent (waiting approval)");
+}
+
+/* SHOW */
+db.ref("payments").on("value", snap=>{
+
+  let html="";
+
+  snap.forEach(c=>{
+
+    let d=c.val();
+
+    html+=`
+    <div class="card">
+      <b>${d.name}</b><br>
+      ${d.age} | ${d.phone}<br>
+
+      <img src="${d.screenshot}">
+
+      <p>Status: ${d.status}</p>
+    </div>`;
+  });
+
+  document.getElementById("list").innerHTML=html;
 
 });
 
