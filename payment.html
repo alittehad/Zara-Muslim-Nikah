@@ -6,6 +6,7 @@
 <title>Registration Payment</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
@@ -24,56 +25,42 @@ body{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-h2{
-  text-align:center;
-  color:#0f766e;
-}
-
-/* 🔥 SCANNER FIX */
-.scanner{
-  text-align:center;
-  margin:10px 0;
-}
-
-.scanner img{
-  width:100%;
-  max-width:250px;
-  height:auto;
-  border-radius:10px;
-  border:2px solid #ddd;
-}
-
-/* MESSAGE */
-.msg{
-  background:#e0f2fe;
-  padding:10px;
-  border-radius:8px;
-  text-align:center;
-  font-weight:bold;
-  margin-bottom:10px;
-}
-
-input{
+input,button{
   width:100%;
   padding:10px;
   margin:8px 0;
-  border:1px solid #ddd;
   border-radius:8px;
 }
 
 button{
-  width:100%;
-  padding:12px;
   background:#0f766e;
   color:white;
   border:none;
-  border-radius:8px;
-  font-size:16px;
   cursor:pointer;
 }
 
-button:active{
-  transform:scale(0.98);
+.preview{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+  margin-top:10px;
+  border-radius:10px;
+  display:none;
+}
+
+.card{
+  background:white;
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+  border-radius:8px;
 }
 </style>
 </head>
@@ -82,34 +69,26 @@ button:active{
 
 <div class="box">
 
-<h2>💍 रिश्ता रजिस्ट्रेशन</h2>
+<h2>💍 Registration Payment</h2>
 
-<!-- 🔥 MESSAGE -->
-<div class="msg">
-👉 रिश्ता करने के लिए Registration Fees भरना अनिवार्य है<br>
-👉 नीचे दिए गए QR को scan करके payment करें
-</div>
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="phone" placeholder="Phone">
 
-<!-- 🔥 SCANNER / QR -->
-<div class="scanner">
-  <p><b>📸 Scan & Pay</b></p>
-  <img src="https://i.ibb.co/6RkksFjc/qr.png" alt="scanner">
-</div>
+<p>📷 Screenshot Upload</p>
+<input type="file" id="file">
 
-<!-- FORM -->
-<input id="name" placeholder="नाम लिखें">
-<input id="age" placeholder="उम्र लिखें">
-<input id="phone" placeholder="मोबाइल नंबर">
+<img id="preview" class="preview">
 
-<p><b>📷 Payment Screenshot Upload</b></p>
-<input type="file" id="image">
-
-<button onclick="submitPayment()">📩 Send करें</button>
+<button onclick="submit()">Send Payment</button>
 
 </div>
+
+<div id="list"></div>
 
 <script>
 
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -118,10 +97,27 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
+const auth = firebase.auth();
+
+/* PREVIEW */
+document.getElementById("file").onchange = function(e){
+  let file = e.target.files[0];
+
+  if(!file) return;
+
+  let reader = new FileReader();
+  reader.onload = function(){
+    let img = document.getElementById("preview");
+    img.src = reader.result;
+    img.style.display = "block";
+  }
+  reader.readAsDataURL(file);
+};
 
 /* IMGBB UPLOAD */
-async function uploadToImgBB(file){
+async function uploadImg(file){
 
   let form = new FormData();
   form.append("image", file);
@@ -136,34 +132,93 @@ async function uploadToImgBB(file){
 }
 
 /* SUBMIT */
-async function submitPayment(){
+async function submit(){
+
+  const user = auth.currentUser;
+
+  if(!user){
+    alert("Please login first");
+    return;
+  }
 
   let name = document.getElementById("name").value;
   let age = document.getElementById("age").value;
   let phone = document.getElementById("phone").value;
-  let file = document.getElementById("image").files[0];
+  let file = document.getElementById("file").files[0];
 
   if(!name || !age || !phone || !file){
-    alert("सभी जानकारी भरें");
+    alert("Fill all fields");
     return;
   }
 
-  alert("Image upload हो रहा है...");
+  alert("Uploading...");
 
-  let imageUrl = await uploadToImgBB(file);
+  let imgUrl = await uploadImg(file);
 
   db.ref("payments").push({
+    uid: user.uid,
     name,
     age,
     phone,
-    screenshot: imageUrl,
+    screenshot: imgUrl,
     status:"pending",
     time:Date.now()
   });
 
-  alert("✔️ Payment भेज दिया गया है");
-  window.location = "index.html";
+  alert("✔ Payment sent (waiting approval)");
 }
+
+/* SHOW ONLY LOGGED USER DATA */
+auth.onAuthStateChanged(user=>{
+
+  if(!user){
+    document.getElementById("list").innerHTML = "<p>Login Required</p>";
+    return;
+  }
+
+  db.ref("payments").on("value", snap=>{
+
+    let html="";
+
+    snap.forEach(c=>{
+
+      let d=c.val();
+
+      // 🔥 ONLY OWN DATA
+      if(d.uid !== user.uid) return;
+
+      html+=`
+      <div class="card">
+        <b>${d.name}</b><br>
+        ${d.age} | ${d.phone}<br>
+
+        <img src="${d.screenshot}">
+
+        <div style="margin-top:8px;">
+      `;
+
+      if(d.status === "approved"){
+        html+=`
+          <p style="color:green;font-weight:bold;">
+            ✔️ आप रजिस्टर हो गए हैं
+          </p>
+        `;
+      }else{
+        html+=`
+          <p style="color:orange;font-weight:bold;">
+            ⏳ Wait for approval
+          </p>
+        `;
+      }
+
+      html+=`</div></div>`;
+    });
+
+    document.getElementById("list").innerHTML =
+      html || "<p>No Payment Found</p>";
+  });
+
+});
 
 </script>
 
