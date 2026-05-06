@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Admin Panel</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f4f6f9;
+}
+
+/* HEADER */
+header{
+  background:#111;
+  color:white;
+  text-align:center;
+  padding:12px;
+  font-size:16px;
+  font-weight:bold;
+}
+
+/* SEARCH + FILTER */
+.topbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:10px;
+}
+
+input{
+  flex:1;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+
+.filter-btn{
+  padding:8px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+  background:#ddd;
+}
+
+/* CONTAINER GRID */
+.container{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  padding:10px;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  .container{
+    grid-template-columns:1fr;
+  }
+}
+
+/* CARD */
+.card{
+  background:white;
+  border-radius:10px;
+  padding:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+  font-size:13px;
+}
+
+/* IMAGE FIX */
+.card img{
+  width:100%;
+  height:140px;
+  object-fit:cover;
+  border-radius:8px;
+  margin-top:5px;
+}
+
+/* BUTTONS */
+.btn{
+  padding:6px 8px;
+  border:none;
+  border-radius:5px;
+  margin-top:5px;
+  cursor:pointer;
+  font-size:11px;
+  color:white;
+}
+
+.approve{background:green;}
+.reject{background:red;}
+.delete{background:black;}
+</style>
+</head>
+
+<body>
+
+<header>👑 Payment Admin Panel</header>
+
+<!-- SEARCH + FILTER -->
+<div class="topbar">
+  <input type="text" id="search" placeholder="🔍 Name / Mobile search..." onkeyup="render()">
+
+  <button class="filter-btn" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" onclick="setFilter('pending')">Request</button>
+  <button class="filter-btn" onclick="setFilter('approved')">Approved</button>
+  <button class="filter-btn" onclick="setFilter('rejected')">Rejected</button>
+</div>
+
+<div class="container" id="list"></div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+let payments = {};
+let currentFilter = "all";
+
+/* LOAD DATA */
+db.ref("payments").on("value", snap=>{
+  payments = snap.val() || {};
+  render();
+});
+
+/* FILTER */
+function setFilter(f){
+  currentFilter = f;
+  render();
+}
+
+/* RENDER */
+function render(){
+
+  let search = document.getElementById("search").value.toLowerCase();
+  let html = "";
+
+  Object.keys(payments).forEach(id=>{
+
+    let d = payments[id];
+
+    let text = (d.name + " " + (d.mobile||"") + " " + (d.age||"")).toLowerCase();
+
+    if(search && !text.includes(search)) return;
+
+    if(currentFilter !== "all" && (d.status||"pending") !== currentFilter) return;
+
+    html += `
+    <div class="card">
+
+      <b>👤 ${d.name || ""}</b><br>
+      📱 ${d.mobile || "N/A"}<br>
+      🎂 ${d.age || ""}<br>
+      💰 ₹${d.amount || "0"}<br>
+
+      ${d.screenshot ? `<img src="${d.screenshot}">` : ""}
+
+      <div>Status: <b>${d.status || "pending"}</b></div>
+
+      <button class="btn approve" onclick="approve('${id}')">✔ Approve</button>
+      <button class="btn reject" onclick="reject('${id}')">✖ Reject</button>
+      <button class="btn delete" onclick="del('${id}')">🗑 Delete</button>
+
+    </div>`;
+  });
+
+  document.getElementById("list").innerHTML =
+    html || "<p style='text-align:center'>No Data Found</p>";
+}
+
+/* ACTIONS */
+function approve(id){
+  db.ref("payments/"+id).update({status:"approved"});
+}
+
+function reject(id){
+  db.ref("payments/"+id).update({status:"rejected"});
+}
+
+function del(id){
+  if(confirm("Delete this record?")){
+    db.ref("payments/"+id).remove();
+  }
+}
+
+</script>
+
+</body>
+</html>
