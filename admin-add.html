@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Add</title>
+<title>Admin Add Profile</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -12,9 +12,25 @@
 
 <style>
 body{font-family:sans-serif;background:#f4f6f9;padding:20px;}
-.box{max-width:400px;margin:auto;background:white;padding:20px;border-radius:12px;}
-input,textarea{width:100%;padding:10px;margin:8px 0;}
-button{width:100%;padding:12px;background:#0f766e;color:white;border:none;border-radius:8px;}
+.box{max-width:420px;margin:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+input,textarea{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border:1px solid #ddd;
+  border-radius:8px;
+}
+button{
+  width:100%;
+  padding:12px;
+  background:#0f766e;
+  color:white;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+}
+button:hover{opacity:0.9;}
 </style>
 </head>
 
@@ -35,12 +51,13 @@ button{width:100%;padding:12px;background:#0f766e;color:white;border:none;border
 
 <script>
 
+/* 🔥 YOUR REAL CONFIG */
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  databaseURL: "YOUR_DB",
-  projectId: "YOUR_ID",
-  storageBucket: "YOUR_BUCKET"
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah",
+  storageBucket: "zara-muslim-nikah.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -51,47 +68,65 @@ const storage = firebase.storage();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-/* ADMIN CHECK */
+/* 🔥 ADMIN CHECK */
 auth.onAuthStateChanged(user=>{
   if(!user){
-    window.location="login.html";
+    window.location = "login.html";
     return;
   }
 
-  if(user.email !== ADMIN_EMAIL){
+  if((user.email || "").toLowerCase() !== ADMIN_EMAIL){
     alert("Only admin allowed");
-    window.location="index.html";
+    window.location = "index.html";
   }
 });
 
+/* 🔥 SAVE PROFILE */
 async function save(){
 
-  let name = document.getElementById("name").value;
-  let age = document.getElementById("age").value;
-  let city = document.getElementById("city").value;
-  let desc = document.getElementById("desc").value;
-  let file = document.getElementById("photo").files[0];
+  const name = document.getElementById("name").value.trim();
+  const age  = document.getElementById("age").value.trim();
+  const city = document.getElementById("city").value.trim();
+  const desc = document.getElementById("desc").value.trim();
+  const file = document.getElementById("photo").files[0];
+
+  if(!name || !age || !city || !desc){
+    alert("All fields required");
+    return;
+  }
 
   if(!file){
     alert("Photo required");
     return;
   }
 
-  let ref = storage.ref("profiles/" + Date.now() + file.name);
-  await ref.put(file);
+  try{
 
-  let url = await ref.getDownloadURL();
+    // 🔥 STORAGE UPLOAD FIX
+    const fileRef = storage.ref("profiles/" + Date.now() + "_" + file.name);
 
-  await db.ref("profiles").push({
-    name,
-    age,
-    city,
-    desc,
-    photo: url
-  });
+    await fileRef.put(file);
 
-  alert("Added ✔️");
-  window.location="index.html";
+    const url = await fileRef.getDownloadURL();
+
+    // 🔥 DATABASE SAVE
+    await db.ref("profiles").push({
+      name,
+      age,
+      city,
+      description: desc,
+      photo: url,
+      time: Date.now()
+    });
+
+    alert("Profile Added Successfully ✔️");
+
+    window.location = "index.html";
+
+  }catch(err){
+    console.log(err);
+    alert("Upload Failed: " + err.message);
+  }
 }
 
 </script>
