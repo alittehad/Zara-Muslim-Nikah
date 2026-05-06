@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marriage Profile Form</title>
+<title>Marriage Profile</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -22,20 +22,14 @@ body{
   background:white;
   padding:15px;
   border-radius:12px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-h2{
-  text-align:center;
-  color:#0f766e;
 }
 
 input,select,textarea{
   width:100%;
   padding:10px;
   margin:6px 0;
-  border-radius:8px;
   border:1px solid #ddd;
+  border-radius:8px;
 }
 
 button{
@@ -56,7 +50,6 @@ button{
   object-fit:cover;
   border-radius:8px;
   display:none;
-  margin-top:5px;
 }
 </style>
 </head>
@@ -65,9 +58,8 @@ button{
 
 <div class="box">
 
-<h2>💍 शादी प्रोफाइल फॉर्म</h2>
+<h2>💍 Marriage Profile</h2>
 
-<!-- FULL FORM -->
 <input id="name" placeholder="पूरा नाम">
 <input id="age" placeholder="उम्र">
 <select id="gender">
@@ -83,7 +75,7 @@ button{
 <input id="job" placeholder="नौकरी">
 <textarea id="about" placeholder="अपने बारे में लिखें"></textarea>
 
-<p>📷 फोटो अपलोड करें</p>
+<p>📷 Photo</p>
 <input type="file" id="file">
 <img id="preview">
 
@@ -103,8 +95,6 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.database();
 
-let imageURL = "";
-
 /* IMAGE PREVIEW */
 document.getElementById("file").onchange = function(e){
   let reader = new FileReader();
@@ -116,9 +106,8 @@ document.getElementById("file").onchange = function(e){
   reader.readAsDataURL(e.target.files[0]);
 };
 
-/* IMGBB UPLOAD */
+/* IMGBB */
 async function uploadImg(file){
-
   let form = new FormData();
   form.append("image", file);
 
@@ -131,61 +120,68 @@ async function uploadImg(file){
   return data.data.url;
 }
 
-/* SAVE PROFILE (FIXED) */
+/* SAVE FIXED */
 async function saveProfile(){
 
   let user = auth.currentUser;
 
   if(!user){
-    alert("Login करें");
+    alert("Login required");
     return;
   }
 
-  // validation
+  // 🔥 CLEAN VALUES (IMPORTANT FIX)
+  let nameVal = name.value.trim();
+  let ageVal = age.value.trim();
+  let genderVal = gender.value.trim();
+  let phoneVal = phone.value.trim();
+  let cityVal = city.value.trim();
+  let religionVal = religion.value.trim();
+  let educationVal = education.value.trim();
+  let jobVal = job.value.trim();
+  let aboutVal = about.value.trim();
+
+  let file = document.getElementById("file").files[0];
+
+  // ✔ PROPER VALIDATION FIXED
   if(
-    !name.value ||
-    !age.value ||
-    !gender.value ||
-    !phone.value ||
-    !city.value ||
-    !religion.value ||
-    !education.value ||
-    !job.value ||
-    !about.value
+    nameVal==="" ||
+    ageVal==="" ||
+    genderVal==="" ||
+    phoneVal==="" ||
+    cityVal==="" ||
+    religionVal==="" ||
+    educationVal==="" ||
+    jobVal==="" ||
+    aboutVal==="" ||
+    !file
   ){
     alert("❗ सभी fields भरें");
     return;
   }
 
-  let file = document.getElementById("file").files[0];
+  alert("Uploading...");
 
-  if(!file){
-    alert("❗ Photo जरूरी है");
-    return;
-  }
-
-  alert("Uploading image...");
-
-  imageURL = await uploadImg(file);
+  let imgUrl = await uploadImg(file);
 
   await db.ref("profiles").push({
     uid:user.uid,
-    name:name.value,
-    age:age.value,
-    gender:gender.value,
-    phone:phone.value,
-    city:city.value,
-    religion:religion.value,
-    education:education.value,
-    job:job.value,
-    about:about.value,
-    photo:imageURL,
+    name:nameVal,
+    age:ageVal,
+    gender:genderVal,
+    phone:phoneVal,
+    city:cityVal,
+    religion:religionVal,
+    education:educationVal,
+    job:jobVal,
+    about:aboutVal,
+    photo:imgUrl,
     time:Date.now()
   });
 
   alert("✔ Profile Saved Successfully");
 
-  // 🔥 redirect after save
+  // 🔥 OPEN PAYMENT PAGE (FIXED)
   window.location.href = "payment.html";
 }
 
