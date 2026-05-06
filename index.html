@@ -136,6 +136,12 @@ header{
   <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">
     ➕ Admin Add
   </button>
+
+   <!-- ✅ NEW LOGOUT BUTTON -->
+  <button class="btn admin" onclick="logout()">
+    🚪 Logout
+  </button>
+
 </div>
 
 <div class="grid" id="grid"></div>
@@ -268,6 +274,14 @@ function goAdminAdd(){ window.location="admin-add.html"; }
 function goMyProfile(){
   window.location = "my-profile.html";
 }
+
+function logout(){
+  firebase.auth().signOut().then(()=>{
+    alert("Logout Successfully");
+    window.location = "index.html";
+  });
+}
+  
 </script>
 
 </body>
