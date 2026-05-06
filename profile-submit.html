@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marriage Profile Form</title>
+<title>Profile Submit</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -22,12 +22,6 @@ body{
   background:white;
   padding:15px;
   border-radius:12px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-h2{
-  text-align:center;
-  color:#0f766e;
 }
 
 input,select,textarea{
@@ -38,7 +32,6 @@ input,select,textarea{
   border:1px solid #ddd;
 }
 
-/* BUTTON */
 button{
   width:100%;
   padding:12px;
@@ -47,24 +40,17 @@ button{
   border:none;
   border-radius:10px;
   font-weight:bold;
-  margin-top:8px;
-}
-
-/* CARD */
-.card{
-  background:white;
   margin-top:10px;
-  padding:10px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+  cursor:pointer;
 }
 
-/* IMAGE SMALL */
-.card img{
+/* IMAGE PREVIEW SMALL */
+#preview{
   width:90px;
   height:90px;
   object-fit:cover;
   border-radius:8px;
+  display:none;
 }
 </style>
 </head>
@@ -73,35 +59,21 @@ button{
 
 <div class="box">
 
-<h2>💍 शादी प्रोफाइल फॉर्म</h2>
+<h2>💍 Profile Submit</h2>
 
-<!-- BASIC DETAILS -->
-<input id="name" placeholder="पूरा नाम">
-<input id="age" placeholder="उम्र">
-<select id="gender">
-  <option value="">Gender चुनें</option>
-  <option>Male</option>
-  <option>Female</option>
-</select>
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="phone" placeholder="Phone">
+<input id="city" placeholder="City">
+<input id="job" placeholder="Job">
 
-<input id="phone" placeholder="मोबाइल नंबर">
-<input id="city" placeholder="शहर">
-<input id="religion" placeholder="धर्म">
-<input id="education" placeholder="शिक्षा">
-<input id="job" placeholder="नौकरी / काम">
-<textarea id="about" placeholder="अपने बारे में लिखें"></textarea>
-
-<!-- PHOTO -->
-<p>📷 Profile Photo</p>
+<p>📷 Photo</p>
 <input type="file" id="file">
-<img id="preview" style="width:90px;height:90px;display:none;border-radius:8px;margin-top:5px;">
+<img id="preview">
 
-<button onclick="submitProfile()">💾 Save Profile</button>
+<button onclick="saveProfile()">💾 Save Profile</button>
 
 </div>
-
-<!-- USER DATA -->
-<div id="list"></div>
 
 <script>
 
@@ -128,7 +100,7 @@ document.getElementById("file").onchange = function(e){
   reader.readAsDataURL(e.target.files[0]);
 };
 
-/* IMGBB UPLOAD */
+/* IMG UPLOAD */
 async function uploadImg(file){
 
   let form = new FormData();
@@ -143,13 +115,13 @@ async function uploadImg(file){
   return data.data.url;
 }
 
-/* SUBMIT */
-async function submitProfile(){
+/* SAVE PROFILE */
+async function saveProfile(){
 
-  let user = auth.currentUser;
+  const user = auth.currentUser;
 
   if(!user){
-    alert("Login करें");
+    alert("Login required");
     return;
   }
 
@@ -160,68 +132,37 @@ async function submitProfile(){
     return;
   }
 
-  imageURL = await uploadImg(file);
-
-  let data = {
-    uid:user.uid,
-    name:name.value,
-    age:age.value,
-    gender:gender.value,
-    phone:phone.value,
-    city:city.value,
-    religion:religion.value,
-    education:education.value,
-    job:job.value,
-    about:about.value,
-    photo:imageURL,
-    time:Date.now()
-  };
-
-  db.ref("profiles").push(data);
-
-  alert("✔ Profile Saved Successfully");
-}
-
-/* LOAD (NO DELETE ON REFRESH) */
-auth.onAuthStateChanged(user=>{
-
-  if(!user){
-    window.location="index.html";
+  if(!name.value || !age.value || !phone.value || !city.value){
+    alert("Required fields fill करें");
     return;
   }
 
-  db.ref("profiles").on("value", snap=>{
+  alert("Saving profile...");
 
-    let html="";
+  imageURL = await uploadImg(file);
 
-    snap.forEach(c=>{
-
-      let d=c.val();
-
-      // ONLY USER DATA
-      if(d.uid !== user.uid) return;
-
-      html+=`
-      <div class="card">
-
-        <img src="${d.photo}">
-
-        <b>${d.name}</b><br>
-        🎂 ${d.age}<br>
-        🚻 ${d.gender}<br>
-        📱 ${d.phone}<br>
-        🏙 ${d.city}<br>
-        📚 ${d.education}<br>
-        💼 ${d.job}<br>
-        ❤️ ${d.about}<br>
-
-      </div>`;
-    });
-
-    document.getElementById("list").innerHTML =
-    html || "<p style='text-align:center'>No Profile Found</p>";
+  await db.ref("profiles").push({
+    uid: user.uid,
+    name: name.value,
+    age: age.value,
+    phone: phone.value,
+    city: city.value,
+    job: job.value,
+    photo: imageURL,
+    time: Date.now()
   });
 
+  alert("✔ Profile Saved");
+
+  // 🔥 IMPORTANT: redirect to payment page
+  window.location.href = "payment.html";
+}
+
+/* LOGIN CHECK */
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.location="index.html";
+  }
 });
 
 </script>
