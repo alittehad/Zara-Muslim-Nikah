@@ -108,76 +108,37 @@ button{
 </div>
 
 <script>
+db.ref("payments").on("value", snap => {
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
-};
+  let html = "";
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+  snap.forEach(child => {
 
-/* PREVIEW */
-document.getElementById("image").onchange = function(e){
-  let file = e.target.files[0];
-  let reader = new FileReader();
+    let d = child.val();
 
-  reader.onload = function(){
-    document.getElementById("preview").src = reader.result;
-    document.getElementById("preview").style.display = "block";
-  }
+    html += `
+      <div class="card">
 
-  reader.readAsDataURL(file);
-};
+        <b>👤 Name:</b> ${d.name}<br>
+        <b>📱 Phone:</b> ${d.phone}<br>
 
-/* IMGBB UPLOAD */
-async function uploadToImgBB(file){
+        <img src="${d.image}" style="width:100%;border-radius:8px;">
 
-  let form = new FormData();
-  form.append("image", file);
+        <p>Status: ${d.status}</p>
 
-  let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
-    method: "POST",
-    body: form
+        ${d.status === "approved" ? 
+          `<p style="color:green;font-weight:bold">
+            ${d.message || "आप registered हो गए हैं ✔️"}
+          </p>` 
+          : `<p style="color:orange">Waiting for approval...</p>`
+        }
+
+      </div>
+    `;
   });
 
-  let data = await res.json();
-  return data.data.url;
-}
-
-/* SUBMIT */
-async function submitPayment(){
-
-  let name = document.getElementById("name").value;
-  let age = document.getElementById("age").value;
-  let phone = document.getElementById("phone").value;
-  let file = document.getElementById("image").files[0];
-
-  if(!name || !age || !phone || !file){
-    alert("सभी जानकारी भरें");
-    return;
-  }
-
-  alert("Image upload हो रहा है...");
-
-  let imageUrl = await uploadToImgBB(file);
-
-  db.ref("payments").push({
-    name,
-    age,
-    phone,
-    image: imageUrl,
-    status: "pending",
-    time: Date.now()
-  });
-
-  alert("✔️ Request भेज दिया गया है (Approval का इंतजार करें)");
-
-  window.location = "index.html";
-}
-
+  document.getElementById("list").innerHTML = html;
+});
 </script>
 
 </body>
