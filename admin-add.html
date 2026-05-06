@@ -1,119 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Add Profile</title>
+
+<!-- ✅ Firebase (ORDER FIX) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{font-family:sans-serif;background:#f4f6f9;padding:20px;}
+.box{max-width:420px;margin:auto;background:#fff;padding:20px;border-radius:12px;}
+input,textarea{width:100%;padding:10px;margin:8px 0;border:1px solid #ddd;border-radius:8px;}
+button{width:100%;padding:12px;background:#0f766e;color:white;border:none;border-radius:8px;font-size:16px;}
+img{width:100%;margin-top:10px;border-radius:10px;display:none;}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>👑 Admin Add Profile</h2>
+
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="city" placeholder="City">
+<textarea id="desc" placeholder="Description"></textarea>
+
+<input type="file" id="photo" onchange="preview()">
+<img id="previewImg">
+
+<button onclick="save()">Save Profile</button>
+</div>
+
 <script>
 
-let editId = null; // ✅ FIX
-
+// ✅ FIXED CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com/",
-  projectId: "zara-muslim-nikah",
-  storageBucket: "zara-muslim-nikah.appspot.com"
+  projectId: "zara-muslim-nikah"
 };
 
 firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database();
+const auth = firebase.auth();
 
-/* SAVE / UPDATE */
-async function save(){
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-  const name = document.getElementById("name").value;
-  const age = document.getElementById("age").value;
-  const city = document.getElementById("city").value;
-  const desc = document.getElementById("desc").value;
-  const photo = document.getElementById("photo").files[0];
-
-  if(!name || !age || !city || !desc){
-    alert("Fill all fields");
+// ✅ ADMIN CHECK
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.location="login.html";
     return;
   }
 
-  let photoURL = "";
+  if((user.email || "").toLowerCase() !== ADMIN_EMAIL){
+    alert("Only admin allowed");
+    window.location="index.html";
+  }
+});
 
-  if(photo){
-    // 🔥 ImgBB upload
+// ✅ IMAGE PREVIEW
+function preview(){
+  let file = document.getElementById("photo").files[0];
+  let img = document.getElementById("previewImg");
+
+  img.src = URL.createObjectURL(file);
+  img.style.display="block";
+}
+
+// ✅ SAVE FUNCTION (ImgBB UPLOAD)
+async function save(){
+
+  const name = document.getElementById("name").value.trim();
+  const age = document.getElementById("age").value.trim();
+  const city = document.getElementById("city").value.trim();
+  const desc = document.getElementById("desc").value.trim();
+  const file = document.getElementById("photo").files[0];
+
+  if(!name || !age || !city || !desc || !file){
+    alert("All fields required");
+    return;
+  }
+
+  try{
+
+    // 🔥 ImgBB upload (NO CORS ISSUE)
     let formData = new FormData();
-    formData.append("image", photo);
+    formData.append("image", file);
 
-    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72", {
-      method: "POST",
-      body: formData
+    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
+      method:"POST",
+      body:formData
     });
 
     let data = await res.json();
-    photoURL = data.data.url;
-  }
 
-  let profile = {
-    name,
-    age,
-    city,
-    desc,
-    photo: photoURL,
-    time: Date.now()
-  };
+    let imageUrl = data.data.url;
 
-  if(editId){
-    await db.ref("profiles/" + editId).update(profile);
-    alert("Updated ✔️");
-    editId = null;
-  }else{
-    await db.ref("profiles").push(profile);
-    alert("Added ✔️");
-  }
-
-  window.location.reload();
-}
-
-/* LOAD DATA */
-function load(){
-
-  db.ref("profiles").on("value", snap=>{
-
-    let html = "";
-
-    snap.forEach(child=>{
-      let p = child.val();
-      let id = child.key;
-
-      html += `
-      <div style="background:#fff;margin:10px;padding:10px;border-radius:10px;">
-        <img src="${p.photo}" style="width:100%;height:150px;object-fit:cover">
-        <h3>${p.name}</h3>
-        <p>${p.city}</p>
-
-        <button onclick="edit('${id}','${p.name}','${p.age}','${p.city}','${p.desc}')">
-          Edit
-        </button>
-
-        <button onclick="del('${id}')">
-          Delete
-        </button>
-      </div>
-      `;
+    // 🔥 FIREBASE SAVE
+    await db.ref("profiles").push({
+      name,
+      age,
+      city,
+      desc,
+      photo:imageUrl,
+      time:Date.now()
     });
 
-    document.body.innerHTML += html;
-  });
-}
+    alert("Profile Added ✔️");
 
-/* EDIT */
-function edit(id,name,age,city,desc){
-  editId = id;
+    window.location="index.html";
 
-  document.getElementById("name").value = name;
-  document.getElementById("age").value = age;
-  document.getElementById("city").value = city;
-  document.getElementById("desc").value = desc;
-}
-
-/* DELETE */
-function del(id){
-  if(confirm("Delete?")){
-    db.ref("profiles/" + id).remove();
+  }catch(err){
+    console.log(err);
+    alert("Error: "+err.message);
   }
 }
 
-load();
-
 </script>
+
+</body>
+</html>
