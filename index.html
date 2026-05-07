@@ -16,9 +16,7 @@ body{
   font-family:sans-serif;
   background:#f4f6f9;
 }
-
-/* HEADER */
-/* HEADER 3D STYLE */
+/* HEADER CLEAN 3D TEXT STYLE */
 header{
   background: linear-gradient(135deg, #0f766e, #14b8a6);
   color: white;
@@ -33,30 +31,40 @@ header{
   top: 0;
   z-index: 1000;
 
-  /* 3D EFFECT */
+  /* ❌ REMOVE TILT (important) */
+  transform: none;
+
+  /* ✔ CLEAN 3D TEXT */
   text-shadow:
-    1px 1px 0 #0b3d39,
-    2px 2px 0 #0b3d39,
-    3px 3px 0 #062a27,
-    4px 4px 10px rgba(0,0,0,0.4);
+    1px 1px 0 #064e46,
+    2px 2px 0 #064e46,
+    3px 3px 0 #03332f,
+    4px 4px 6px rgba(0,0,0,0.35);
 
-  box-shadow:
-    0 6px 0 #0b3d39,
-    0 12px 25px rgba(0,0,0,0.25);
+  /* optional soft depth */
+  box-shadow: 0 6px 15px rgba(0,0,0,0.2);
 
-  transform: perspective(600px) rotateX(5deg);
-
-  border-bottom: 3px solid rgba(255,255,255,0.2);
-  animation: headerGlow 3s infinite alternate;
+  /* subtle glow (not too strong) */
+  animation: headerGlow 4s ease-in-out infinite alternate;
 }
 
-/* GLOW ANIMATION */
+/* SOFT GLOW ONLY */
 @keyframes headerGlow{
   from{
-    filter: drop-shadow(0 0 5px rgba(20,184,166,0.4));
+    text-shadow:
+      1px 1px 0 #064e46,
+      2px 2px 0 #064e46,
+      3px 3px 0 #03332f,
+      4px 4px 6px rgba(0,0,0,0.35),
+      0 0 6px rgba(20,184,166,0.3);
   }
   to{
-    filter: drop-shadow(0 0 18px rgba(20,184,166,0.9));
+    text-shadow:
+      1px 1px 0 #064e46,
+      2px 2px 0 #064e46,
+      3px 3px 0 #03332f,
+      4px 4px 6px rgba(0,0,0,0.35),
+      0 0 14px rgba(20,184,166,0.7);
   }
 }
 
