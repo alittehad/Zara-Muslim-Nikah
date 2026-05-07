@@ -107,9 +107,11 @@ select, input[type="range"]{
   inset:0;
   display:none;
   justify-content:center;
-  align-items:center;
+  align-items:flex-start;   /* ⭐ important fix */
   background:rgba(0,0,0,0.6);
   z-index:999;
+  overflow-y:auto;          /* ⭐ allow page scroll */
+  padding:20px 10px;
 }
 
 .modal-content{
@@ -118,9 +120,13 @@ select, input[type="range"]{
   max-width:600px;
   padding:20px;
   border-radius:12px;
-  max-height:90vh;
-  overflow-y:auto;
 
+  max-height:none;          /* ⭐ remove height limit issue */
+  overflow:visible;         /* ⭐ avoid cut content */
+
+  box-shadow:0 10px 30px rgba(0,0,0,0.3);
+  margin:20px auto;         /* ⭐ center with scroll */
+}
   /* ✨ better look */
   box-shadow:0 10px 30px rgba(0,0,0,0.3);
 }
