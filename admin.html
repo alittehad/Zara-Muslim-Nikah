@@ -96,7 +96,7 @@ button{
 
 <script>
 
-// Firebase config
+/* FIREBASE */
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -106,61 +106,109 @@ firebase.initializeApp({
 
 const auth = firebase.auth();
 const db = firebase.database();
-const ADMIN_EMAIL="ngogrant454@gmail.com";
 
-/* LOGIN */
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
+
+/* LOGIN STAY FIX */
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+/* CHECK LOGIN */
 auth.onAuthStateChanged(user=>{
-  if(!user || (user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
-    location="login.html";
-  } else {
-    loadData();
+
+  console.log("USER:", user);
+
+  if(!user){
+
+    alert("Login Required");
+
+    window.location.href = "login.html";
+
+    return;
   }
+
+  /* ADMIN CHECK */
+  if((user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
+
+    alert("Admin Access Only");
+
+    auth.signOut();
+
+    window.location.href = "login.html";
+
+    return;
+  }
+
+  loadData();
+
 });
 
 /* LOAD USERS */
 function loadData(){
+
   db.ref("users").on("value",snap=>{
 
     const list=document.getElementById("list");
     list.innerHTML="";
 
     snap.forEach(child=>{
+
       const id=child.key;
       const d=child.val()||{};
 
       let approveBtn = (d.status==="approved")
-        ? `<button class="reject" onclick="event.stopPropagation(); unapprove('${id}')">Reject</button>`
-        : `<button class="approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>`;
+      ? `<button class="reject" onclick="event.stopPropagation(); unapprove('${id}')">Reject</button>`
+      : `<button class="approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>`;
 
-    
-     list.innerHTML+=`
-<div class="card ${(d.status || 'pending')==='approved' ? 'approved-card' : 'pending-card'}" onclick="openModal('${id}')">
+      list.innerHTML += `
+
+      <div class="card ${(d.status || 'pending')==='approved' ? 'approved-card' : 'pending-card'}"
+      onclick="openModal('${id}')">
 
         <img src="${d.photo || 'https://via.placeholder.com/300'}">
 
         <h3>${d.name || 'No Name'}</h3>
+
         <p>${d.city || ''}</p>
 
         <div>
           ${approveBtn}
-          <button class="reject" onclick="event.stopPropagation(); deleteUser('${id}')">Delete</button>
-          <button class="premium" onclick="event.stopPropagation(); premium('${id}')">Premium</button>
-          <button class="featured" onclick="event.stopPropagation(); featured('${id}')">Featured</button>
+
+          <button class="reject"
+          onclick="event.stopPropagation(); deleteUser('${id}')">
+          Delete
+          </button>
+
+          <button class="premium"
+          onclick="event.stopPropagation(); premium('${id}')">
+          Premium
+          </button>
+
+          <button class="featured"
+          onclick="event.stopPropagation(); featured('${id}')">
+          Featured
+          </button>
         </div>
 
-      </div>`;
+      </div>
+      `;
+
     });
 
   });
+
 }
 
-/* OPEN FULL PROFILE */
+/* OPEN PROFILE */
 function openModal(id){
+
   db.ref("users/"+id).once("value").then(snap=>{
+
     const d=snap.val()||{};
 
     document.getElementById("modalBody").innerHTML=`
-      <img src="${d.photo || 'https://via.placeholder.com/300'}" style="width:100%;border-radius:10px">
+
+      <img src="${d.photo || 'https://via.placeholder.com/300'}"
+      style="width:100%;border-radius:10px">
 
       <h2>${d.name || '-'}</h2>
 
@@ -180,39 +228,59 @@ function openModal(id){
     `;
 
     document.getElementById("profileModal").style.display="flex";
+
   });
+
 }
 
-/* CLOSE MODAL */
 function closeModal(e){
+
   if(e.target.id==="profileModal"){
     document.getElementById("profileModal").style.display="none";
   }
+
 }
 
 /* ACTIONS */
-function approve(id){ db.ref("users/"+id+"/status").set("approved"); }
-function unapprove(id){ db.ref("users/"+id+"/status").set("pending"); }
+function approve(id){
+  db.ref("users/"+id+"/status").set("approved");
+}
+
+function unapprove(id){
+  db.ref("users/"+id+"/status").set("pending");
+}
 
 function deleteUser(id){
+
   if(confirm("Delete?")){
     db.ref("users/"+id).remove();
   }
+
 }
 
-function premium(id){ db.ref("users/"+id+"/premium").set(true); }
-function featured(id){ db.ref("users/"+id+"/featured").set(true); }
+function premium(id){
+  db.ref("users/"+id+"/premium").set(true);
+}
+
+function featured(id){
+  db.ref("users/"+id+"/featured").set(true);
+}
 
 function logout(){
-  auth.signOut().then(()=>location="login.html");
+
+  auth.signOut().then(()=>{
+
+    window.location.href="login.html";
+
+  });
+
 }
 
 function goHome(){
+
   window.location.href = "index.html";
+
 }
-
-
-  
 
 </script>
 
