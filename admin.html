@@ -192,11 +192,11 @@ function premium(id){ db.ref("users/"+id+"/premium").set(true); }
 function featured(id){ db.ref("users/"+id+"/featured").set(true); }
 
 function logout(){
-  auth.signOut().then(()=>location="index.html");
+  auth.signOut().then(()=>location="login.html");
 }
 
 function goHome(){
-  window.location.href = "index.html";
+  window.location.href = "login.html";
 }
 
 
