@@ -42,7 +42,7 @@ header{
   border-bottom: 2px solid rgba(255,255,255,0.3);
 }
 
-/* 🔥 SCROLLING TEXT BAR */
+/* SCROLL TEXT */
 .marquee{
   background: linear-gradient(90deg,#0ea5e9,#38bdf8,#0ea5e9);
   color:white;
@@ -72,7 +72,6 @@ header{
   flex-wrap:wrap;
 }
 
-/* BUTTON */
 .btn{
   padding:10px 16px;
   border:none;
@@ -113,58 +112,53 @@ header{
   width:100%;
   height:200px;
   object-fit:cover;
-  cursor:pointer;
 }
 
-.card-body{
-  text-align:center;
-  padding:10px;
-}
-
-.card-body button{
-  margin:4px;
-  padding:6px 10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  color:white;
-}
-
-.like{background:#16a34a;}
-.edit{background:#1d4ed8;}
-.delete{background:#dc2626;}
-
-/* MODAL */
+/* MODAL FIX (MAIN ISSUE FIXED) */
 .modal{
   position: fixed;
   inset: 0;
   display: none;
+
   justify-content: center;
   align-items: center;
-  background: rgba(0,0,0,0.6);
+
+  background: rgba(0,0,0,0.65);
   z-index: 9999;
-  overflow-y: auto;
-  padding: 15px;
-  box-sizing: border-box;
+
+  padding: 20px;
 }
 
 .modal-content{
   background: white;
-  width: 92%;
+  width: 95%;
   max-width: 500px;
-  padding: 18px;
+
   border-radius: 12px;
-  max-height: 85vh;
+  padding: 15px;
+
+  /* ⭐ FIX HERE (NO CUT ANYMORE) */
+  max-height: 90vh;
   overflow-y: auto;
+
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+
+  display:flex;
+  flex-direction:column;
 }
 
 .modal-content img{
-  width: 100%;
-  height: auto;
-  display: block;
-  margin-bottom: 10px;
-  border-radius: 10px;
+  width:100%;
+  height:auto;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+
+.close-btn{
+  align-self:flex-end;
+  cursor:pointer;
+  font-size:22px;
+  font-weight:bold;
 }
 </style>
 </head>
@@ -173,21 +167,14 @@ header{
 
 <header>🕋 Zara Nikah Service 🕌</header>
 
-<!-- 🔥 SCROLLING TEXT -->
 <div class="marquee">
-  <span>💍 Welcome to Zara Nikah Service | Best Islamic Marriage Platform | Admin Approved Profiles | Safe & Trusted Rishta Service 💍</span>
+  <span>💍 Welcome to Zara Nikah Service | Safe Marriage Platform | Verified Profiles | Trusted Rishta Service 💍</span>
 </div>
 
 <div class="topbar">
   <button class="btn add" onclick="goAdd()">प्रोफ़ाइल जोड़ें</button>
-
-  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">
-    👑 Admin Panel
-  </button>
-
-  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">
-    ➕ Admin Add
-  </button>
+  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">👑 Admin Panel</button>
+  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">➕ Admin Add</button>
 </div>
 
 <div class="grid" id="grid"></div>
@@ -195,14 +182,12 @@ header{
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
+    <div class="close-btn" onclick="closeModal()">✖</div>
     <div id="modalBody"></div>
   </div>
 </div>
 
 <script>
-
-/* Firebase code same as yours */
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
@@ -217,13 +202,10 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
-
 let isAdmin = false;
 
-/* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(user){
-
     isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
 
     if(isAdmin){
@@ -232,18 +214,16 @@ auth.onAuthStateChanged(user=>{
     }
 
     loadProfiles();
-
-  }else{
-    document.getElementById("grid").innerHTML = "<p style='text-align:center'>Login Required</p>";
+  } else {
+    document.getElementById("grid").innerHTML="<p style='text-align:center'>Login Required</p>";
   }
 });
 
-/* LOAD */
 function loadProfiles(){
   db.ref("profiles").on("value",snap=>{
     let html="";
     snap.forEach(child=>{
-      let d = child.val();
+      let d=child.val();
 
       html+=`
       <div class="card">
@@ -263,11 +243,11 @@ function loadProfiles(){
       </div>`;
     });
 
-    document.getElementById("grid").innerHTML = html;
+    document.getElementById("grid").innerHTML=html;
   });
 }
 
-function goPayment(){ window.location.href="payment.html"; }
+function goPayment(){ window.location="payment.html"; }
 function deleteProfile(id){ if(confirm("Delete?")) db.ref("profiles/"+id).remove(); }
 function editProfile(id){ window.location="admin-add.html?id="+id; }
 
@@ -278,7 +258,9 @@ function openModal(id){
     document.getElementById("modalBody").innerHTML=`
       <h2>${d.name}</h2>
       <img src="${d.photo}">
-      <p>${d.city}</p>
+      <p><b>City:</b> ${d.city}</p>
+      <p><b>Phone:</b> ${d.phone || ''}</p>
+      <p><b>Bio:</b> ${d.bio || ''}</p>
     `;
 
     document.getElementById("modal").style.display="flex";
