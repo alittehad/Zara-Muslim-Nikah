@@ -53,14 +53,6 @@ header{
   100%{transform:translateX(-100%);}
 }
 
-#adminText{
-  font-weight:bold;
-  color:yellow;
-  margin-top:5px;
-  text-shadow:1px 1px 2px black;
-  display:none;
-}
-
 /* TOPBAR */
 .topbar{
   display:flex;
@@ -70,6 +62,7 @@ header{
   flex-wrap:wrap;
 }
 
+/* BUTTON */
 .btn{
   padding:10px 16px;
   border:none;
@@ -82,6 +75,13 @@ header{
 .add{background:#1d4ed8;}
 .admin{background:#111;}
 
+/* ADMIN BUTTON BOX */
+#adminText{
+  margin-top:5px;
+  display:none;
+}
+
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -129,7 +129,6 @@ header{
   background:rgba(0,0,0,0.6);
   z-index:9999;
   padding:15px;
-  box-sizing:border-box;
 }
 
 .modal-content{
@@ -156,6 +155,7 @@ header{
     </div>
   </div>
 
+  <!-- ADMIN BUTTONS AREA -->
   <div id="adminText"></div>
 
 </header>
@@ -174,6 +174,7 @@ header{
 
 <div class="grid" id="grid"></div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
@@ -208,10 +209,30 @@ auth.onAuthStateChanged(user=>{
       document.getElementById("adminPanelBtn").style.display="inline-block";
       document.getElementById("adminAddBtn").style.display="inline-block";
 
-      // ✅ UPDATED TEXT (YOUR REQUEST)
+      // ✅ BUTTONS (NO TEXT)
       document.getElementById("adminText").style.display="block";
-      document.getElementById("adminText").innerText =
-        "✏ Add / 🗑 Delete Profiles Enabled";
+      document.getElementById("adminText").innerHTML = `
+        <button onclick="goAdd()" style="
+          background:#16a34a;
+          color:white;
+          padding:8px 12px;
+          border:none;
+          border-radius:8px;
+          margin-right:6px;
+          cursor:pointer;
+          font-weight:bold;
+        ">✏ Add Profile</button>
+
+        <button onclick="deleteMode()" style="
+          background:#dc2626;
+          color:white;
+          padding:8px 12px;
+          border:none;
+          border-radius:8px;
+          cursor:pointer;
+          font-weight:bold;
+        ">🗑 Delete Mode</button>
+      `;
     }
 
     loadProfiles();
@@ -220,6 +241,10 @@ auth.onAuthStateChanged(user=>{
     document.getElementById("grid").innerHTML = "<p style='text-align:center'>Login Required</p>";
   }
 });
+
+function deleteMode(){
+  alert("Delete mode ON");
+}
 
 function loadProfiles(){
 
@@ -233,6 +258,7 @@ function loadProfiles(){
       html+=`
       <div class="card">
         <img src="${d.photo}" onclick="openModal('${child.key}')">
+
         <div class="card-body">
           <h3>${d.name}</h3>
           <p>${d.city}</p>
