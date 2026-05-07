@@ -212,15 +212,29 @@ let isAdmin = false;
 
 /* 🔐 LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
+
   if(user){
 
     isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
 
     if(isAdmin){
-      document.getElementById("adminPanelBtn").style.display="inline-block";
-      document.getElementById("adminAddBtn").style.display="inline-block";
+
+      document.getElementById("adminPanelBtn").style.display = "inline-block";
+
+      document.getElementById("adminAddBtn").style.display = "inline-block";
+
     }
 
+    loadProfiles();
+
+  }else{
+
+    /* LOGIN PAGE PAR BHEJO */
+    window.location.href = "login.html";
+
+  }
+
+});
     loadProfiles();
 
   }else{
