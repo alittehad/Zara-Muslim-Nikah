@@ -211,21 +211,29 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let isAdmin = false;
 
 /* 🔐 LOGIN CHECK */
+/* 🔐 LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
-  if(user){
 
-    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
+  /* ❌ LOGIN NAHI */
+  if(!user){
 
-    if(isAdmin){
-      document.getElementById("adminPanelBtn").style.display="inline-block";
-      document.getElementById("adminAddBtn").style.display="inline-block";
-    }
+    window.location.href = "/login.html";
 
-    loadProfiles();
-
-  }else{
-    document.getElementById("grid").innerHTML = "<p style='text-align:center'>Login Required</p>";
+    return;
   }
+
+  /* ✅ LOGIN HAI */
+  isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
+
+  if(isAdmin){
+
+    document.getElementById("adminPanelBtn").style.display="inline-block";
+
+    document.getElementById("adminAddBtn").style.display="inline-block";
+  }
+
+  loadProfiles();
+
 });
 
 /* 📥 LOAD DATA */
