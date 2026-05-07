@@ -20,33 +20,35 @@ body{
 /* HEADER */
 header{
   background: linear-gradient(135deg, #38bdf8, #0ea5e9, #e0f2fe);
-  color:white;
-  text-align:center;
-  padding:10px 12px;
-  font-weight:900;
-  position:sticky;
-  top:0;
-  z-index:1000;
-  box-shadow:0 8px 20px rgba(0,0,0,0.2);
+  color: white;
+  text-align: center;
+  padding: 12px;
+  font-weight: 900;
+  font-size: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 
-/* 🔥 SCROLL TEXT */
-.marquee{
-  background:rgba(0,0,0,0.25);
-  padding:5px;
+/* 🔥 SCROLL TEXT (NEW - SAFE ADD) */
+.ticker{
+  width:100%;
   overflow:hidden;
+  background:rgba(0,0,0,0.25);
+  color:white;
+  font-size:14px;
+  padding:5px 0;
   white-space:nowrap;
 }
 
-.marquee span{
+.ticker span{
   display:inline-block;
   padding-left:100%;
-  animation:scroll 12s linear infinite;
-  color:white;
-  font-size:14px;
+  animation:move 12s linear infinite;
 }
 
-@keyframes scroll{
+@keyframes move{
   0%{transform:translateX(0);}
   100%{transform:translateX(-100%);}
 }
@@ -68,6 +70,7 @@ header{
   font-weight:bold;
   cursor:pointer;
 }
+
 .add{background:#1d4ed8;}
 .admin{background:#111;}
 
@@ -86,6 +89,21 @@ header{
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
   border:2px solid #d1d5db;
 }
+
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
+
+.card-body{
+  text-align:center;
+  padding:10px;
+}
+
+.like{background:#16a34a;}
+.edit{background:#1d4ed8;}
+.delete{background:#dc2626;}
 
 /* MODAL */
 .modal{
@@ -117,28 +135,20 @@ header{
 <header>
   🕋 Zara Nikah Service 🕌
 
-  <div class="marquee">
+  <!-- 🔥 SCROLLING TEXT ADDED HERE -->
+  <div class="ticker">
     <span id="scrollText">💍 Welcome to Zara Nikah Service - Find your perfect match 💍</span>
   </div>
 </header>
 
 <div class="topbar">
   <button class="btn add" onclick="goAdd()">प्रोफ़ाइल जोड़ें</button>
-
-  <button class="btn admin" id="adminBtn" style="display:none" onclick="editText()">
-    ✏ Edit Text
-  </button>
-
-  <button class="btn admin" id="adminDelBtn" style="display:none" onclick="resetText()">
-    🗑 Reset Text
-  </button>
 </div>
 
 <div class="grid" id="grid"></div>
 
 <script>
 
-/* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -153,49 +163,26 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-/* LOGIN */
+/* LOAD SCROLL TEXT */
 auth.onAuthStateChanged(user=>{
   if(user){
     if((user.email||"").toLowerCase() === ADMIN_EMAIL){
-      document.getElementById("adminBtn").style.display="inline-block";
-      document.getElementById("adminDelBtn").style.display="inline-block";
+      // admin future use
     }
-    loadText();
+
+    db.ref("scrollText").on("value",snap=>{
+      let t = snap.val();
+      if(t){
+        document.getElementById("scrollText").innerText = t;
+      }
+    });
   }
 });
-
-/* LOAD TEXT */
-function loadText(){
-  db.ref("scrollText").on("value",snap=>{
-    let txt = snap.val();
-    if(txt){
-      document.getElementById("scrollText").innerText = txt;
-    }
-  });
-}
-
-/* EDIT TEXT */
-function editText(){
-  let newText = prompt("Enter new scrolling text:");
-  if(newText){
-    db.ref("scrollText").set(newText);
-  }
-}
-
-/* RESET TEXT */
-function resetText(){
-  if(confirm("Reset to default text?")){
-    db.ref("scrollText").set("💍 Welcome to Zara Nikah Service - Find your perfect match 💍");
-  }
-}
 
 /* NAV */
 function goAdd(){
   window.location="profile-submit.html";
 }
-
-/* PLACEHOLDER */
-function loadProfiles(){}
 
 </script>
 
