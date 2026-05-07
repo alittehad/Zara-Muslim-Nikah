@@ -5,39 +5,105 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Add Profile</title>
 
-<!-- ✅ Firebase (ORDER FIX) -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{font-family:sans-serif;background:#f4f6f9;padding:20px;}
-.box{max-width:420px;margin:auto;background:#fff;padding:20px;border-radius:12px;}
-input,textarea{width:100%;padding:10px;margin:8px 0;border:1px solid #ddd;border-radius:8px;}
-button{width:100%;padding:12px;background:#0f766e;color:white;border:none;border-radius:8px;font-size:16px;}
-img{width:100%;margin-top:10px;border-radius:10px;display:none;}
+body{
+  font-family:sans-serif;
+  background:#f4f6f9;
+  padding:20px;
+}
+
+.box{
+  max-width:420px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+input,textarea,select{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border:1px solid #ddd;
+  border-radius:8px;
+  font-size:15px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  background:#0f766e;
+  color:white;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+img{
+  width:100%;
+  margin-top:10px;
+  border-radius:10px;
+  display:none;
+}
 </style>
 </head>
 
 <body>
 
 <div class="box">
+
 <h2>👑 Admin Add Profile</h2>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
+<input id="name" placeholder="Full Name">
+
+<input id="age" type="number" placeholder="Age">
+
+<select id="gender">
+  <option value="">Select Gender</option>
+  <option>Male</option>
+  <option>Female</option>
+</select>
+
 <input id="city" placeholder="City">
-<textarea id="desc" placeholder="Description"></textarea>
+
+<input id="phone" placeholder="Phone Number">
+
+<input id="education" placeholder="Education">
+
+<input id="profession" placeholder="Profession">
+
+<input id="religion" placeholder="Religion">
+
+<select id="marital">
+  <option value="">Marital Status</option>
+  <option>Single</option>
+  <option>Divorced</option>
+  <option>Widow</option>
+</select>
+
+<input id="height" placeholder="Height">
+
+<textarea id="bio" placeholder="Write Bio"></textarea>
 
 <input type="file" id="photo" onchange="preview()">
+
 <img id="previewImg">
 
 <button onclick="save()">Save Profile</button>
+
 </div>
 
 <script>
 
-// ✅ FIXED CONFIG
+/* FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -52,8 +118,9 @@ const auth = firebase.auth();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-// ✅ ADMIN CHECK
+/* ADMIN CHECK */
 auth.onAuthStateChanged(user=>{
+
   if(!user){
     window.location="login.html";
     return;
@@ -65,61 +132,92 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-// ✅ IMAGE PREVIEW
+/* IMAGE PREVIEW */
 function preview(){
+
   let file = document.getElementById("photo").files[0];
+
+  if(!file) return;
+
   let img = document.getElementById("previewImg");
 
   img.src = URL.createObjectURL(file);
   img.style.display="block";
 }
 
-// ✅ SAVE FUNCTION (ImgBB UPLOAD)
+/* SAVE PROFILE */
 async function save(){
 
   const name = document.getElementById("name").value.trim();
   const age = document.getElementById("age").value.trim();
+  const gender = document.getElementById("gender").value;
   const city = document.getElementById("city").value.trim();
-  const desc = document.getElementById("desc").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const education = document.getElementById("education").value.trim();
+  const profession = document.getElementById("profession").value.trim();
+  const religion = document.getElementById("religion").value.trim();
+  const marital = document.getElementById("marital").value;
+  const height = document.getElementById("height").value.trim();
+  const bio = document.getElementById("bio").value.trim();
+
   const file = document.getElementById("photo").files[0];
 
-  if(!name || !age || !city || !desc || !file){
-    alert("All fields required");
+  if(!name || !age || !gender || !city || !phone || !file){
+    alert("Please fill required fields");
     return;
   }
 
   try{
 
-    // 🔥 ImgBB upload (NO CORS ISSUE)
+    /* IMAGE UPLOAD */
     let formData = new FormData();
     formData.append("image", file);
 
-    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
-      method:"POST",
-      body:formData
-    });
+    let res = await fetch(
+      "https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",
+      {
+        method:"POST",
+        body:formData
+      }
+    );
 
     let data = await res.json();
 
     let imageUrl = data.data.url;
 
-    // 🔥 FIREBASE SAVE
+    /* SAVE FIREBASE */
     await db.ref("profiles").push({
+
       name,
       age,
+      gender,
       city,
-      desc,
+      phone,
+      education,
+      profession,
+      religion,
+      marital,
+      height,
+      bio,
+
       photo:imageUrl,
+
+      status:"approved",
+
+      premium:false,
+      featured:false,
+
       time:Date.now()
     });
 
-    alert("Profile Added ✔️");
+    alert("Profile Added Successfully ✔️");
 
     window.location="index.html";
 
   }catch(err){
+
     console.log(err);
-    alert("Error: "+err.message);
+    alert("Error: " + err.message);
   }
 }
 
