@@ -20,34 +20,30 @@ body{
 /* HEADER */
 header{
   background: linear-gradient(135deg, #38bdf8, #0ea5e9, #e0f2fe);
-  color: white;
-  text-align: center;
-  padding: 10px;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  color:white;
+  text-align:center;
+  padding:10px 12px;
+  font-weight:900;
+  position:sticky;
+  top:0;
+  z-index:1000;
+  box-shadow:0 8px 20px rgba(0,0,0,0.2);
 }
 
-.logo{
-  font-weight: 900;
-  font-size: 22px;
-  text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
-}
-
+/* SCROLL TEXT */
 .marquee{
-  overflow:hidden;
+  background:rgba(0,0,0,0.25);
+  padding:5px;
+  font-size:14px;
   white-space:nowrap;
-  margin-top:5px;
+  overflow:hidden;
 }
-
-#scrollText{
+.marquee span{
   display:inline-block;
   padding-left:100%;
   animation:scroll 12s linear infinite;
-  font-weight:bold;
-  color:#003049;
+  color:#fff;
 }
-
 @keyframes scroll{
   0%{transform:translateX(0);}
   100%{transform:translateX(-100%);}
@@ -71,15 +67,8 @@ header{
   font-weight:bold;
   cursor:pointer;
 }
-
 .add{background:#1d4ed8;}
 .admin{background:#111;}
-
-/* ADMIN BUTTON BOX */
-#adminText{
-  margin-top:5px;
-  display:none;
-}
 
 /* GRID */
 .grid{
@@ -95,29 +84,7 @@ header{
   overflow:hidden;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
   border:2px solid #d1d5db;
-  transition:0.3s;
 }
-
-.card:hover{
-  transform:scale(1.03);
-  border:2px solid #14b8a6;
-  box-shadow:0 10px 25px rgba(20,184,166,0.35);
-}
-
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-}
-
-.card-body{
-  text-align:center;
-  padding:10px;
-}
-
-.like{background:#16a34a;}
-.edit{background:#1d4ed8;}
-.delete{background:#dc2626;}
 
 /* MODAL */
 .modal{
@@ -140,35 +107,34 @@ header{
   max-height:85vh;
   overflow-y:auto;
 }
+
+/* IMAGE */
+.modal-content img{
+  width:100%;
+  height:auto;
+  border-radius:10px;
+  margin-bottom:10px;
+}
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <header>
+  🕋 Zara Nikah Service 🕌
 
-  <div class="logo">🕋 Zara Nikah Service 🕌</div>
-
+  <!-- SCROLL TEXT -->
   <div class="marquee">
-    <div id="scrollText">
-      💍 Nikah Service | Best Muslim Profiles | Trusted Matching | 24x7 Support 💍
-    </div>
+    <span id="scrollText">💍 Welcome to Zara Nikah Service - Find your perfect match 💍</span>
   </div>
-
-  <!-- ADMIN BUTTONS AREA -->
-  <div id="adminText"></div>
-
 </header>
 
 <div class="topbar">
   <button class="btn add" onclick="goAdd()">प्रोफ़ाइल जोड़ें</button>
 
-  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">
-    👑 Admin Panel
-  </button>
-
-  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">
-    ➕ Admin Add
+  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="changeScrollText()">
+    ✏ Add / Edit Text
   </button>
 </div>
 
@@ -198,120 +164,43 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-let isAdmin = false;
-
+/* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(user){
-
-    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
-
-    if(isAdmin){
+    if((user.email||"").toLowerCase() === ADMIN_EMAIL){
       document.getElementById("adminPanelBtn").style.display="inline-block";
-      document.getElementById("adminAddBtn").style.display="inline-block";
-
-      // ✅ BUTTONS (NO TEXT)
-      document.getElementById("adminText").style.display="block";
-      document.getElementById("adminText").innerHTML = `
-        <button onclick="goAdd()" style="
-          background:#16a34a;
-          color:white;
-          padding:8px 12px;
-          border:none;
-          border-radius:8px;
-          margin-right:6px;
-          cursor:pointer;
-          font-weight:bold;
-        ">✏ Add Profile</button>
-
-        <button onclick="deleteMode()" style="
-          background:#dc2626;
-          color:white;
-          padding:8px 12px;
-          border:none;
-          border-radius:8px;
-          cursor:pointer;
-          font-weight:bold;
-        ">🗑 Delete Mode</button>
-      `;
     }
-
-    loadProfiles();
-
-  }else{
-    document.getElementById("grid").innerHTML = "<p style='text-align:center'>Login Required</p>";
+    loadScrollText();
   }
 });
 
-function deleteMode(){
-  alert("Delete mode ON");
-}
-
-function loadProfiles(){
-
-  db.ref("profiles").on("value",snap=>{
-
-    let html="";
-
-    snap.forEach(child=>{
-      let d = child.val();
-
-      html+=`
-      <div class="card">
-        <img src="${d.photo}" onclick="openModal('${child.key}')">
-
-        <div class="card-body">
-          <h3>${d.name}</h3>
-          <p>${d.city}</p>
-
-          <button class="like" onclick="goPayment()">💍 रिश्ता करें</button>
-
-          ${isAdmin ? `
-            <button class="edit" onclick="editProfile('${child.key}')">✏ Edit</button>
-            <button class="delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
-          ` : ""}
-
-        </div>
-      </div>`;
-    });
-
-    document.getElementById("grid").innerHTML = html;
+/* LOAD TEXT */
+function loadScrollText(){
+  db.ref("scrollText").on("value",snap=>{
+    let txt = snap.val();
+    if(txt){
+      document.getElementById("scrollText").innerText = txt;
+    }
   });
 }
 
-function goPayment(){ window.location="payment.html"; }
-
-function deleteProfile(id){
-  if(confirm("Delete profile?")){
-    db.ref("profiles/"+id).remove();
+/* CHANGE TEXT */
+function changeScrollText(){
+  let newText = prompt("Enter scrolling text:");
+  if(newText){
+    db.ref("scrollText").set(newText);
   }
 }
 
-function editProfile(id){
-  window.location="admin-add.html?id="+id;
+/* SIMPLE NAV */
+function goAdd(){
+  window.location="profile-submit.html";
 }
 
-function openModal(id){
-  db.ref("profiles/"+id).once("value").then(snap=>{
-    let d = snap.val();
-
-    document.getElementById("modalBody").innerHTML = `
-      <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%;border-radius:10px;">
-      <p>${d.city}</p>
-      <p>${d.bio}</p>
-    `;
-
-    document.getElementById("modal").style.display="flex";
-  });
-}
-
-function closeModal(){
-  document.getElementById("modal").style.display="none";
-}
-
-function goAdd(){ window.location="profile-submit.html"; }
-function goAdmin(){ window.location="admin.html"; }
-function goAdminAdd(){ window.location="admin-add.html"; }
+/* PLACEHOLDER FUNCTIONS */
+function loadProfiles(){}
+function openModal(){}
+function closeModal(){}
 
 </script>
 
