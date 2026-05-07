@@ -101,8 +101,7 @@ body::after{
 </div>
 
 <script>
-
-/* FIREBASE CONFIG */
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -110,58 +109,41 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
 
-/* LOGIN PERSISTENCE */
+/* keep login session */
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-/* CHECK REDIRECT LOGIN */
-auth.getRedirectResult()
-
-.then((result)=>{
-
-  if(result.user){
-
-    console.log("Redirect Login Success");
-
-    window.location.href = "index.html";
-
-  }
-
-})
-
-.catch((error)=>{
-
-  console.log(error);
-
-  alert(error.message);
-
-});
-
-/* AUTO LOGIN CHECK */
-auth.onAuthStateChanged(user => {
-
+/* AUTO REDIRECT IF ALREADY LOGGED IN */
+auth.onAuthStateChanged(user=>{
   if(user){
-
     window.location.href = "index.html";
-
   }
-
 });
 
-/* GOOGLE LOGIN */
 function login(){
 
   document.getElementById("loading").style.display = "block";
 
   const provider = new firebase.auth.GoogleAuthProvider();
 
-  auth.signInWithRedirect(provider);
+  auth.signInWithPopup(provider)
+  .then((result)=>{
 
+    console.log("Login success:", result.user.email);
+
+    window.location.href = "index.html";
+
+  })
+  .catch((error)=>{
+
+    document.getElementById("loading").style.display = "none";
+
+    alert(error.message);
+    console.log(error);
+
+  });
 }
-
 </script>
-
 </body>
 </html>
