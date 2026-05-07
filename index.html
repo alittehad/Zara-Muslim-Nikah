@@ -102,76 +102,80 @@ select, input[type="range"]{
 .edit{background:#1d4ed8;color:white;border:none;padding:6px;border-radius:6px;}
 .delete{background:#dc2626;color:white;border:none;padding:6px;border-radius:6px;}
 
-/* BACKDROP */
+
 /* BACKDROP */
 .modal{
-  position:fixed;
-  inset:0;
-  display:none;
+  position: fixed;
+  inset: 0;
+  display: none;
 
-  justify-content:center;
-  align-items:flex-start;
+  justify-content: center;
+  align-items: flex-start;
 
-  background:rgba(0,0,0,0.6);
-  z-index:9999;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
 
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 
-  padding:20px 10px;
+  padding: 20px 10px;
 
-  overscroll-behavior:contain;
+  overscroll-behavior: contain;
 }
 
 /* MODAL BOX */
 .modal-content{
-  background:white;
-  width:90%;
-  max-width:600px;
+  background: #fff;
+  width: 90%;
+  max-width: 600px;
 
-  margin:30px auto;
-  border-radius:12px;
-  padding:20px;
+  margin: 30px auto;
+  border-radius: 12px;
+  padding: 20px;
 
-  max-height:90vh;
-  overflow-y:auto;
+  max-height: 90vh;
+  overflow-y: auto;
 
-  box-shadow:0 10px 30px rgba(0,0,0,0.3);
+  box-sizing: border-box;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 
   animation: modalPop 0.25s ease;
-
-  box-sizing:border-box;
 }
 
-/* ANIMATION */
+/* OPEN ANIMATION */
 @keyframes modalPop{
   from{
-    transform:scale(0.9);
-    opacity:0;
+    transform: scale(0.9);
+    opacity: 0;
   }
   to{
-    transform:scale(1);
-    opacity:1;
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
 /* IMAGE */
 .modal-content img{
-  width:100%;
-  max-height:300px;
-  object-fit:cover;
-  border-radius:12px;
-  margin-bottom:12px;
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 12px;
 }
 
 /* TEXT */
 .modal-content p{
-  margin:6px 0;
-  font-size:14px;
-  line-height:1.4;
+  margin: 6px 0;
+  font-size: 14px;
+  line-height: 1.4;
 }
-  /* ✨ better look */
-  box-shadow:0 10px 30px rgba(0,0,0,0.3);
+
+/* CLOSE BUTTON */
+.modal-content span{
+  float: right;
+  cursor: pointer;
+  font-size: 20px;
 }
 
 /* profile image */
