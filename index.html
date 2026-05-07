@@ -217,6 +217,8 @@ function renderProfiles(list){
 
       <img src="${d.photo}">
 
+      
+
       <div class="card-body">
         <h3>${d.name}</h3>
         <p>${d.city}</p>
@@ -288,12 +290,24 @@ function openModal(id){
     let d = snap.val();
 
     document.getElementById("modalBody").innerHTML = `
-      <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%">
-      <p>${d.city}</p>
+      <h2>${d.name || ''}</h2>
+
+      <img src="${d.photo || ''}" style="width:100%;border-radius:10px;margin-bottom:10px;">
+
+      <p><b>Age:</b> ${d.age || '-'}</p>
+      <p><b>Gender:</b> ${d.gender || '-'}</p>
+      <p><b>City:</b> ${d.city || '-'}</p>
+      <p><b>Religion:</b> ${d.religion || '-'}</p>
+      <p><b>Education:</b> ${d.education || '-'}</p>
+      <p><b>Profession:</b> ${d.profession || '-'}</p>
+      <p><b>Phone:</b> ${d.phone || '-'}</p>
+      <p><b>Marital Status:</b> ${d.marital || '-'}</p>
+      <p><b>Height:</b> ${d.height || '-'}</p>
+
+      <p><b>Bio:</b><br>${d.bio || '-'}</p>
     `;
 
-    document.getElementById("modal").style.display="flex";
+    document.getElementById("modal").style.display = "flex";
   });
 }
 
