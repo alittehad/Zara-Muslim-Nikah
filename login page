@@ -50,7 +50,8 @@ body::after{
 
 /* LOGIN BUTTON */
 .btn{
-  padding:14px 24px;
+  padding:14px 12
+px;
   border:none;
   border-radius:12px;
   font-weight:bold;
