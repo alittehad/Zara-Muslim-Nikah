@@ -125,41 +125,46 @@ header{
 
 /* MODAL */
 
+/* MODAL BACKDROP */
 .modal{
-  position:fixed;
-  inset:0;
-  display:none;
+  position: fixed;
+  inset: 0;
+  display: none;
 
-  justify-content:center;
-  align-items:center;
+  justify-content: center;
+  align-items: center;
 
-  background:rgba(0,0,0,0.6);
-  z-index:999;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
 
-  overflow-y:auto;
+  overflow-y: auto;
 
-  /* ⭐ SAFE CENTER + NO CUT */
-  padding:20px 10px;
-  box-sizing:border-box;
+  padding: 15px;
+  box-sizing: border-box;
 }
 
-/* CONTENT BOX */
+/* MODAL CONTENT */
 .modal-content{
-  background:white;
-  width:90%;
-  max-width:500px;
-  padding:20px;
-  border-radius:10px;
+  background: white;
+  width: 92%;
+  max-width: 500px;
 
-  /* ⭐ IMPORTANT FIX */
-  max-height:90vh;
-  overflow-y:auto;
+  padding: 18px;
+  border-radius: 12px;
 
-  /* smooth look */
-  box-shadow:0 10px 30px rgba(0,0,0,0.3);
+  max-height: 85vh;
+  overflow-y: auto;
 
-  /* center fix */
-  margin:auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* 🔥 IMAGE FIX (IMPORTANT - prevents top cut look) */
+.modal-content img{
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 10px;
+  border-radius: 10px;
 }
 </style>
 </head>
