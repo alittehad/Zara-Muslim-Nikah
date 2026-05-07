@@ -24,11 +24,22 @@ header{
 }
 
 .card{
-  background:white;padding:10px;border-radius:15px;
+  background:white;
+  padding:10px;
+  border-radius:15px;
   box-shadow:0 8px 20px rgba(0,0,0,0.1);
   cursor:pointer;
 }
 
+.approved-card{
+  background:#f0fdf4;
+  border:3px solid #16a34a;
+}
+
+.pending-card{
+  background:#fef2f2;
+  border:3px solid #dc2626;
+}
 .card img{
   width:100%;height:200px;
   object-fit:cover;border-radius:10px;
@@ -121,8 +132,9 @@ function loadData(){
         ? `<button class="reject" onclick="event.stopPropagation(); unapprove('${id}')">Reject</button>`
         : `<button class="approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>`;
 
-      list.innerHTML+=`
-      <div class="card" onclick="openModal('${id}')">
+    
+     list.innerHTML+=`
+<div class="card ${(d.status || 'pending')==='approved' ? 'approved-card' : 'pending-card'}" onclick="openModal('${id}')">
 
         <img src="${d.photo || 'https://via.placeholder.com/300'}">
 
