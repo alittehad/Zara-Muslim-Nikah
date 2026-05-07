@@ -100,7 +100,7 @@ const ADMIN_EMAIL="ngogrant454@gmail.com";
 /* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(!user || (user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
-    location="index.html";
+    location="login.html";
   } else {
     loadData();
   }
