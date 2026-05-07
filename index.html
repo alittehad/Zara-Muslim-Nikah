@@ -129,15 +129,21 @@ header{
   position:fixed;
   inset:0;
   display:none;
+
   justify-content:center;
-  align-items:flex-start;   /* ⭐ important */
+  align-items:center;
+
   background:rgba(0,0,0,0.6);
   z-index:999;
-  overflow-y:auto;          /* ⭐ page scroll enable */
+
+  overflow-y:auto;
+
+  /* ⭐ SAFE CENTER + NO CUT */
   padding:20px 10px;
+  box-sizing:border-box;
 }
 
-/* CONTENT SCROLL FIX */
+/* CONTENT BOX */
 .modal-content{
   background:white;
   width:90%;
@@ -145,8 +151,15 @@ header{
   padding:20px;
   border-radius:10px;
 
-  max-height:85vh;          /* ⭐ limit height */
-  overflow-y:auto;          /* ⭐ inner scroll */
+  /* ⭐ IMPORTANT FIX */
+  max-height:90vh;
+  overflow-y:auto;
+
+  /* smooth look */
+  box-shadow:0 10px 30px rgba(0,0,0,0.3);
+
+  /* center fix */
+  margin:auto;
 }
 </style>
 </head>
