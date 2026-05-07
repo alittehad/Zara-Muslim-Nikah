@@ -16,56 +16,24 @@ body{
   font-family:sans-serif;
   background:#f4f6f9;
 }
-/* HEADER CLEAN 3D TEXT STYLE */
+
+/* HEADER */
 header{
 background: linear-gradient(135deg, #38bdf8, #0ea5e9);
   color: white;
   text-align: center;
   padding: 18px 12px;
-
   font-weight: 900;
   font-size: 26px;
   letter-spacing: 2px;
-
   position: sticky;
   top: 0;
   z-index: 1000;
-
-  /* ❌ REMOVE TILT (important) */
-  transform: none;
-
-  /* ✔ CLEAN 3D TEXT */
   text-shadow:
     1px 1px 0 #064e46,
     2px 2px 0 #064e46,
     3px 3px 0 #03332f,
     4px 4px 6px rgba(0,0,0,0.35);
-
-  /* optional soft depth */
-  box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-
-  /* subtle glow (not too strong) */
-  animation: headerGlow 4s ease-in-out infinite alternate;
-}
-
-/* SOFT GLOW ONLY */
-@keyframes headerGlow{
-  from{
-    text-shadow:
-      1px 1px 0 #064e46,
-      2px 2px 0 #064e46,
-      3px 3px 0 #03332f,
-      4px 4px 6px rgba(0,0,0,0.35),
-      0 0 6px rgba(20,184,166,0.3);
-  }
-  to{
-    text-shadow:
-      1px 1px 0 #064e46,
-      2px 2px 0 #064e46,
-      3px 3px 0 #03332f,
-      4px 4px 6px rgba(0,0,0,0.35),
-      0 0 14px rgba(20,184,166,0.7);
-  }
 }
 
 /* TOPBAR */
@@ -78,25 +46,11 @@ background: linear-gradient(135deg, #38bdf8, #0ea5e9);
   background:white;
 }
 
-/* FILTER BOX */
 select, input[type="range"]{
   padding:6px;
   border-radius:8px;
   border:1px solid #ccc;
 }
-
-/* BUTTON */
-.btn{
-  padding:10px 16px;
-  border:none;
-  border-radius:10px;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.add{background:#1d4ed8;}
-.admin{background:#111;}
 
 /* GRID */
 .grid{
@@ -119,148 +73,80 @@ select, input[type="range"]{
 
 .card:hover{
   transform:scale(1.03);
-  border:2px solid #14b8a6;
-  box-shadow:0 10px 25px rgba(20,184,166,0.35);
 }
 
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-}
-
-.card-body{
-  text-align:center;
-  padding:10px;
-}
-
-.like{background:#16a34a;color:white;border:none;padding:6px;border-radius:6px;}
-.edit{background:#1d4ed8;color:white;border:none;padding:6px;border-radius:6px;}
-.delete{background:#dc2626;color:white;border:none;padding:6px;border-radius:6px;}
-
-
-/* BACKDROP */
+/* MODAL */
 .modal{
   position: fixed;
   inset: 0;
   display: none;
-
   justify-content: center;
   align-items: flex-start;
-
   background: rgba(0,0,0,0.6);
   z-index: 9999;
-
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-
   padding: 20px 10px;
-
-  overscroll-behavior: contain;
 }
 
-/* MODAL BOX */
 .modal-content{
   background: #fff;
   width: 90%;
   max-width: 600px;
-
   margin: 30px auto;
   border-radius: 12px;
   padding: 20px;
-
-  max-height: 90vh;
-  overflow-y: auto;
-
-  box-sizing: border-box;
-
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-
-  animation: modalPop 0.25s ease;
 }
 
-/* OPEN ANIMATION */
-@keyframes modalPop{
-  from{
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to{
-    transform: scale(1);
-    opacity: 1;
-  }
+/* FLOATING AD */
+#adBox{
+  position:fixed;
+  top:120px;
+  right:10px;
+  z-index:99999;
+  display:none;
 }
 
-/* IMAGE */
-.modal-content img{
-  width: 100%;
-  max-height: 300px;
-  object-fit: cover;
-  border-radius: 12px;
-  margin-bottom: 12px;
-}
-
-/* TEXT */
-.modal-content p{
-  margin: 6px 0;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-/* CLOSE BUTTON */
-.modal-content span{
-  float: right;
-  cursor: pointer;
-  font-size: 20px;
-}
-
-/* profile image */
-.modal-content img{
-  width:100%;
-  max-height:300px;
+#adImage{
+  width:120px;
+  height:120px;
   object-fit:cover;
   border-radius:12px;
-  margin-bottom:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.3);
+  animation: floatUpDown 3s ease-in-out infinite;
 }
 
-/* text spacing */
-.modal-content p{
-  margin:6px 0;
-  font-size:14px;
+@keyframes floatUpDown {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
 }
+
 </style>
 </head>
 
 <body>
 
-<header>🕋 Zara Nikah Service 🕌</header>
+<header>Zara Nikah Service</header>
 
-<!-- 🔥 FILTER SECTION -->
+<!-- FILTER -->
 <div class="topbar">
 
-  <select id="genderFilter" onchange="applyFilters()">
+  <select id="genderFilter">
     <option value="">Gender</option>
     <option>Male</option>
     <option>Female</option>
   </select>
 
-  <select id="cityFilter" onchange="applyFilters()">
-    <option value="">City</option>
-  </select>
+  <select id="cityFilter"></select>
+  <select id="religionFilter"></select>
+  <select id="educationFilter"></select>
 
-  <select id="religionFilter" onchange="applyFilters()">
-    <option value="">Religion</option>
-  </select>
-
-  <select id="educationFilter" onchange="applyFilters()">
-    <option value="">Education</option>
-  </select>
-
-  <input type="range" min="18" max="60" value="60" id="ageFilter" oninput="applyFilters()">
+  <input type="range" min="18" max="60" value="60" id="ageFilter">
   <span id="ageText">Age: 60</span>
 
 </div>
 
+<!-- GRID -->
 <div class="grid" id="grid"></div>
 
 <!-- MODAL -->
@@ -271,9 +157,43 @@ select, input[type="range"]{
   </div>
 </div>
 
+<!-- FLOATING AD -->
+<div id="adBox">
+
+  <div style="position:relative;">
+
+    <!-- CLOSE -->
+    <span onclick="closeAd()"
+      style="position:absolute;top:-10px;right:-10px;
+      background:red;color:white;width:22px;height:22px;
+      display:flex;align-items:center;justify-content:center;
+      border-radius:50%;cursor:pointer;font-weight:bold;">✖</span>
+
+    <!-- IMAGE -->
+    <a id="adLink" target="_blank">
+      <img id="adImage">
+    </a>
+
+    <!-- TIMER -->
+    <div style="
+      position:absolute;
+      bottom:-22px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#000;
+      color:#fff;
+      padding:3px 10px;
+      font-size:12px;
+      border-radius:20px;">
+      ⏱ <span id="adTimer">5</span>s
+    </div>
+
+  </div>
+</div>
+
 <script>
 
-/* Firebase */
+/* FIREBASE */
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -285,18 +205,22 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 let allProfiles = [];
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
+let ads = [];
+let adIndex = 0;
+let countdown = 5;
+let timer;
 
 /* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(user){
     loadProfiles();
+    loadAds();
   }else{
     document.getElementById("grid").innerHTML = "Login Required";
   }
 });
 
-/* LOAD */
+/* LOAD PROFILES */
 function loadProfiles(){
   db.ref("profiles").on("value",snap=>{
     allProfiles = [];
@@ -307,119 +231,89 @@ function loadProfiles(){
       allProfiles.push(d);
     });
 
-    fillFilters(allProfiles);
     renderProfiles(allProfiles);
   });
 }
 
 /* RENDER */
 function renderProfiles(list){
-
   let html = "";
-
   list.forEach(d=>{
-
     html += `
     <div class="card" onclick="openModal('${d.id}')">
-
-      <img src="${d.photo}">
-
-      
-
-      <div class="card-body">
+      <img src="${d.photo}" style="width:100%;height:200px;object-fit:cover;">
+      <div style="padding:10px;">
         <h3>${d.name}</h3>
         <p>${d.city}</p>
-
-        <button class="like">💍 रिश्ता करें</button>
       </div>
-
     </div>`;
   });
-
   document.getElementById("grid").innerHTML = html;
-}
-
-/* FILTER */
-function applyFilters(){
-
-  let gender = document.getElementById("genderFilter").value;
-  let city = document.getElementById("cityFilter").value;
-  let religion = document.getElementById("religionFilter").value;
-  let education = document.getElementById("educationFilter").value;
-  let age = document.getElementById("ageFilter").value;
-
-  document.getElementById("ageText").innerText = "Age: " + age;
-
-  let filtered = allProfiles.filter(p=>{
-
-    return (
-      (gender=="" || p.gender==gender) &&
-      (city=="" || p.city==city) &&
-      (religion=="" || p.religion==religion) &&
-      (education=="" || p.education==education) &&
-      (!p.age || parseInt(p.age) <= age)
-    );
-
-  });
-
-  renderProfiles(filtered);
-}
-
-/* FILL DROPDOWN */
-function fillFilters(data){
-
-  let cities = new Set();
-  let religions = new Set();
-  let educations = new Set();
-
-  data.forEach(d=>{
-    if(d.city) cities.add(d.city);
-    if(d.religion) religions.add(d.religion);
-    if(d.education) educations.add(d.education);
-  });
-
-  fill("cityFilter", cities);
-  fill("religionFilter", religions);
-  fill("educationFilter", educations);
-}
-
-function fill(id, set){
-  let el = document.getElementById(id);
-  el.innerHTML = `<option value="">All</option>`;
-  set.forEach(v=>{
-    el.innerHTML += `<option>${v}</option>`;
-  });
 }
 
 /* MODAL */
 function openModal(id){
   db.ref("profiles/"+id).once("value").then(snap=>{
     let d = snap.val();
-
-    document.getElementById("modalBody").innerHTML = `
-      <h2>${d.name || ''}</h2>
-
-      <img src="${d.photo || ''}" style="width:100%;border-radius:10px;margin-bottom:10px;">
-
-      <p><b>Age:</b> ${d.age || '-'}</p>
-      <p><b>Gender:</b> ${d.gender || '-'}</p>
-      <p><b>City:</b> ${d.city || '-'}</p>
-      <p><b>Religion:</b> ${d.religion || '-'}</p>
-      <p><b>Education:</b> ${d.education || '-'}</p>
-      <p><b>Profession:</b> ${d.profession || '-'}</p>
-      <p><b>Phone:</b> ${d.phone || '-'}</p>
-      <p><b>Marital Status:</b> ${d.marital || '-'}</p>
-      <p><b>Height:</b> ${d.height || '-'}</p>
-
-      <p><b>Bio:</b><br>${d.bio || '-'}</p>
-    `;
-
-    document.getElementById("modal").style.display = "flex";
+    document.getElementById("modalBody").innerHTML =
+      `<h2>${d.name}</h2><p>${d.city}</p>`;
+    document.getElementById("modal").style.display="flex";
   });
 }
 
 function closeModal(){
   document.getElementById("modal").style.display="none";
+}
+
+/* ADS */
+function loadAds(){
+  db.ref("ads").on("value",snap=>{
+    ads = [];
+    snap.forEach(s=>{
+      ads.push(s.val());
+    });
+
+    if(ads.length>0){
+      document.getElementById("adBox").style.display="block";
+      startAds();
+    }
+  });
+}
+
+function startAds(){
+
+  showAd();
+
+  clearInterval(timer);
+
+  countdown = 5;
+  document.getElementById("adTimer").innerText = countdown;
+
+  timer = setInterval(()=>{
+
+    countdown--;
+    document.getElementById("adTimer").innerText = countdown;
+
+    if(countdown <= 0){
+      nextAd();
+    }
+
+  },1000);
+}
+
+function showAd(){
+  document.getElementById("adImage").src = ads[adIndex].image;
+  document.getElementById("adLink").href = ads[adIndex].link;
+}
+
+function nextAd(){
+  adIndex = (adIndex+1) % ads.length;
+  startAds();
+}
+
+function closeAd(){
+  document.getElementById("adBox").style.display="none";
+  clearInterval(timer);
 }
 
 </script>
