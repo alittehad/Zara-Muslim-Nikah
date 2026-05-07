@@ -113,14 +113,39 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 
-/* LOGIN STAY FIX */
+/* LOGIN PERSISTENCE */
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-/* AUTO REDIRECT IF ALREADY LOGIN */
+/* CHECK REDIRECT LOGIN */
+auth.getRedirectResult()
+
+.then((result)=>{
+
+  if(result.user){
+
+    console.log("Redirect Login Success");
+
+    window.location.href = "index.html";
+
+  }
+
+})
+
+.catch((error)=>{
+
+  console.log(error);
+
+  alert(error.message);
+
+});
+
+/* AUTO LOGIN CHECK */
 auth.onAuthStateChanged(user => {
 
   if(user){
+
     window.location.href = "index.html";
+
   }
 
 });
@@ -132,25 +157,7 @@ function login(){
 
   const provider = new firebase.auth.GoogleAuthProvider();
 
-  auth.signInWithPopup(provider)
-
-  .then((result)=>{
-
-    console.log("Login Success");
-
-    window.location.href = "index.html";
-
-  })
-
-  .catch((error)=>{
-
-    document.getElementById("loading").style.display = "none";
-
-    console.log(error);
-
-    alert(error.message);
-
-  });
+  auth.signInWithRedirect(provider);
 
 }
 
