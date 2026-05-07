@@ -125,26 +125,28 @@ header{
 
 /* MODAL */
 
- .modal{
+.modal{
   position:fixed;
   inset:0;
   display:none;
   justify-content:center;
-  align-items:center;
+  align-items:flex-start;   /* ⭐ important */
   background:rgba(0,0,0,0.6);
-  z-index:999;   /* ⭐ add this */
+  z-index:999;
+  overflow-y:auto;          /* ⭐ page scroll enable */
+  padding:20px 10px;
 }
 
-
- .modal-content{
+/* CONTENT SCROLL FIX */
+.modal-content{
   background:white;
   width:90%;
   max-width:500px;
   padding:20px;
   border-radius:10px;
 
-  max-height:90vh;
-  overflow-y:auto;
+  max-height:85vh;          /* ⭐ limit height */
+  overflow-y:auto;          /* ⭐ inner scroll */
 }
 </style>
 </head>
