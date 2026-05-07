@@ -56,12 +56,25 @@ header{
   padding:15px;
 }
 
-/* CARD */
 .card{
   background:white;
   border-radius:12px;
   overflow:hidden;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  cursor:pointer;
+
+  /* ✨ NEW PREMIUM BORDER */
+  border:2px solid #e5e7eb;
+
+  /* smooth animation */
+  transition:0.3s;
+}
+
+/* 🔥 hover effect */
+.card:hover{
+  transform:scale(1.03);
+  border:2px solid #14b8a6;
+  box-shadow:0 10px 25px rgba(20,184,166,0.35);
 }
 
 .card img{
