@@ -18,18 +18,46 @@ body{
 }
 
 /* HEADER */
+/* HEADER 3D STYLE */
 header{
   background: linear-gradient(135deg, #0f766e, #14b8a6);
   color: white;
   text-align: center;
-  padding: 16px 12px;
+  padding: 18px 12px;
+
   font-weight: 900;
-  font-size: 24px;
+  font-size: 26px;
   letter-spacing: 2px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+
   position: sticky;
   top: 0;
   z-index: 1000;
+
+  /* 3D EFFECT */
+  text-shadow:
+    1px 1px 0 #0b3d39,
+    2px 2px 0 #0b3d39,
+    3px 3px 0 #062a27,
+    4px 4px 10px rgba(0,0,0,0.4);
+
+  box-shadow:
+    0 6px 0 #0b3d39,
+    0 12px 25px rgba(0,0,0,0.25);
+
+  transform: perspective(600px) rotateX(5deg);
+
+  border-bottom: 3px solid rgba(255,255,255,0.2);
+  animation: headerGlow 3s infinite alternate;
+}
+
+/* GLOW ANIMATION */
+@keyframes headerGlow{
+  from{
+    filter: drop-shadow(0 0 5px rgba(20,184,166,0.4));
+  }
+  to{
+    filter: drop-shadow(0 0 18px rgba(20,184,166,0.9));
+  }
 }
 
 /* TOPBAR */
