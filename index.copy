@@ -18,14 +18,34 @@ body{
 }
 
 /* HEADER */
+/* HEADER - 3D EFFECT */
 header{
-  background:linear-gradient(90deg,#0f766e,#14b8a6);
-  color:white;
-  text-align:center;
-  padding:14px;
-  font-weight:900;
-}
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  color: white;
+  text-align: center;
+  padding: 16px 12px;
 
+  font-weight: 900;
+  font-size: 24px;
+  letter-spacing: 2px;
+
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  /* ✨ 3D TEXT EFFECT */
+  text-shadow:
+    1px 1px 0 #0b3d3a,
+    2px 2px 0 #0b3d3a,
+    3px 3px 0 #062b29;
+
+  transform: perspective(500px) rotateX(5deg);
+
+  /* shadow box */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+
+  border-bottom: 2px solid rgba(255,255,255,0.2);
+}
 /* TOPBAR */
 .topbar{
   display:flex;
@@ -132,7 +152,7 @@ header{
 <header>🕋 Zara Nikah Service 🕌</header>
 
 <div class="topbar">
-  <button class="btn add" onclick="goAdd()">➕ रिश्ता जोड़ें</button>
+  <button class="btn add" onclick="goAdd()">प्रोफ़ाइल जोड़ें</button>
 
   <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">
     👑 Admin Panel
