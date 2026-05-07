@@ -97,30 +97,6 @@ select, input[type="range"]{
   padding: 20px;
 }
 
-/* FLOATING AD */
-#adBox{
-  position:fixed;
-  top:120px;
-  right:10px;
-  z-index:99999;
-  display:none;
-}
-
-#adImage{
-  width:120px;
-  height:120px;
-  object-fit:cover;
-  border-radius:12px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.3);
-  animation: floatUpDown 3s ease-in-out infinite;
-}
-
-@keyframes floatUpDown {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0); }
-}
-
 </style>
 </head>
 
@@ -157,43 +133,9 @@ select, input[type="range"]{
   </div>
 </div>
 
-<!-- FLOATING AD -->
-<div id="adBox">
-
-  <div style="position:relative;">
-
-    <!-- CLOSE -->
-    <span onclick="closeAd()"
-      style="position:absolute;top:-10px;right:-10px;
-      background:red;color:white;width:22px;height:22px;
-      display:flex;align-items:center;justify-content:center;
-      border-radius:50%;cursor:pointer;font-weight:bold;">✖</span>
-
-    <!-- IMAGE -->
-    <a id="adLink" target="_blank">
-      <img id="adImage">
-    </a>
-
-    <!-- TIMER -->
-    <div style="
-      position:absolute;
-      bottom:-22px;
-      left:50%;
-      transform:translateX(-50%);
-      background:#000;
-      color:#fff;
-      padding:3px 10px;
-      font-size:12px;
-      border-radius:20px;">
-      ⏱ <span id="adTimer">5</span>s
-    </div>
-
-  </div>
-</div>
-
 <script>
 
-/* FIREBASE */
+/* Firebase */
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -205,22 +147,18 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 let allProfiles = [];
-let ads = [];
-let adIndex = 0;
-let countdown = 5;
-let timer;
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
 /* LOGIN */
 auth.onAuthStateChanged(user=>{
   if(user){
     loadProfiles();
-    loadAds();
   }else{
     document.getElementById("grid").innerHTML = "Login Required";
   }
 });
 
-/* LOAD PROFILES */
+/* LOAD */
 function loadProfiles(){
   db.ref("profiles").on("value",snap=>{
     allProfiles = [];
@@ -263,57 +201,6 @@ function openModal(id){
 
 function closeModal(){
   document.getElementById("modal").style.display="none";
-}
-
-/* ADS */
-function loadAds(){
-  db.ref("ads").on("value",snap=>{
-    ads = [];
-    snap.forEach(s=>{
-      ads.push(s.val());
-    });
-
-    if(ads.length>0){
-      document.getElementById("adBox").style.display="block";
-      startAds();
-    }
-  });
-}
-
-function startAds(){
-
-  showAd();
-
-  clearInterval(timer);
-
-  countdown = 5;
-  document.getElementById("adTimer").innerText = countdown;
-
-  timer = setInterval(()=>{
-
-    countdown--;
-    document.getElementById("adTimer").innerText = countdown;
-
-    if(countdown <= 0){
-      nextAd();
-    }
-
-  },1000);
-}
-
-function showAd(){
-  document.getElementById("adImage").src = ads[adIndex].image;
-  document.getElementById("adLink").href = ads[adIndex].link;
-}
-
-function nextAd(){
-  adIndex = (adIndex+1) % ads.length;
-  startAds();
-}
-
-function closeAd(){
-  document.getElementById("adBox").style.display="none";
-  clearInterval(timer);
 }
 
 </script>
