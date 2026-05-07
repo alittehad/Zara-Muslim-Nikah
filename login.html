@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
@@ -31,12 +32,12 @@ body::before{
   z-index:0;
 }
 
-/* LIGHT OVERLAY */
+/* DARK OVERLAY */
 body::after{
   content:"";
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.15);
+  background:rgba(0,0,0,0.18);
   z-index:1;
 }
 
@@ -44,24 +45,43 @@ body::after{
 .box{
   position:relative;
   z-index:2;
+  text-align:center;
 }
 
-/* SMALL BUTTON */
+/* LOGIN BUTTON */
 .btn{
-  padding:10px 18px;
+  padding:14px 24px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   font-weight:bold;
-  font-size:10px;
+  font-size:16px;
   color:white;
   cursor:pointer;
+
   background:linear-gradient(145deg,#14b8a6,#0f766e);
-  box-shadow:0 4px 0 #0b5e57;
+
+  box-shadow:
+    0 6px 0 #0b5e57,
+    0 10px 20px rgba(0,0,0,0.25);
+
+  transition:0.2s;
+}
+
+.btn:hover{
+  transform:scale(1.04);
 }
 
 .btn:active{
   transform:translateY(3px);
-  box-shadow:0 1px 0 #0b5e57;
+  box-shadow:0 2px 0 #0b5e57;
+}
+
+/* LOADING TEXT */
+.loading{
+  color:white;
+  margin-top:15px;
+  font-size:14px;
+  display:none;
 }
 </style>
 </head>
@@ -69,10 +89,20 @@ body::after{
 <body>
 
 <div class="box">
-  <button class="btn" onclick="login()">Login with Google</button>
+
+  <button class="btn" onclick="login()">
+    🔐 Login with Google
+  </button>
+
+  <div class="loading" id="loading">
+    Please wait...
+  </div>
+
 </div>
 
 <script>
+
+/* FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -80,14 +110,50 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 
-function login(){
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-  .then(()=>{
+/* LOGIN STAY FIX */
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+/* AUTO REDIRECT IF ALREADY LOGIN */
+auth.onAuthStateChanged(user => {
+
+  if(user){
     window.location.href = "index.html";
+  }
+
+});
+
+/* GOOGLE LOGIN */
+function login(){
+
+  document.getElementById("loading").style.display = "block";
+
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  auth.signInWithPopup(provider)
+
+  .then((result)=>{
+
+    console.log("Login Success");
+
+    window.location.href = "index.html";
+
+  })
+
+  .catch((error)=>{
+
+    document.getElementById("loading").style.display = "none";
+
+    console.log(error);
+
+    alert(error.message);
+
   });
+
 }
+
 </script>
 
 </body>
