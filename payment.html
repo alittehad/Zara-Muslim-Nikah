@@ -123,7 +123,7 @@ async function uploadImg(file){
 
   try{
 
-    let res = await fetch("https://i.ibb.co/9mVPX3L1/scener.jpg",{
+    let res = await fetch("https://api.imgbb.com/1/upload?key=API_KEY",{
       method:"POST",
       body:form
     });
