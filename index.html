@@ -2,7 +2,6 @@
 <html>
 <head>
 
-<meta name="google-site-verification" content="FaElE6Kh5Ixq0wRBtgIOLdHfW08ZfQQVBDE_3QLx9Ns" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
@@ -12,49 +11,152 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f4f6f9;}
 
-header{
-  background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);
-  color:white;text-align:center;padding:16px;
-  font-size:24px;font-weight:bold;
-  position:sticky;top:0;z-index:1000;
+/* 🌈 GLOBAL */
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f4f6f9;
+  scroll-behavior:smooth;
 }
 
-.topbar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px;}
+/* HEADER */
+header{
+  background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);
+  color:white;
+  text-align:center;
+  padding:16px;
+  font-size:24px;
+  font-weight:bold;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
 
-.btn{padding:10px 16px;border:none;border-radius:10px;color:white;font-weight:bold;cursor:pointer;}
+/* TOPBAR */
+.topbar{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:10px;
+}
+
+.btn{
+  padding:10px 16px;
+  border:none;
+  border-radius:10px;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
 .add{background:#1d4ed8;}
 .admin{background:#111;}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;padding:15px;}
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:15px;
+  padding:15px;
+}
 
-.card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
-.card img{width:100%;height:250px;object-fit:cover;}
+/* 🔥 CARD ANIMATION (PREMIUM FEEL) */
+.card{
+  background:white;
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
 
-.card-body{text-align:center;padding:10px;}
+  transform:translateY(20px);
+  opacity:0;
+  animation:fadeUp 0.5s ease forwards;
+  transition:0.3s;
+}
 
-.like{background:#16a34a;}
-.edit{background:#1d4ed8;}
-.delete{background:#dc2626;}
+.card:hover{
+  transform:scale(1.05);
+  box-shadow:0 15px 30px rgba(0,0,0,0.2);
+}
 
+@keyframes fadeUp{
+  to{
+    transform:translateY(0);
+    opacity:1;
+  }
+}
+
+/* IMAGE ZOOM EFFECT */
+.card img{
+  width:100%;
+  height:250px;
+  object-fit:cover;
+  transition:0.4s;
+}
+
+.card img:hover{
+  transform:scale(1.1);
+}
+
+.card-body{
+  text-align:center;
+  padding:10px;
+}
+
+.like{
+  background:#16a34a;
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  color:white;
+}
+
+/* MODAL (SWIPE STYLE) */
 .modal{
-  position:fixed;inset:0;
+  position:fixed;
+  inset:0;
   display:none;
   justify-content:center;
-  align-items:center;
+  align-items:flex-end;
   background:rgba(0,0,0,0.6);
+  z-index:9999;
 }
 
+/* swipe bottom sheet */
 .modal-content{
   background:white;
-  width:90%;
+  width:100%;
   max-width:500px;
-  padding:15px;
-  border-radius:10px;
-}
-</style>
+  border-radius:20px 20px 0 0;
+  padding:20px;
 
+  animation:slideUp 0.3s ease;
+}
+
+@keyframes slideUp{
+  from{transform:translateY(100%);}
+  to{transform:translateY(0);}
+}
+
+/* IMAGE ZOOM IN MODAL */
+.modal-content img{
+  width:100%;
+  border-radius:10px;
+  transition:0.3s;
+}
+
+.modal-content img:hover{
+  transform:scale(1.05);
+}
+
+/* CLOSE BUTTON */
+.close{
+  float:right;
+  cursor:pointer;
+  font-size:20px;
+}
+
+</style>
 </head>
 
 <body>
@@ -63,57 +165,46 @@ header{
 
 <div class="topbar">
 
-  <button class="btn add" onclick="requireLogin(goAdd)">➕ Profile Add</button>
+  <button class="btn add" onclick="goAdd()">➕ Profile</button>
 
-  <button class="btn admin" onclick="loginUser()" id="loginBtn">🔑 Login</button>
+  <button class="btn admin" onclick="loginUser()">🔑 Login</button>
 
-  <button class="btn admin" onclick="logoutUser()" id="logoutBtn" style="display:none">🚪 Logout</button>
-
-  <button class="btn admin" onclick="requireLogin(goPayment)">💍 Payment</button>
-
-  <button class="btn admin" id="adminBtn" style="display:none" onclick="requireLogin(goAdmin)">👑 Admin</button>
+  <button class="btn admin" onclick="logoutUser()">🚪 Logout</button>
 
 </div>
 
 <div class="grid" id="grid"></div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
+
+    <span class="close" onclick="closeModal()">✖</span>
+
     <div id="modalBody"></div>
+
   </div>
 </div>
 
 <script>
 
-/* 🔥 Firebase Config */
+/* FIREBASE */
 const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnx2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
   projectId: "zara-muslim-nikah"
 };
-
 
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.database();
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
-let isAdmin = false;
-
 /* LOGIN */
 function loginUser(){
   const provider = new firebase.auth.GoogleAuthProvider();
-
-  auth.signInWithPopup(provider)
-  .then(res=>{
-    console.log("Login success");
-  })
-  .catch(err=>{
-    alert(err.message);
-  });
+  auth.signInWithPopup(provider);
 }
 
 /* LOGOUT */
@@ -121,41 +212,7 @@ function logoutUser(){
   auth.signOut();
 }
 
-/* AUTH CHECK */
-auth.onAuthStateChanged(user=>{
-
-  if(user){
-    isAdmin = (user.email||"").toLowerCase() === ADMIN_EMAIL;
-
-    document.getElementById("loginBtn").style.display="none";
-    document.getElementById("logoutBtn").style.display="inline-block";
-
-    if(isAdmin){
-      document.getElementById("adminBtn").style.display="inline-block";
-    }
-
-  } else {
-    isAdmin = false;
-
-    document.getElementById("loginBtn").style.display="inline-block";
-    document.getElementById("logoutBtn").style.display="none";
-    document.getElementById("adminBtn").style.display="none";
-  }
-
-  loadProfiles();
-});
-
-/* REQUIRE LOGIN */
-function requireLogin(callback){
-  if(!auth.currentUser){
-    alert("पहले Login करें 🔑");
-    loginUser();
-    return;
-  }
-  callback();
-}
-
-/* LOAD DATA */
+/* LOAD PROFILES */
 function loadProfiles(){
   db.ref("profiles").on("value",snap=>{
     let html="";
@@ -166,15 +223,15 @@ function loadProfiles(){
       html+=`
       <div class="card">
 
-        <img src="${d.photo}" onclick="requireLogin(()=>openModal('${child.key}'))">
+        <img src="${d.photo}" onclick="openModal('${child.key}')">
 
         <div class="card-body">
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
-          <button class="like" onclick="requireLogin(goPayment)">💍 Rishta</button>
-        </div>
+          <button class="like">💍 Rishta</button>
 
+        </div>
       </div>`;
     });
 
@@ -182,20 +239,15 @@ function loadProfiles(){
   });
 }
 
-/* MODAL */
+/* MODAL OPEN */
 function openModal(id){
-
-  if(!auth.currentUser){
-    alert("Login required");
-    return;
-  }
 
   db.ref("profiles/"+id).once("value").then(snap=>{
     let d = snap.val();
 
     document.getElementById("modalBody").innerHTML=`
       <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%">
+      <img src="${d.photo}">
       <p>Age: ${d.age}</p>
       <p>City: ${d.city}</p>
       <p>Phone: ${d.phone}</p>
@@ -203,17 +255,25 @@ function openModal(id){
     `;
 
     document.getElementById("modal").style.display="flex";
+
+    /* 🔥 scroll lock */
+    document.body.style.overflow="hidden";
   });
 }
 
+/* CLOSE MODAL */
 function closeModal(){
   document.getElementById("modal").style.display="none";
+  document.body.style.overflow="auto";
 }
 
-/* NAVIGATION */
-function goPayment(){ window.location="payment.html"; }
-function goAdd(){ window.location="profile-submit.html"; }
-function goAdmin(){ window.location="admin.html"; }
+/* NAV */
+function goAdd(){
+  window.location="profile-submit.html";
+}
+
+/* START */
+loadProfiles();
 
 </script>
 
