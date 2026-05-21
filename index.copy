@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
+
+<meta name="google-site-verification" content="FaElE6Kh5Ixq0wRBtgIOLdHfW08ZfQQVBDE_3QLx9Ns" />
+
+
+
+  
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
@@ -95,11 +101,15 @@ header{
 }
 .card img{
   width:100%;
-  height:200px;
-  object-fit:cover;
+  height:250px;
+
+  object-fit:contain;
+
+background:linear-gradient(135deg,#e0e7ff,#c7d2fe,#ddd6fe);
+  display:block;
+
   cursor:pointer;
 }
-
 .card-body{
   text-align:center;
   padding:10px;
