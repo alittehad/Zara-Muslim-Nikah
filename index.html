@@ -57,7 +57,6 @@ header{
   padding:15px;
 }
 
-/* CARD */
 .card{
   background:white;
   border-radius:12px;
@@ -107,7 +106,7 @@ header{
   max-width:500px;
   padding:15px;
   border-radius:12px;
-  animation:pop 0.3s ease;
+  animation:pop 0.2s ease;
 }
 
 @keyframes pop{
@@ -115,7 +114,6 @@ header{
   to{transform:scale(1);opacity:1;}
 }
 
-/* LOADING */
 .loading{
   text-align:center;
   padding:20px;
@@ -126,6 +124,12 @@ header{
   text-align:center;
   padding:20px;
   color:red;
+}
+
+.close{
+  float:right;
+  cursor:pointer;
+  font-size:20px;
 }
 
 </style>
@@ -153,9 +157,9 @@ header{
 </div>
 
 <!-- MODAL -->
-<div class="modal" id="modal">
+<div class="modal" id="modal" onclick="outsideClick(event)">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px">✖</span>
+    <span class="close" onclick="closeModal()">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
@@ -177,13 +181,13 @@ const db = firebase.database();
 
 let currentUser = null;
 
-/* LOGIN */
+/* LOGIN (SAFE) */
 function loginUser(){
   const provider = new firebase.auth.GoogleAuthProvider();
 
   auth.signInWithPopup(provider)
-  .catch(err=>{
-    alert("Login Error: " + err.message);
+  .catch(()=>{
+    auth.signInWithRedirect(provider);
   });
 }
 
@@ -212,11 +216,10 @@ function requireLogin(callback){
   callback();
 }
 
-/* LOAD PROFILES (OPTIMIZED) */
+/* LOAD PROFILES */
 function loadProfiles(){
 
-  db.ref("profiles").once("value")
-  .then(snap=>{
+  db.ref("profiles").on("value",snap=>{
 
     let html = "";
 
@@ -231,7 +234,7 @@ function loadProfiles(){
       html += `
       <div class="card">
 
-        <img src="${d.photo}" onclick="openModal('${child.key}')">
+        <img src="${d.photo}" onclick="requireLogin(()=>openModal('${child.key}'))">
 
         <div class="card-body">
           <h3>${d.name || ''}</h3>
@@ -244,10 +247,6 @@ function loadProfiles(){
     });
 
     document.getElementById("grid").innerHTML = html;
-
-  })
-  .catch(()=>{
-    document.getElementById("grid").innerHTML = `<div class="empty">Error loading data</div>`;
   });
 }
 
@@ -255,7 +254,7 @@ function loadProfiles(){
 function openModal(id){
 
   if(!currentUser){
-    alert("Login required 🔑");
+    loginUser();
     return;
   }
 
@@ -276,10 +275,17 @@ function openModal(id){
   });
 }
 
-/* CLOSE */
+/* CLOSE MODAL */
 function closeModal(){
   document.getElementById("modal").style.display = "none";
   document.body.style.overflow = "auto";
+}
+
+/* CLICK OUTSIDE CLOSE */
+function outsideClick(e){
+  if(e.target.id === "modal"){
+    closeModal();
+  }
 }
 
 /* NAV */
