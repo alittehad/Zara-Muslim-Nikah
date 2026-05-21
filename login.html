@@ -19,6 +19,10 @@ body{
   background:#0f172a;
 }
 
+.box{
+  text-align:center;
+}
+
 button{
   padding:14px 22px;
   border:none;
@@ -31,8 +35,8 @@ button{
 }
 
 .loading{
-  color:white;
   margin-top:10px;
+  color:white;
   display:none;
 }
 </style>
@@ -40,32 +44,29 @@ button{
 
 <body>
 
-<div style="text-align:center;">
+<div class="box">
   <button onclick="login()">🔐 Login with Google</button>
   <div class="loading" id="loading">Please wait...</div>
 </div>
 
 <script>
 
-/* 🔥 FIREBASE CONFIG */
+/* 🔥 YOUR FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnx2nFDG_M65Wc",
+  apiKey: "YOUR_API_KEY_HERE",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah",
-  storageBucket: "zara-muslim-nikah.appspot.com",
-  messagingSenderId: "690336186269",
-  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
+  projectId: "zara-muslim-nikah"
 };
 
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 
-/* SESSION SAVE */
+/* 🔥 SESSION SAVE */
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-/* LOGIN */
+/* 🔐 LOGIN FUNCTION */
 function login(){
 
   document.getElementById("loading").style.display = "block";
@@ -76,7 +77,11 @@ function login(){
   .then((result)=>{
 
     if(result.user){
+
+      console.log("LOGIN SUCCESS:", result.user.email);
+
       window.location.replace("index.html");
+
     }
 
   })
@@ -92,7 +97,7 @@ function login(){
 
 }
 
-/* AUTO LOGIN */
+/* 🔁 AUTO LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
   if(user){
     window.location.replace("index.html");
