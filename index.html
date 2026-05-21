@@ -62,11 +62,6 @@ header{
   border-radius:12px;
   overflow:hidden;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  transition:0.3s;
-}
-
-.card:hover{
-  transform:scale(1.03);
 }
 
 .card img{
@@ -106,30 +101,6 @@ header{
   max-width:500px;
   padding:15px;
   border-radius:12px;
-  animation:pop 0.2s ease;
-}
-
-@keyframes pop{
-  from{transform:scale(0.8);opacity:0;}
-  to{transform:scale(1);opacity:1;}
-}
-
-.loading{
-  text-align:center;
-  padding:20px;
-  color:#555;
-}
-
-.empty{
-  text-align:center;
-  padding:20px;
-  color:red;
-}
-
-.close{
-  float:right;
-  cursor:pointer;
-  font-size:20px;
 }
 
 </style>
@@ -153,13 +124,13 @@ header{
 </div>
 
 <div id="grid" class="grid">
-  <div class="loading">Loading profiles...</div>
+  <div style="text-align:center;padding:20px;">Loading...</div>
 </div>
 
 <!-- MODAL -->
-<div class="modal" id="modal" onclick="outsideClick(event)">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal()">✖</span>
+<div class="modal" id="modal" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
@@ -181,7 +152,7 @@ const db = firebase.database();
 
 let currentUser = null;
 
-/* LOGIN (SAFE) */
+/* 🔥 LOGIN FIXED (POPUP + REDIRECT FALLBACK) */
 function loginUser(){
   const provider = new firebase.auth.GoogleAuthProvider();
 
@@ -191,12 +162,15 @@ function loginUser(){
   });
 }
 
+/* HANDLE REDIRECT LOGIN */
+auth.getRedirectResult().catch(()=>{});
+
 /* LOGOUT */
 function logoutUser(){
   auth.signOut();
 }
 
-/* AUTH */
+/* AUTH STATE */
 auth.onAuthStateChanged(user=>{
   currentUser = user;
 
@@ -224,7 +198,7 @@ function loadProfiles(){
     let html = "";
 
     if(!snap.exists()){
-      document.getElementById("grid").innerHTML = `<div class="empty">No profiles found</div>`;
+      document.getElementById("grid").innerHTML = "<div style='text-align:center;color:red;'>No Profiles Found</div>";
       return;
     }
 
@@ -279,13 +253,6 @@ function openModal(id){
 function closeModal(){
   document.getElementById("modal").style.display = "none";
   document.body.style.overflow = "auto";
-}
-
-/* CLICK OUTSIDE CLOSE */
-function outsideClick(e){
-  if(e.target.id === "modal"){
-    closeModal();
-  }
 }
 
 /* NAV */
