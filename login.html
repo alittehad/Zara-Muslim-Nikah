@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
@@ -35,13 +34,13 @@ button{
   font-size:16px;
 }
 
-button:hover{
-  transform:scale(1.05);
+button:active{
+  transform:scale(0.98);
 }
 
 .loading{
-  margin-top:10px;
   color:white;
+  margin-top:10px;
   display:none;
 }
 </style>
@@ -50,18 +49,13 @@ button:hover{
 <body>
 
 <div class="box">
-
   <button onclick="login()">🔐 Login with Google</button>
-
-  <div class="loading" id="loading">
-    Logging in...
-  </div>
-
+  <div class="loading" id="loading">Logging in...</div>
 </div>
 
 <script>
 
-/* FIREBASE CONFIG */
+/* FIREBASE CONFIG (SAME AS YOUR PROJECT) */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnx2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -72,10 +66,10 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 
-/* 🔥 IMPORTANT: persistence ON */
+/* 🔥 MUST: session save */
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-/* 🚀 LOGIN FUNCTION */
+/* 🔐 LOGIN */
 function login(){
 
   document.getElementById("loading").style.display = "block";
@@ -85,41 +79,32 @@ function login(){
   auth.signInWithPopup(provider)
   .then((result)=>{
 
-    if(result && result.user){
+    if(result.user){
 
       console.log("LOGIN SUCCESS:", result.user.email);
 
-      // ✔ only real login redirect
-      setTimeout(()=>{
-        window.location.href = "index.html";
-      }, 500);
+      window.location.replace("index.html");
 
     }
 
   })
   .catch((error)=>{
 
-    document.getElementById("loading").style.display = "none";
-
     console.log(error);
 
-    // fallback method
-    auth.signInWithRedirect(provider);
+    document.getElementById("loading").style.display = "none";
+
+    alert("Login failed: " + error.message);
 
   });
+
 }
 
-/* 🔥 HANDLE REDIRECT LOGIN */
-auth.getRedirectResult()
-.then((result)=>{
-
-  if(result && result.user){
-    window.location.href = "index.html";
+/* 🔁 IF ALREADY LOGGED IN */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    window.location.replace("index.html");
   }
-
-})
-.catch((error)=>{
-  console.log(error);
 });
 
 </script>
