@@ -7,109 +7,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#f4f6f9;
-}
+body{margin:0;font-family:sans-serif;background:#f4f6f9;}
 
 header{
-  background: linear-gradient(135deg, #38bdf8, #0ea5e9, #e0f2fe);
-  color:white;
-  text-align:center;
-  padding:16px;
-  font-size:24px;
-  font-weight:bold;
-  position:sticky;
-  top:0;
-  z-index:1000;
+  background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);
+  color:white;text-align:center;padding:16px;
+  font-size:24px;font-weight:bold;
+  position:sticky;top:0;z-index:1000;
 }
 
-.topbar{
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  padding:10px;
-  flex-wrap:wrap;
-}
+.topbar{display:flex;justify-content:center;gap:10px;padding:10px;flex-wrap:wrap;}
 
-.btn{
-  padding:10px 16px;
-  border:none;
-  border-radius:10px;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-
+.btn{padding:10px 16px;border:none;border-radius:10px;color:white;font-weight:bold;cursor:pointer;}
 .add{background:#1d4ed8;}
 .admin{background:#111;}
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:15px;
-  padding:15px;
-}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;padding:15px;}
 
-.card{
-  background:white;
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  border:2px solid #ddd;
-  transition:0.3s;
-}
+.card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+.card img{width:100%;height:250px;object-fit:cover;}
 
-.card:hover{
-  transform:scale(1.03);
-}
-
-.card img{
-  width:100%;
-  height:250px;
-  object-fit:cover;
-}
-
-.card-body{
-  text-align:center;
-  padding:10px;
-}
-
-.card-body button{
-  margin:4px;
-  padding:6px 10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  color:white;
-}
+.card-body{text-align:center;padding:10px;}
 
 .like{background:#16a34a;}
 .edit{background:#1d4ed8;}
 .delete{background:#dc2626;}
 
 .modal{
-  position:fixed;
-  inset:0;
-  display:none;
-  justify-content:center;
-  align-items:center;
+  position:fixed;inset:0;display:none;
+  justify-content:center;align-items:center;
   background:rgba(0,0,0,0.6);
 }
 
 .modal-content{
-  background:white;
-  width:90%;
-  max-width:500px;
-  padding:15px;
-  border-radius:10px;
+  background:white;width:90%;max-width:500px;
+  padding:15px;border-radius:10px;
 }
 </style>
 </head>
@@ -120,15 +57,13 @@ header{
 
 <div class="topbar">
 
-  <button class="btn add" onclick="requireLogin(goAdd)">➕ प्रोफ़ाइल जोड़ें</button>
+  <button class="btn add" onclick="requireLogin(goAdd)">➕ Profile</button>
 
   <button class="btn admin" onclick="loginUser()" id="loginBtn">🔑 Login</button>
 
   <button class="btn admin" onclick="logoutUser()" id="logoutBtn" style="display:none">🚪 Logout</button>
 
-  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="requireLogin(goAdmin)">👑 Admin</button>
-
-  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="requireLogin(goAdminAdd)">➕ Admin Add</button>
+  <button class="btn admin" id="adminBtn" style="display:none" onclick="requireLogin(goAdmin)">👑 Admin</button>
 
 </div>
 
@@ -157,36 +92,43 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
+
 let isAdmin = false;
 
-/* LOGIN */
+/* 🔥 LOGIN FIX (IMPORTANT) */
 function loginUser(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider);
+  auth.signInWithRedirect(provider);
 }
 
+/* HANDLE REDIRECT */
+auth.getRedirectResult().catch(err=>{
+  console.log(err);
+});
+
+/* LOGOUT */
 function logoutUser(){
   auth.signOut();
 }
 
-/* AUTH STATE */
+/* AUTH CHECK */
 auth.onAuthStateChanged(user=>{
 
   if(user){
-    isAdmin = (user.email||"").toLowerCase() === ADMIN_EMAIL;
+    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
 
     document.getElementById("loginBtn").style.display="none";
     document.getElementById("logoutBtn").style.display="inline-block";
 
     if(isAdmin){
-      document.getElementById("adminPanelBtn").style.display="inline-block";
-      document.getElementById("adminAddBtn").style.display="inline-block";
+      document.getElementById("adminBtn").style.display="inline-block";
     }
 
   } else {
     isAdmin = false;
     document.getElementById("loginBtn").style.display="inline-block";
     document.getElementById("logoutBtn").style.display="none";
+    document.getElementById("adminBtn").style.display="none";
   }
 
   loadProfiles();
@@ -219,12 +161,8 @@ function loadProfiles(){
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
-          <button class="like" onclick="requireLogin(goPayment)">💍 रिश्ता करें</button>
+          <button class="like" onclick="requireLogin(goPayment)">💍 Rishta</button>
 
-          ${isAdmin ? `
-            <button class="edit" onclick="editProfile('${child.key}')">✏ Edit</button>
-            <button class="delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
-          ` : ""}
         </div>
       </div>`;
     });
@@ -235,6 +173,11 @@ function loadProfiles(){
 
 /* MODAL */
 function openModal(id){
+
+  if(!auth.currentUser){
+    loginUser();
+    return;
+  }
 
   db.ref("profiles/"+id).once("value").then(snap=>{
     let d = snap.val();
@@ -256,21 +199,10 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* ACTIONS */
+/* NAV */
 function goPayment(){ window.location="payment.html"; }
 function goAdd(){ window.location="profile-submit.html"; }
 function goAdmin(){ window.location="admin.html"; }
-function goAdminAdd(){ window.location="admin-add.html"; }
-
-function deleteProfile(id){
-  if(confirm("Delete?")){
-    db.ref("profiles/"+id).remove();
-  }
-}
-
-function editProfile(id){
-  window.location="admin-add.html?id="+id;
-}
 
 </script>
 
