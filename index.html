@@ -21,7 +21,7 @@ header{
   position:sticky;top:0;z-index:1000;
 }
 
-.topbar{display:flex;justify-content:center;gap:10px;padding:10px;flex-wrap:wrap;}
+.topbar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px;}
 
 .btn{padding:10px 16px;border:none;border-radius:10px;color:white;font-weight:bold;cursor:pointer;}
 .add{background:#1d4ed8;}
@@ -39,16 +39,22 @@ header{
 .delete{background:#dc2626;}
 
 .modal{
-  position:fixed;inset:0;display:none;
-  justify-content:center;align-items:center;
+  position:fixed;inset:0;
+  display:none;
+  justify-content:center;
+  align-items:center;
   background:rgba(0,0,0,0.6);
 }
 
 .modal-content{
-  background:white;width:90%;max-width:500px;
-  padding:15px;border-radius:10px;
+  background:white;
+  width:90%;
+  max-width:500px;
+  padding:15px;
+  border-radius:10px;
 }
 </style>
+
 </head>
 
 <body>
@@ -57,11 +63,13 @@ header{
 
 <div class="topbar">
 
-  <button class="btn add" onclick="requireLogin(goAdd)">➕ Profile</button>
+  <button class="btn add" onclick="requireLogin(goAdd)">➕ Profile Add</button>
 
   <button class="btn admin" onclick="loginUser()" id="loginBtn">🔑 Login</button>
 
   <button class="btn admin" onclick="logoutUser()" id="logoutBtn" style="display:none">🚪 Logout</button>
+
+  <button class="btn admin" onclick="requireLogin(goPayment)">💍 Payment</button>
 
   <button class="btn admin" id="adminBtn" style="display:none" onclick="requireLogin(goAdmin)">👑 Admin</button>
 
@@ -92,19 +100,20 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
-
 let isAdmin = false;
 
-/* 🔥 LOGIN FIX (IMPORTANT) */
+/* LOGIN */
 function loginUser(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider);
-}
 
-/* HANDLE REDIRECT */
-auth.getRedirectResult().catch(err=>{
-  console.log(err);
-});
+  auth.signInWithPopup(provider)
+  .then(res=>{
+    console.log("Login success");
+  })
+  .catch(err=>{
+    alert(err.message);
+  });
+}
 
 /* LOGOUT */
 function logoutUser(){
@@ -115,7 +124,7 @@ function logoutUser(){
 auth.onAuthStateChanged(user=>{
 
   if(user){
-    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
+    isAdmin = (user.email||"").toLowerCase() === ADMIN_EMAIL;
 
     document.getElementById("loginBtn").style.display="none";
     document.getElementById("logoutBtn").style.display="inline-block";
@@ -126,6 +135,7 @@ auth.onAuthStateChanged(user=>{
 
   } else {
     isAdmin = false;
+
     document.getElementById("loginBtn").style.display="inline-block";
     document.getElementById("logoutBtn").style.display="none";
     document.getElementById("adminBtn").style.display="none";
@@ -144,7 +154,7 @@ function requireLogin(callback){
   callback();
 }
 
-/* LOAD PROFILES */
+/* LOAD DATA */
 function loadProfiles(){
   db.ref("profiles").on("value",snap=>{
     let html="";
@@ -162,8 +172,8 @@ function loadProfiles(){
           <p>${d.city}</p>
 
           <button class="like" onclick="requireLogin(goPayment)">💍 Rishta</button>
-
         </div>
+
       </div>`;
     });
 
@@ -175,7 +185,7 @@ function loadProfiles(){
 function openModal(id){
 
   if(!auth.currentUser){
-    loginUser();
+    alert("Login required");
     return;
   }
 
@@ -199,7 +209,7 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* NAV */
+/* NAVIGATION */
 function goPayment(){ window.location="payment.html"; }
 function goAdd(){ window.location="profile-submit.html"; }
 function goAdmin(){ window.location="admin.html"; }
