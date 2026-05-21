@@ -12,15 +12,12 @@
 
 <style>
 
-/* 🌈 GLOBAL */
 body{
   margin:0;
   font-family:sans-serif;
   background:#f4f6f9;
-  scroll-behavior:smooth;
 }
 
-/* HEADER */
 header{
   background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);
   color:white;
@@ -33,7 +30,6 @@ header{
   z-index:1000;
 }
 
-/* TOPBAR */
 .topbar{
   display:flex;
   justify-content:center;
@@ -50,10 +46,10 @@ header{
   font-weight:bold;
   cursor:pointer;
 }
+
 .add{background:#1d4ed8;}
 .admin{background:#111;}
 
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -61,41 +57,23 @@ header{
   padding:15px;
 }
 
-/* 🔥 CARD ANIMATION (PREMIUM FEEL) */
+/* CARD */
 .card{
   background:white;
-  border-radius:15px;
+  border-radius:12px;
   overflow:hidden;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
-
-  transform:translateY(20px);
-  opacity:0;
-  animation:fadeUp 0.5s ease forwards;
   transition:0.3s;
 }
 
 .card:hover{
-  transform:scale(1.05);
-  box-shadow:0 15px 30px rgba(0,0,0,0.2);
+  transform:scale(1.03);
 }
 
-@keyframes fadeUp{
-  to{
-    transform:translateY(0);
-    opacity:1;
-  }
-}
-
-/* IMAGE ZOOM EFFECT */
 .card img{
   width:100%;
   height:250px;
   object-fit:cover;
-  transition:0.4s;
-}
-
-.card img:hover{
-  transform:scale(1.1);
 }
 
 .card-body{
@@ -109,54 +87,49 @@ header{
   border:none;
   border-radius:6px;
   color:white;
+  cursor:pointer;
 }
 
-/* MODAL (SWIPE STYLE) */
+/* MODAL */
 .modal{
   position:fixed;
   inset:0;
   display:none;
   justify-content:center;
-  align-items:flex-end;
+  align-items:center;
   background:rgba(0,0,0,0.6);
   z-index:9999;
 }
 
-/* swipe bottom sheet */
 .modal-content{
   background:white;
-  width:100%;
+  width:90%;
   max-width:500px;
-  border-radius:20px 20px 0 0;
+  padding:15px;
+  border-radius:12px;
+  animation:pop 0.3s ease;
+}
+
+@keyframes pop{
+  from{transform:scale(0.8);opacity:0;}
+  to{transform:scale(1);opacity:1;}
+}
+
+/* LOADING */
+.loading{
+  text-align:center;
   padding:20px;
-
-  animation:slideUp 0.3s ease;
+  color:#555;
 }
 
-@keyframes slideUp{
-  from{transform:translateY(100%);}
-  to{transform:translateY(0);}
-}
-
-/* IMAGE ZOOM IN MODAL */
-.modal-content img{
-  width:100%;
-  border-radius:10px;
-  transition:0.3s;
-}
-
-.modal-content img:hover{
-  transform:scale(1.05);
-}
-
-/* CLOSE BUTTON */
-.close{
-  float:right;
-  cursor:pointer;
-  font-size:20px;
+.empty{
+  text-align:center;
+  padding:20px;
+  color:red;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -165,24 +138,25 @@ header{
 
 <div class="topbar">
 
-  <button class="btn add" onclick="goAdd()">➕ Profile</button>
+  <button class="btn add" onclick="requireLogin(goAdd)">➕ Profile Add</button>
 
-  <button class="btn admin" onclick="loginUser()">🔑 Login</button>
+  <button class="btn admin" onclick="loginUser()" id="loginBtn">🔑 Login</button>
 
-  <button class="btn admin" onclick="logoutUser()">🚪 Logout</button>
+  <button class="btn admin" onclick="logoutUser()" id="logoutBtn" style="display:none">🚪 Logout</button>
+
+  <button class="btn admin" onclick="requireLogin(goPayment)">💍 Payment</button>
 
 </div>
 
-<div class="grid" id="grid"></div>
+<div id="grid" class="grid">
+  <div class="loading">Loading profiles...</div>
+</div>
 
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-
-    <span class="close" onclick="closeModal()">✖</span>
-
+    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px">✖</span>
     <div id="modalBody"></div>
-
   </div>
 </div>
 
@@ -201,10 +175,16 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
+let currentUser = null;
+
 /* LOGIN */
 function loginUser(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider);
+
+  auth.signInWithPopup(provider)
+  .catch(err=>{
+    alert("Login Error: " + err.message);
+  });
 }
 
 /* LOGOUT */
@@ -212,68 +192,99 @@ function logoutUser(){
   auth.signOut();
 }
 
-/* LOAD PROFILES */
+/* AUTH */
+auth.onAuthStateChanged(user=>{
+  currentUser = user;
+
+  document.getElementById("loginBtn").style.display = user ? "none" : "inline-block";
+  document.getElementById("logoutBtn").style.display = user ? "inline-block" : "none";
+
+  loadProfiles();
+});
+
+/* REQUIRE LOGIN */
+function requireLogin(callback){
+  if(!currentUser){
+    alert("Login required 🔑");
+    loginUser();
+    return;
+  }
+  callback();
+}
+
+/* LOAD PROFILES (OPTIMIZED) */
 function loadProfiles(){
-  db.ref("profiles").on("value",snap=>{
-    let html="";
+
+  db.ref("profiles").once("value")
+  .then(snap=>{
+
+    let html = "";
+
+    if(!snap.exists()){
+      document.getElementById("grid").innerHTML = `<div class="empty">No profiles found</div>`;
+      return;
+    }
 
     snap.forEach(child=>{
       let d = child.val();
 
-      html+=`
+      html += `
       <div class="card">
 
         <img src="${d.photo}" onclick="openModal('${child.key}')">
 
         <div class="card-body">
-          <h3>${d.name}</h3>
-          <p>${d.city}</p>
+          <h3>${d.name || ''}</h3>
+          <p>${d.city || ''}</p>
 
-          <button class="like">💍 Rishta</button>
-
+          <button class="like" onclick="requireLogin(goPayment)">💍 Rishta</button>
         </div>
+
       </div>`;
     });
 
     document.getElementById("grid").innerHTML = html;
+
+  })
+  .catch(()=>{
+    document.getElementById("grid").innerHTML = `<div class="empty">Error loading data</div>`;
   });
 }
 
-/* MODAL OPEN */
+/* MODAL */
 function openModal(id){
+
+  if(!currentUser){
+    alert("Login required 🔑");
+    return;
+  }
 
   db.ref("profiles/"+id).once("value").then(snap=>{
     let d = snap.val();
 
-    document.getElementById("modalBody").innerHTML=`
+    document.getElementById("modalBody").innerHTML = `
       <h2>${d.name}</h2>
-      <img src="${d.photo}">
+      <img src="${d.photo}" style="width:100%;border-radius:10px;">
       <p>Age: ${d.age}</p>
       <p>City: ${d.city}</p>
       <p>Phone: ${d.phone}</p>
       <p>Bio: ${d.bio}</p>
     `;
 
-    document.getElementById("modal").style.display="flex";
-
-    /* 🔥 scroll lock */
-    document.body.style.overflow="hidden";
+    document.getElementById("modal").style.display = "flex";
+    document.body.style.overflow = "hidden";
   });
 }
 
-/* CLOSE MODAL */
+/* CLOSE */
 function closeModal(){
-  document.getElementById("modal").style.display="none";
-  document.body.style.overflow="auto";
+  document.getElementById("modal").style.display = "none";
+  document.body.style.overflow = "auto";
 }
 
 /* NAV */
-function goAdd(){
-  window.location="profile-submit.html";
-}
-
-/* START */
-loadProfiles();
+function goPayment(){ window.location="payment.html"; }
+function goAdd(){ window.location="profile-submit.html"; }
 
 </script>
 
