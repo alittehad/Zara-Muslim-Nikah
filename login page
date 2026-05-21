@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
@@ -17,71 +16,27 @@ body{
   justify-content:center;
   align-items:center;
   font-family:sans-serif;
-  overflow:hidden;
-  position:relative;
+  background:#0f172a;
 }
 
-/* BACKGROUND IMAGE */
-body::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:url("https://i.ibb.co/rG6YyCzB/nikah-wall.png") no-repeat center;
-  background-size:cover;
-  filter:brightness(0.95) contrast(1.05);
-  z-index:0;
-}
-
-/* DARK OVERLAY */
-body::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,0.18);
-  z-index:1;
-}
-
-/* BUTTON AREA */
 .box{
-  position:relative;
-  z-index:2;
   text-align:center;
 }
 
-/* LOGIN BUTTON */
-.btn{
-  padding:14px 12
-px;
+button{
+  padding:14px 22px;
   border:none;
-  border-radius:12px;
+  border-radius:10px;
+  background:#14b8a6;
+  color:white;
   font-weight:bold;
-  font-size:10px;
-  color:white;
   cursor:pointer;
-
-  background:linear-gradient(145deg,#14b8a6,#0f766e);
-
-  box-shadow:
-    0 6px 0 #0b5e57,
-    0 10px 20px rgba(0,0,0,0.25);
-
-  transition:0.2s;
+  font-size:16px;
 }
 
-.btn:hover{
-  transform:scale(1.04);
-}
-
-.btn:active{
-  transform:translateY(3px);
-  box-shadow:0 2px 0 #0b5e57;
-}
-
-/* LOADING TEXT */
 .loading{
+  margin-top:10px;
   color:white;
-  margin-top:15px;
-  font-size:14px;
   display:none;
 }
 </style>
@@ -90,37 +45,28 @@ px;
 <body>
 
 <div class="box">
-
-  <button class="btn" onclick="login()">
-    🔐 Login with Google
-  </button>
-
-  <div class="loading" id="loading">
-    Please wait...
-  </div>
-
+  <button onclick="login()">🔐 Login with Google</button>
+  <div class="loading" id="loading">Please wait...</div>
 </div>
 
 <script>
+
+/* 🔥 YOUR FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  apiKey: "YOUR_API_KEY_HERE",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
   projectId: "zara-muslim-nikah"
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 
-/* keep login session */
+/* 🔥 SESSION SAVE */
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-/* AUTO REDIRECT IF ALREADY LOGGED IN */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    window.location.href = "index.html";
-  }
-});
-
+/* 🔐 LOGIN FUNCTION */
 function login(){
 
   document.getElementById("loading").style.display = "block";
@@ -130,20 +76,35 @@ function login(){
   auth.signInWithPopup(provider)
   .then((result)=>{
 
-    console.log("Login success:", result.user.email);
+    if(result.user){
 
-    window.location.href = "index.html";
+      console.log("LOGIN SUCCESS:", result.user.email);
+
+      window.location.replace("index.html");
+
+    }
 
   })
   .catch((error)=>{
 
     document.getElementById("loading").style.display = "none";
 
-    alert(error.message);
+    alert("Login failed: " + error.message);
+
     console.log(error);
 
   });
+
 }
+
+/* 🔁 AUTO LOGIN CHECK */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    window.location.replace("index.html");
+  }
+});
+
 </script>
+
 </body>
 </html>
