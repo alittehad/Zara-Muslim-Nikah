@@ -38,7 +38,7 @@ button{
 <script>
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnx2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
   projectId: "zara-muslim-nikah",
@@ -46,32 +46,28 @@ const firebaseConfig = {
   messagingSenderId: "690336186269",
   appId: "1:690336186269:web:8215c1d313c4273c1f7974"
 };
+
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 
-/* KEEP SESSION */
+/* SESSION SAVE */
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-/* LOGIN */
+/* LOGIN FUNCTION */
 function login(){
   const provider = new firebase.auth.GoogleAuthProvider();
 
   auth.signInWithPopup(provider)
-  .then(()=>{
+  .then((result)=>{
     window.location.href = "index.html";
   })
-  .catch(err=>{
+  .catch((err)=>{
     alert(err.message);
   });
 }
 
-/* AUTO REDIRECT */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    window.location.href = "index.html";
-  }
-});
+/* ❌ AUTO REDIRECT REMOVED (BUG FIX) */
 
 </script>
 
