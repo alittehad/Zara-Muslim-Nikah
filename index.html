@@ -20,7 +20,8 @@ header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;te
 .card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
 .card img{width:100%;height:250px;object-fit:contain;cursor:pointer;}
 .card-body{text-align:center;padding:10px;}
-.like{background:#16a34a;}
+.like{background:#16a34a;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;}
+
 .modal{position:fixed;inset:0;display:none;justify-content:center;align-items:center;background:rgba(0,0,0,0.6);}
 .modal-content{background:white;width:92%;max-width:500px;padding:18px;border-radius:12px;}
 </style>
@@ -31,7 +32,7 @@ header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;te
 <header>🕋 Zara Nikah Service 🕌</header>
 
 <div class="topbar">
-  <button class="btn add" onclick="login()">🔐 Login with Google</button>
+  <button class="btn add" onclick="login()">🔐 Login</button>
   <button class="btn logout" onclick="logout()">🚪 Logout</button>
 </div>
 
@@ -46,9 +47,9 @@ header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;te
 
 <script>
 
-/* 🔥 Firebase CONFIG (FIXED) */
+/* ================= FIREBASE CONFIG (FIXED) ================= */
 const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnx2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
   projectId: "zara-muslim-nikah",
@@ -62,9 +63,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-/* ======================
-   LOGIN
-====================== */
+/* ================= LOGIN ================= */
 function login(){
   const provider = new firebase.auth.GoogleAuthProvider();
 
@@ -72,25 +71,12 @@ function login(){
   .catch(err => alert(err.message));
 }
 
-/* ======================
-   LOGOUT
-====================== */
+/* ================= LOGOUT ================= */
 function logout(){
   auth.signOut();
 }
 
-/* ======================
-   AUTH STATE
-====================== */
-let userLoggedIn = null;
-
-auth.onAuthStateChanged(user => {
-  userLoggedIn = user;
-});
-
-/* ======================
-   LOAD PROFILES
-====================== */
+/* ================= LOAD PROFILES ================= */
 loadProfiles();
 
 function loadProfiles(){
@@ -123,22 +109,29 @@ function loadProfiles(){
   });
 }
 
-/* ======================
-   LOGIN CHECK (MAIN FIX)
-====================== */
-function checkLogin(id){
+/* ================= LOGIN CHECK (BEST FIX) ================= */
+async function checkLogin(id){
 
-  if(!userLoggedIn){
-    alert("Please login first");
+  const user = auth.currentUser;
+
+  if(!user){
+
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    try {
+      await auth.signInWithPopup(provider);
+      openModal(id);
+    } catch (e){
+      alert(e.message);
+    }
+
     return;
   }
 
   openModal(id);
 }
 
-/* ======================
-   MODAL
-====================== */
+/* ================= MODAL ================= */
 function openModal(id){
 
   db.ref("profiles/"+id).once("value").then(snap => {
@@ -146,13 +139,13 @@ function openModal(id){
     let d = snap.val();
 
     document.getElementById("modalBody").innerHTML = `
-      <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%;border-radius:10px;">
-      <p>${d.city}</p>
+      <h2>${d.name || ''}</h2>
+      <img src="${d.photo || ''}" style="width:100%;border-radius:10px;">
+      <p>${d.city || ''}</p>
       <p>${d.bio || ''}</p>
     `;
 
-    document.getElementById("modal").style.display = "flex";
+    document.getElementById("modal").style.display="flex";
   });
 }
 
