@@ -4,174 +4,32 @@
 
 <meta name="google-site-verification" content="FaElE6Kh5Ixq0wRBtgIOLdHfW08ZfQQVBDE_3QLx9Ns" />
 
-
-
-  
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#f4f6f9;
-}
-
-/* HEADER */
-/* HEADER - 3D EFFECT */
-header{
-  background: linear-gradient(135deg, #38bdf8, #0ea5e9, #e0f2fe);
-
-  color: white;
-  text-align: center;
-  padding: 16px 12px;
-
-  font-weight: 900;
-  font-size: 24px;
-  letter-spacing: 2px;
-
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-
-  text-shadow:
-    1px 1px 0 #0b3d3a,
-    2px 2px 0 #0b3d3a,
-    3px 3px 0 #062b29,
-    4px 4px 6px rgba(0,0,0,0.25);
-
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-
-  border-bottom: 2px solid rgba(255,255,255,0.3);
-}
-/* TOPBAR */
-.topbar{
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  padding:10px;
-  flex-wrap:wrap;
-}
-
-/* BUTTON */
-.btn{
-  padding:10px 16px;
-  border:none;
-  border-radius:10px;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-
+body{margin:0;font-family:sans-serif;background:#f4f6f9;}
+header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;text-align:center;padding:16px;font-weight:900;font-size:24px;position:sticky;top:0;z-index:1000;}
+.topbar{display:flex;justify-content:center;gap:10px;padding:10px;flex-wrap:wrap;}
+.btn{padding:10px 16px;border:none;border-radius:10px;color:white;font-weight:bold;cursor:pointer;}
 .add{background:#1d4ed8;}
 .admin{background:#111;}
-
-/* GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:15px;
-  padding:15px;
-}
-
-.card{
-  background:white;
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  cursor:pointer;
-
-  /* ✔ ALWAYS VISIBLE BORDER */
-  border:2px solid #d1d5db;
-
-  transition:0.3s;
-}
-
-/* 🔥 hover effect (stronger only) */
-.card:hover{
-  transform:scale(1.03);
-  border:2px solid #14b8a6;
-  box-shadow:0 10px 25px rgba(20,184,166,0.35);
-}
-.card img{
-  width:100%;
-  height:250px;
-
-  object-fit:contain;
-
-background:linear-gradient(135deg,#e0e7ff,#c7d2fe,#ddd6fe);
-  display:block;
-
-  cursor:pointer;
-}
-.card-body{
-  text-align:center;
-  padding:10px;
-}
-
-.card-body button{
-  margin:4px;
-  padding:6px 10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  color:white;
-}
-
-/* BUTTON COLORS */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;padding:15px;}
+.card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.1);cursor:pointer;border:2px solid #d1d5db;}
+.card:hover{transform:scale(1.03);border:2px solid #14b8a6;}
+.card img{width:100%;height:250px;object-fit:contain;background:#ddd;}
+.card-body{text-align:center;padding:10px;}
 .like{background:#16a34a;}
 .edit{background:#1d4ed8;}
 .delete{background:#dc2626;}
 
-/* MODAL */
-
-/* MODAL BACKDROP */
-.modal{
-  position: fixed;
-  inset: 0;
-  display: none;
-
-  justify-content: center;
-  align-items: center;
-
-  background: rgba(0,0,0,0.6);
-  z-index: 9999;
-
-  overflow-y: auto;
-
-  padding: 15px;
-  box-sizing: border-box;
-}
-
-/* MODAL CONTENT */
-.modal-content{
-  background: white;
-  width: 92%;
-  max-width: 500px;
-
-  padding: 18px;
-  border-radius: 12px;
-
-  max-height: 85vh;
-  overflow-y: auto;
-
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-/* 🔥 IMAGE FIX (IMPORTANT - prevents top cut look) */
-.modal-content img{
-  width: 100%;
-  height: auto;
-  display: block;
-  margin-bottom: 10px;
-  border-radius: 10px;
-}
+.modal{position:fixed;inset:0;display:none;justify-content:center;align-items:center;background:rgba(0,0,0,0.6);z-index:9999;}
+.modal-content{background:white;width:92%;max-width:500px;padding:18px;border-radius:12px;max-height:85vh;overflow-y:auto;}
 </style>
 </head>
 
@@ -181,29 +39,21 @@ background:linear-gradient(135deg,#e0e7ff,#c7d2fe,#ddd6fe);
 
 <div class="topbar">
   <button class="btn add" onclick="goAdd()">प्रोफ़ाइल जोड़ें</button>
-
-  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">
-    👑 Admin Panel
-  </button>
-
-  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">
-    ➕ Admin Add
-  </button>
+  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">👑 Admin Panel</button>
+  <button class="btn admin" id="adminAddBtn" style="display:none" onclick="goAdminAdd()">➕ Admin Add</button>
 </div>
 
 <div class="grid" id="grid"></div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <span onclick="closeModal()" style="float:right;cursor:pointer;font-size:20px;">✖</span>
+    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
     <div id="modalBody"></div>
   </div>
 </div>
 
 <script>
 
-/* 🔥 Firebase Config */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -220,39 +70,25 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
 let isAdmin = false;
 
-/* 🔐 LOGIN CHECK */
-/* 🔐 LOGIN CHECK */
+/* ✅ SHOW PROFILES TO EVERYONE */
+loadProfiles();
+
+/* ADMIN CHECK */
 auth.onAuthStateChanged(user=>{
+  if(user){
+    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
 
-  /* ❌ LOGIN NAHI */
-  if(!user){
-
-    window.location.href = "/login.html";
-
-    return;
+    if(isAdmin){
+      document.getElementById("adminPanelBtn").style.display="inline-block";
+      document.getElementById("adminAddBtn").style.display="inline-block";
+    }
   }
-
-  /* ✅ LOGIN HAI */
-  isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
-
-  if(isAdmin){
-
-    document.getElementById("adminPanelBtn").style.display="inline-block";
-
-    document.getElementById("adminAddBtn").style.display="inline-block";
-  }
-
-  loadProfiles();
-
 });
 
-/* 📥 LOAD DATA */
+/* LOAD PROFILES */
 function loadProfiles(){
-
   db.ref("profiles").on("value",snap=>{
-
     let html="";
-
     snap.forEach(child=>{
       let d = child.val();
 
@@ -265,12 +101,8 @@ function loadProfiles(){
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
-          <!-- 💍 RISHTA BUTTON -->
-          <button class="like" onclick="goPayment()">
-            💍 रिश्ता करें
-          </button>
+          <button class="like" onclick="goPayment()">💍 रिश्ता करें</button>
 
-          <!-- 👑 ADMIN BUTTON -->
           ${isAdmin ? `
             <button class="edit" onclick="editProfile('${child.key}')">✏ Edit</button>
             <button class="delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
@@ -284,83 +116,57 @@ function loadProfiles(){
   });
 }
 
-/* 💍 GO TO PAYMENT */
+/* 🔐 LOGIN REQUIRED FUNCTIONS */
 function goPayment(){
-  window.location.href = "payment.html";
-}
-
-/* 🗑 DELETE */
-function deleteProfile(id){
-  if(confirm("Delete profile?")){
-    db.ref("profiles/"+id).remove();
+  if(!auth.currentUser){
+    window.location="login.html";
+    return;
   }
+  window.location="payment.html";
 }
 
-/* ✏ EDIT */
-function editProfile(id){
-  window.location = "admin-add.html?id=" + id;
+function goAdd(){
+  if(!auth.currentUser){
+    window.location="login.html";
+    return;
+  }
+  window.location="profile-submit.html";
 }
 
-/* 📄 MODAL */
 function openModal(id){
 
-  db.ref("profiles/"+id).once("value").then(snap=>{
+  if(!auth.currentUser){
+    window.location="login.html";
+    return;
+  }
 
+  db.ref("profiles/"+id).once("value").then(snap=>{
     let d = snap.val();
 
     document.getElementById("modalBody").innerHTML = `
-
-      <h2>${d.name || ''}</h2>
-
-      <img src="${d.photo || ''}" 
-      style="width:100%;border-radius:10px;margin-bottom:10px;">
-
-      <p><b>Age:</b> ${d.age || ''}</p>
-
-      <p><b>Gender:</b> ${d.gender || ''}</p>
-
-      <p><b>City:</b> ${d.city || ''}</p>
-
-      <p><b>Phone:</b> ${d.phone || ''}</p>
-
-      <p><b>Education:</b> ${d.education || ''}</p>
-
-      <p><b>Profession:</b> ${d.profession || ''}</p>
-
-      <p><b>Religion:</b> ${d.religion || ''}</p>
-
-      <p><b>Marital Status:</b> ${d.marital || ''}</p>
-
-      <p><b>Height:</b> ${d.height || ''}</p>
-
-      <p><b>Bio:</b><br>${d.bio || ''}</p>
-
-      ${d.premium ? `
-        <p style="color:gold;font-weight:bold;">
-          ⭐ Premium Profile
-        </p>
-      ` : ""}
-
-      ${d.featured ? `
-        <p style="color:orange;font-weight:bold;">
-          🔥 Featured Profile
-        </p>
-      ` : ""}
-
+      <h2>${d.name}</h2>
+      <img src="${d.photo}" style="width:100%;border-radius:10px;">
+      <p>${d.city}</p>
+      <p>${d.bio}</p>
     `;
 
-    document.getElementById("modal").style.display = "flex";
-
+    document.getElementById("modal").style.display="flex";
   });
-
 }
 
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* NAVIGATION */
-function goAdd(){ window.location="profile-submit.html"; }
+/* ADMIN */
+function deleteProfile(id){
+  db.ref("profiles/"+id).remove();
+}
+
+function editProfile(id){
+  window.location="admin-add.html?id="+id;
+}
+
 function goAdmin(){ window.location="admin.html"; }
 function goAdminAdd(){ window.location="admin-add.html"; }
 
