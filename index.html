@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zara Nikah Service</title>
@@ -18,7 +17,7 @@ header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;te
 .add{background:#1d4ed8;}
 .admin{background:#111;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;padding:15px;}
-.card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.1);border:2px solid #d1d5db;}
+.card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
 .card img{width:100%;height:250px;object-fit:contain;background:#eee;cursor:pointer;}
 .card-body{text-align:center;padding:10px;}
 .like{background:#16a34a;}
@@ -51,6 +50,7 @@ header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;te
 
 <script>
 
+/* ✅ FIREBASE FIXED CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnx2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -67,28 +67,25 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
-
 let isAdmin = false;
 
 /* =========================
-   LOAD PROFILES ALWAYS
+   LOAD ALWAYS
 ========================= */
 loadProfiles();
 
 /* =========================
    AUTH LISTENER (NO REDIRECT)
 ========================= */
-auth.onAuthStateChanged(user=>{
+auth.onAuthStateChanged(user => {
 
   if(user){
-
     isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
 
     if(isAdmin){
       document.getElementById("adminPanelBtn").style.display="inline-block";
       document.getElementById("adminAddBtn").style.display="inline-block";
     }
-
   } else {
     isAdmin = false;
   }
@@ -96,18 +93,18 @@ auth.onAuthStateChanged(user=>{
 });
 
 /* =========================
-   LOAD DATA
+   LOAD PROFILES
 ========================= */
 function loadProfiles(){
 
-  db.ref("profiles").on("value",snap=>{
+  db.ref("profiles").on("value", snap => {
 
-    let html="";
+    let html = "";
 
-    snap.forEach(child=>{
+    snap.forEach(child => {
       let d = child.val();
 
-      html+=`
+      html += `
       <div class="card">
 
         <img src="${d.photo}" onclick="requireLogin('modal','${child.key}')">
@@ -132,20 +129,22 @@ function loadProfiles(){
 }
 
 /* =========================
-   LOGIN GATE SYSTEM
+   LOGIN GATE (MAIN FIX)
 ========================= */
-function requireLogin(type,id){
+function requireLogin(type, id){
 
-  if(!auth.currentUser){
-    window.location="login.html";
+  const user = auth.currentUser;
+
+  if(!user){
+    window.location.href = "login.html";
     return;
   }
 
-  if(type==="payment"){
-    window.location="payment.html";
+  if(type === "payment"){
+    window.location.href = "payment.html";
   }
 
-  if(type==="modal"){
+  if(type === "modal"){
     openModal(id);
   }
 }
@@ -155,49 +154,49 @@ function requireLogin(type,id){
 ========================= */
 function openModal(id){
 
-  db.ref("profiles/"+id).once("value").then(snap=>{
+  db.ref("profiles/" + id).once("value").then(snap => {
 
     let d = snap.val();
 
     document.getElementById("modalBody").innerHTML = `
-      <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%;border-radius:10px;">
-      <p>${d.city}</p>
-      <p>${d.bio}</p>
+      <h2>${d.name || ''}</h2>
+      <img src="${d.photo || ''}" style="width:100%;border-radius:10px;">
+      <p>${d.city || ''}</p>
+      <p>${d.bio || ''}</p>
     `;
 
-    document.getElementById("modal").style.display="flex";
+    document.getElementById("modal").style.display = "flex";
   });
 }
 
 function closeModal(){
-  document.getElementById("modal").style.display="none";
+  document.getElementById("modal").style.display = "none";
 }
 
 /* =========================
-   ADMIN ACTIONS
+   ADMIN
 ========================= */
 function deleteProfile(id){
-  db.ref("profiles/"+id).remove();
+  db.ref("profiles/" + id).remove();
 }
 
 function editProfile(id){
-  window.location="admin-add.html?id="+id;
+  window.location.href = "admin-add.html?id=" + id;
 }
 
 /* =========================
-   NAV
+   NAVIGATION
 ========================= */
 function goAdd(){
   if(!auth.currentUser){
-    window.location="login.html";
+    window.location.href = "login.html";
     return;
   }
-  window.location="profile-submit.html";
+  window.location.href = "profile-submit.html";
 }
 
-function goAdmin(){ window.location="admin.html"; }
-function goAdminAdd(){ window.location="admin-add.html"; }
+function goAdmin(){ window.location.href="admin.html"; }
+function goAdminAdd(){ window.location.href="admin-add.html"; }
 
 </script>
 
