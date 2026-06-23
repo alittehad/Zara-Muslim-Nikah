@@ -8,84 +8,241 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f0f2f5;}
-header{background:#075e54;color:#fff;padding:15px;text-align:center;font-size:20px;font-weight:bold;}
+body{margin:0;font-family:sans-serif;background:#e5e7eb;}
 
-.item{
-  background:#fff;
-  margin:10px;
-  padding:12px;
-  border-radius:10px;
-  cursor:pointer;
-  box-shadow:0 2px 5px rgba(0,0,0,0.1);
+header{
+  background:#0ea5e9;
+  color:white;
+  padding:15px;
+  font-weight:bold;
+  text-align:center;
 }
 
-.name{font-weight:bold;}
-.last{font-size:12px;color:gray;}
-.dot{background:red;color:white;padding:2px 6px;border-radius:50%;font-size:11px;margin-left:5px;}
+.container{
+  display:flex;
+  height:100vh;
+}
+
+/* CHAT LIST */
+.users{
+  width:30%;
+  background:white;
+  overflow:auto;
+  border-right:1px solid #ddd;
+}
+
+.user{
+  padding:15px;
+  border-bottom:1px solid #eee;
+  cursor:pointer;
+  position:relative;
+}
+
+.user:hover{background:#f1f5f9;}
+
+.badge{
+  position:absolute;
+  right:10px;
+  top:15px;
+  background:red;
+  color:white;
+  font-size:12px;
+  padding:2px 6px;
+  border-radius:50%;
+}
+
+/* CHAT BOX */
+.chat{
+  width:70%;
+  display:flex;
+  flex-direction:column;
+}
+
+.messages{
+  flex:1;
+  overflow:auto;
+  padding:10px;
+}
+
+.msg{
+  margin:5px;
+  padding:8px;
+  border-radius:10px;
+  max-width:60%;
+}
+
+.me{background:#0ea5e9;color:white;margin-left:auto;}
+.other{background:white;}
+
+.inputBox{
+  display:flex;
+  padding:10px;
+  background:white;
+}
+
+input{flex:1;padding:10px;}
+
+button{padding:10px;}
+
+.status{
+  font-size:12px;
+  color:gray;
+}
 </style>
 </head>
 
 <body>
 
-<header>💬 Messages</header>
-<div id="list"></div>
+<header>💬 Live Chat</header>
+
+<div class="container">
+
+  <!-- USERS -->
+  <div class="users" id="users"></div>
+
+  <!-- CHAT -->
+  <div class="chat">
+    <div class="status" id="status"></div>
+    <div class="messages" id="messages"></div>
+
+    <div class="inputBox">
+      <input id="text" placeholder="Type message...">
+
+      <button onclick="sendMsg()">Send</button>
+      <button onclick="sendImage()">📷</button>
+      <button onclick="startVoice()">🎤</button>
+    </div>
+  </div>
+
+</div>
 
 <script>
-
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  storageBucket: "zara-muslim-nikah.appspot.com",
 };
 
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.database();
+const storage = firebase.storage();
 
-const ADMIN = "ngogrant454@gmail.com";
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
+let currentUser = null;
+let chatWith = "admin";
+
+/* LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
   if(!user){
     window.location="login.html";
-  }else{
-    loadChats(user.email);
+    return;
   }
+  currentUser = user;
+  loadUsers();
 });
 
-function loadChats(email){
-
+/* USERS LIST */
+function loadUsers(){
   db.ref("chats").on("value",snap=>{
     let html="";
-
-    snap.forEach(c=>{
-      let d = c.val();
-
-      if(email===ADMIN || d.user===email){
-
-        html+=`
-        <div class="item" onclick="openChat('${c.key}')">
-          <div class="name">
-            ${d.user}
-            ${d.unread && d.unread[email] ? `<span class="dot">${d.unread[email]}</span>` : ""}
-          </div>
-          <div class="last">${d.lastMessage||""}</div>
-        </div>`;
-      }
-
+    snap.forEach(u=>{
+      let key = u.key;
+      html += `<div class="user" onclick="openChat('${key}')">
+        ${key}
+        <span class="badge">!</span>
+      </div>`;
     });
-
-    document.getElementById("list").innerHTML=html;
+    document.getElementById("users").innerHTML = html;
   });
 }
 
-function openChat(id){
-  window.location="chat.html?id="+id;
+/* OPEN CHAT */
+function openChat(uid){
+  chatWith = uid;
+  loadMessages();
 }
 
+/* LOAD MSG */
+function loadMessages(){
+  db.ref("messages/"+chatWith).on("value",snap=>{
+    let html="";
+    snap.forEach(m=>{
+      let d = m.val();
+      html += `<div class="msg ${d.uid==currentUser.uid?'me':'other'}">
+        ${d.text || ""}
+        ${d.image ? `<br><img src="${d.image}" width="150">`:""}
+      </div>`;
+    });
+    document.getElementById("messages").innerHTML = html;
+  });
+}
+
+/* SEND TEXT */
+function sendMsg(){
+  let text = document.getElementById("text").value;
+  db.ref("messages/"+chatWith).push({
+    uid: currentUser.uid,
+    text,
+    time: Date.now()
+  });
+  document.getElementById("text").value="";
+}
+
+/* IMAGE */
+function sendImage(){
+  let input = document.createElement("input");
+  input.type="file";
+  input.onchange = async e=>{
+    let file = e.target.files[0];
+    let ref = storage.ref("chat/"+file.name);
+    await ref.put(file);
+    let url = await ref.getDownloadURL();
+
+    db.ref("messages/"+chatWith).push({
+      uid: currentUser.uid,
+      image:url,
+      time:Date.now()
+    });
+  };
+  input.click();
+}
+
+/* VOICE (simple recorder) */
+let recorder, chunks=[];
+
+function startVoice(){
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    recorder = new MediaRecorder(stream);
+    recorder.start();
+
+    recorder.ondataavailable = e=>{
+      chunks.push(e.data);
+    };
+
+    recorder.onstop = async ()=>{
+      let blob = new Blob(chunks,{type:"audio/webm"});
+      chunks=[];
+
+      let ref = storage.ref("voice/"+Date.now()+".webm");
+      await ref.put(blob);
+      let url = await ref.getDownloadURL();
+
+      db.ref("messages/"+chatWith).push({
+        uid:currentUser.uid,
+        voice:url
+      });
+    };
+
+    setTimeout(()=>recorder.stop(),4000);
+  });
+}
 </script>
 
 </body>
