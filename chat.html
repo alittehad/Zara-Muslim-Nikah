@@ -8,43 +8,56 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#e5ddd5;}
+body{margin:0;font-family:sans-serif;background:#e5e7eb;}
 
-header{background:#075e54;color:#fff;padding:15px;}
-
-#box{height:75vh;overflow:auto;padding:10px;}
-
-.msg{
-  padding:10px;
-  margin:5px;
-  border-radius:10px;
-  max-width:70%;
+header{
+  background:#0ea5e9;
+  color:white;
+  padding:12px;
 }
 
-.me{background:#dcf8c6;margin-left:auto;}
-.other{background:#fff;}
+.chatBox{height:85vh;overflow:auto;padding:10px;}
+
+.msg{
+  padding:8px;
+  margin:5px;
+  max-width:70%;
+  border-radius:10px;
+}
+
+.me{background:#0ea5e9;color:white;margin-left:auto;}
+.other{background:white;}
 
 .input{
   display:flex;
   padding:10px;
-  background:#fff;
+  background:white;
 }
 
-input{flex:1;padding:10px;border:1px solid #ccc;border-radius:5px;}
-button{padding:10px;background:#075e54;color:#fff;border:none;margin-left:5px;}
+input{flex:1;padding:10px;}
+button{padding:10px;}
+
+.typing{
+  font-size:12px;
+  color:gray;
+  padding:5px;
+}
 </style>
 </head>
 
 <body>
 
-<header>💬 Chat <span id="status"></span></header>
+<header id="head">Chat</header>
 
-<div id="box"></div>
+<div class="typing" id="typing"></div>
+
+<div class="chatBox" id="box"></div>
 
 <div class="input">
-  <input id="msg">
+  <input id="text" oninput="typing()">
   <button onclick="send()">Send</button>
 </div>
 
@@ -61,56 +74,74 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-let chatId = new URLSearchParams(location.search).get("id");
+let me, other;
+
+const uid = new URLSearchParams(location.search).get("uid");
 
 auth.onAuthStateChanged(user=>{
-  if(!user){
-    window.location="login.html";
-  }else{
-    load(user.email);
-  }
+  if(!user) location="login.html";
+  me=user;
+  other=uid;
+  load();
+  setOnline(true);
 });
 
-/* LOAD MESSAGES */
-function load(email){
-
-  db.ref("messages/"+chatId).on("value",snap=>{
-    let html="";
-
-    snap.forEach(m=>{
-      let d = m.val();
-
-      html+=`<div class="msg ${d.sender===email?'me':'other'}">${d.text||''}</div>`;
-    });
-
-    document.getElementById("box").innerHTML=html;
-    document.getElementById("box").scrollTop=document.getElementById("box").scrollHeight;
+/* ONLINE STATUS */
+function setOnline(status){
+  db.ref("users/"+me.uid).update({
+    online:status
   });
+}
 
-  // reset unread
-  db.ref("chats/"+chatId+"/unread/"+email).set(0);
+/* TYPING */
+function typing(){
+  db.ref("users/"+me.uid).update({typing:true});
+  setTimeout(()=>db.ref("users/"+me.uid).update({typing:false}),1000);
 }
 
 /* SEND */
 function send(){
+  let text=document.getElementById("text").value;
 
-  let text=document.getElementById("msg").value;
-  if(text==="") return;
-
-  let user=auth.currentUser.email;
-
-  db.ref("messages/"+chatId).push({
-    text,
-    sender:user,
+  let msg={
+    from:me.uid,
+    to:other,
+    text:text,
+    seen:false,
     time:Date.now()
-  });
+  };
 
-  db.ref("chats/"+chatId).update({
-    lastMessage:text
-  });
-
-  document.getElementById("msg").value="";
+  db.ref("messages").push(msg);
+  document.getElementById("text").value="";
 }
+
+/* LOAD CHAT */
+db.ref("messages").on("value",snap=>{
+  let html="";
+  snap.forEach(m=>{
+    let d=m.val();
+    if((d.from==me.uid && d.to==other) || (d.from==other && d.to==me.uid)){
+
+      html+=`
+      <div class="msg ${d.from==me.uid?'me':'other'}">
+        ${d.text}
+        ${d.seen && d.from==me.uid ? "✔✔" : "✔"}
+      </div>`;
+    }
+  });
+
+  document.getElementById("box").innerHTML=html;
+});
+
+/* SEEN UPDATE */
+db.ref("messages").on("value",snap=>{
+  snap.forEach(m=>{
+    let d=m.val();
+    if(d.to==me.uid){
+      db.ref("messages/"+m.key).update({seen:true});
+    }
+  });
+});
 
 </script>
 
