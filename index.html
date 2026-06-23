@@ -31,12 +31,31 @@ header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;te
 
 <body>
 
-<header>🕋 Zara Nikah Service 🕌</header>
+header{
+  background: linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);
+  color:white;
+  text-align:center;
+  padding:16px;
+  font-weight:900;
+  font-size:24px;
+  letter-spacing:2px;
 
-<div class="topbar">
-  <button class="btn add" onclick="goAdd()">प्रोफ़ाइल जोड़ें</button>
-  <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">👑 Admin</button>
-</div>
+  position:sticky;
+  top:0;
+  z-index:1000;
+
+  text-shadow:
+    1px 1px 0 #0c4a6e,
+    2px 2px 0 #075985,
+    3px 3px 0 #0369a1,
+    4px 4px 8px rgba(0,0,0,0.35);
+
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.5);
+
+  border-bottom:3px solid rgba(255,255,255,0.4);
+}
 
 <div class="grid" id="grid"></div>
 
