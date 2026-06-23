@@ -20,10 +20,53 @@ header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;te
 .card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.1);border:2px solid #d1d5db;}
 .card img{width:100%;height:250px;object-fit:contain;background:#eee;cursor:pointer;}
 .card-body{text-align:center;padding:10px;}
-.like{background:#16a34a;}
-.edit{background:#1d4ed8;}
-.delete{background:#dc2626;}
+.card-body button{
+  margin:5px;
+  padding:8px 14px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  color:white;
+  font-weight:bold;
+  font-size:14px;
 
+  transform:translateY(0);
+  transition:all .2s ease;
+
+  box-shadow:
+    0 5px 0 rgba(0,0,0,.25),
+    0 8px 15px rgba(0,0,0,.2);
+}
+
+.card-body button:hover{
+  transform:translateY(-2px);
+}
+
+.card-body button:active{
+  transform:translateY(3px);
+
+  box-shadow:
+    0 2px 0 rgba(0,0,0,.25),
+    0 4px 8px rgba(0,0,0,.2);
+}
+
+/* RISHTA BUTTON */
+.like{
+  background:linear-gradient(to bottom,#22c55e,#15803d);
+  border-bottom:3px solid #14532d;
+}
+
+/* EDIT BUTTON */
+.edit{
+  background:linear-gradient(to bottom,#3b82f6,#1d4ed8);
+  border-bottom:3px solid #1e3a8a;
+}
+
+/* DELETE BUTTON */
+.delete{
+  background:linear-gradient(to bottom,#ef4444,#b91c1c);
+  border-bottom:3px solid #7f1d1d;
+}
 .modal{position:fixed;inset:0;display:none;justify-content:center;align-items:center;background:rgba(0,0,0,0.6);z-index:9999;}
 .modal-content{background:white;width:92%;max-width:500px;padding:18px;border-radius:12px;max-height:85vh;overflow-y:auto;}
 </style>
