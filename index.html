@@ -85,19 +85,19 @@ header{
   cursor:pointer;
 }
 
-/* CHAT BUTTON 3D */
+/* ✅ SIDE FLOATING CHAT BUTTON (FIXED) */
 .chat-btn{
   position:fixed;
+  right:20px;
   top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
+  transform:translateY(-50%);
 
-  padding:15px 25px;
-  font-size:18px;
+  padding:14px 18px;
+  font-size:16px;
   font-weight:bold;
 
   border:none;
-  border-radius:12px;
+  border-radius:50px;
 
   background:linear-gradient(135deg,#0ea5e9,#0369a1);
   color:white;
@@ -107,18 +107,16 @@ header{
     0 6px 0 #075985,
     0 15px 25px rgba(0,0,0,0.25);
 
+  z-index:9999;
   transition:0.2s;
 }
 
 .chat-btn:hover{
-  transform:translate(-50%,-50%) scale(1.05);
+  transform:translateY(-50%) scale(1.1);
 }
 
 .chat-btn:active{
-  transform:translate(-50%,-50%) scale(0.95);
-  box-shadow:
-    0 3px 0 #075985,
-    0 8px 15px rgba(0,0,0,0.2);
+  transform:translateY(-50%) scale(0.95);
 }
 
 .modal{
@@ -150,7 +148,7 @@ header{
   <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">👑 Admin</button>
 </div>
 
-<!-- ✅ CHAT BUTTON (FIXED) -->
+<!-- ✅ CHAT BUTTON -->
 <button class="chat-btn" onclick="openChat()">💬 Message</button>
 
 <div class="grid" id="grid"></div>
@@ -262,8 +260,9 @@ function goAdmin(){
   window.location="admin.html";
 }
 
+/* ✅ CHAT OPEN FIXED */
 function openChat(){
-  window.location="chat.html";
+  window.location="message.html";
 }
 
 </script>
