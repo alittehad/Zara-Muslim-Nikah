@@ -1,58 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inbox</title>
-
+<title>User Message</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<style>
-body{margin:0;font-family:sans-serif;background:#f3f4f6;}
-
-header{
-  background:#0ea5e9;
-  color:white;
-  padding:15px;
-  text-align:center;
-  font-weight:bold;
-}
-
-.user{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:12px;
-  background:white;
-  margin:5px;
-  border-radius:10px;
-  cursor:pointer;
-}
-
-.dot{
-  width:10px;height:10px;border-radius:50%;
-  background:gray;
-}
-
-.online{background:green;}
-
-.badge{
-  background:red;
-  color:white;
-  padding:3px 7px;
-  border-radius:50%;
-  font-size:12px;
-}
-</style>
 </head>
 
 <body>
 
-<header>💬 Inbox</header>
+<h2>User Message Form</h2>
 
-<div id="list"></div>
+<input id="name" placeholder="Name"><br>
+<input id="age" placeholder="Age"><br>
+<input id="address" placeholder="Address"><br>
+<input id="whatsapp" placeholder="WhatsApp No"><br>
+<input id="income" placeholder="Income"><br>
+
+<button onclick="send()">Send to Admin</button>
 
 <script>
 
@@ -60,6 +25,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah",
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -67,47 +33,27 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-let me;
+function send(){
 
-auth.onAuthStateChanged(user=>{
-  if(!user) location="login.html";
-  me = user;
-  loadUsers();
-});
+  if(!auth.currentUser){
+    alert("Login required");
+    window.location="login.html";
+    return;
+  }
 
-function loadUsers(){
-  db.ref("users").on("value",snap=>{
-    let html="";
+  let uid = auth.currentUser.uid;
 
-    snap.forEach(u=>{
-      let d=u.val();
-      let id=u.key;
-
-      if(id===me.uid) return;
-
-      html+=`
-      <div class="user" onclick="openChat('${id}')">
-        <div>
-          ${d.name}
-          <div style="font-size:12px;color:gray">${d.typing?"typing...":""}</div>
-        </div>
-
-        <div style="display:flex;gap:8px;align-items:center">
-
-          <div class="dot ${d.online?'online':''}"></div>
-
-          <span class="badge" id="unread-${id}">0</span>
-
-        </div>
-      </div>`;
-    });
-
-    document.getElementById("list").innerHTML=html;
+  db.ref("messages/"+uid).push({
+    name: name.value,
+    age: age.value,
+    address: address.value,
+    whatsapp: whatsapp.value,
+    income: income.value,
+    sender: "user",
+    time: Date.now()
   });
-}
 
-function openChat(id){
-  location="chat.html?uid="+id;
+  alert("Sent to Admin");
 }
 
 </script>
