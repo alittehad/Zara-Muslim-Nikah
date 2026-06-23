@@ -3,246 +3,113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Messages</title>
+<title>Inbox</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#e5e7eb;}
+body{margin:0;font-family:sans-serif;background:#f3f4f6;}
 
 header{
   background:#0ea5e9;
   color:white;
   padding:15px;
-  font-weight:bold;
   text-align:center;
-}
-
-.container{
-  display:flex;
-  height:100vh;
-}
-
-/* CHAT LIST */
-.users{
-  width:30%;
-  background:white;
-  overflow:auto;
-  border-right:1px solid #ddd;
+  font-weight:bold;
 }
 
 .user{
-  padding:15px;
-  border-bottom:1px solid #eee;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px;
+  background:white;
+  margin:5px;
+  border-radius:10px;
   cursor:pointer;
-  position:relative;
 }
 
-.user:hover{background:#f1f5f9;}
+.dot{
+  width:10px;height:10px;border-radius:50%;
+  background:gray;
+}
+
+.online{background:green;}
 
 .badge{
-  position:absolute;
-  right:10px;
-  top:15px;
   background:red;
   color:white;
-  font-size:12px;
-  padding:2px 6px;
+  padding:3px 7px;
   border-radius:50%;
-}
-
-/* CHAT BOX */
-.chat{
-  width:70%;
-  display:flex;
-  flex-direction:column;
-}
-
-.messages{
-  flex:1;
-  overflow:auto;
-  padding:10px;
-}
-
-.msg{
-  margin:5px;
-  padding:8px;
-  border-radius:10px;
-  max-width:60%;
-}
-
-.me{background:#0ea5e9;color:white;margin-left:auto;}
-.other{background:white;}
-
-.inputBox{
-  display:flex;
-  padding:10px;
-  background:white;
-}
-
-input{flex:1;padding:10px;}
-
-button{padding:10px;}
-
-.status{
   font-size:12px;
-  color:gray;
 }
 </style>
 </head>
 
 <body>
 
-<header>💬 Live Chat</header>
+<header>💬 Inbox</header>
 
-<div class="container">
-
-  <!-- USERS -->
-  <div class="users" id="users"></div>
-
-  <!-- CHAT -->
-  <div class="chat">
-    <div class="status" id="status"></div>
-    <div class="messages" id="messages"></div>
-
-    <div class="inputBox">
-      <input id="text" placeholder="Type message...">
-
-      <button onclick="sendMsg()">Send</button>
-      <button onclick="sendImage()">📷</button>
-      <button onclick="startVoice()">🎤</button>
-    </div>
-  </div>
-
-</div>
+<div id="list"></div>
 
 <script>
+
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  storageBucket: "zara-muslim-nikah.appspot.com",
 };
 
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.database();
-const storage = firebase.storage();
 
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
+let me;
 
-let currentUser = null;
-let chatWith = "admin";
-
-/* LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
-  if(!user){
-    window.location="login.html";
-    return;
-  }
-  currentUser = user;
+  if(!user) location="login.html";
+  me = user;
   loadUsers();
 });
 
-/* USERS LIST */
 function loadUsers(){
-  db.ref("chats").on("value",snap=>{
+  db.ref("users").on("value",snap=>{
     let html="";
+
     snap.forEach(u=>{
-      let key = u.key;
-      html += `<div class="user" onclick="openChat('${key}')">
-        ${key}
-        <span class="badge">!</span>
+      let d=u.val();
+      let id=u.key;
+
+      if(id===me.uid) return;
+
+      html+=`
+      <div class="user" onclick="openChat('${id}')">
+        <div>
+          ${d.name}
+          <div style="font-size:12px;color:gray">${d.typing?"typing...":""}</div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center">
+
+          <div class="dot ${d.online?'online':''}"></div>
+
+          <span class="badge" id="unread-${id}">0</span>
+
+        </div>
       </div>`;
     });
-    document.getElementById("users").innerHTML = html;
+
+    document.getElementById("list").innerHTML=html;
   });
 }
 
-/* OPEN CHAT */
-function openChat(uid){
-  chatWith = uid;
-  loadMessages();
+function openChat(id){
+  location="chat.html?uid="+id;
 }
 
-/* LOAD MSG */
-function loadMessages(){
-  db.ref("messages/"+chatWith).on("value",snap=>{
-    let html="";
-    snap.forEach(m=>{
-      let d = m.val();
-      html += `<div class="msg ${d.uid==currentUser.uid?'me':'other'}">
-        ${d.text || ""}
-        ${d.image ? `<br><img src="${d.image}" width="150">`:""}
-      </div>`;
-    });
-    document.getElementById("messages").innerHTML = html;
-  });
-}
-
-/* SEND TEXT */
-function sendMsg(){
-  let text = document.getElementById("text").value;
-  db.ref("messages/"+chatWith).push({
-    uid: currentUser.uid,
-    text,
-    time: Date.now()
-  });
-  document.getElementById("text").value="";
-}
-
-/* IMAGE */
-function sendImage(){
-  let input = document.createElement("input");
-  input.type="file";
-  input.onchange = async e=>{
-    let file = e.target.files[0];
-    let ref = storage.ref("chat/"+file.name);
-    await ref.put(file);
-    let url = await ref.getDownloadURL();
-
-    db.ref("messages/"+chatWith).push({
-      uid: currentUser.uid,
-      image:url,
-      time:Date.now()
-    });
-  };
-  input.click();
-}
-
-/* VOICE (simple recorder) */
-let recorder, chunks=[];
-
-function startVoice(){
-  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-    recorder = new MediaRecorder(stream);
-    recorder.start();
-
-    recorder.ondataavailable = e=>{
-      chunks.push(e.data);
-    };
-
-    recorder.onstop = async ()=>{
-      let blob = new Blob(chunks,{type:"audio/webm"});
-      chunks=[];
-
-      let ref = storage.ref("voice/"+Date.now()+".webm");
-      await ref.put(blob);
-      let url = await ref.getDownloadURL();
-
-      db.ref("messages/"+chatWith).push({
-        uid:currentUser.uid,
-        voice:url
-      });
-    };
-
-    setTimeout(()=>recorder.stop(),4000);
-  });
-}
 </script>
 
 </body>
