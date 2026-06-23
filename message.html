@@ -16,38 +16,58 @@ body{
   background:#f0f2f5;
 }
 
+/* HEADER */
 header{
   background:#075e54;
   color:white;
   padding:15px;
   font-size:20px;
   font-weight:bold;
+  text-align:center;
 }
 
-.chat-list{
+/* CHAT LIST */
+.list{
   padding:10px;
 }
 
-.chat-item{
+/* CHAT ITEM */
+.item{
   background:white;
   padding:12px;
   margin-bottom:10px;
   border-radius:10px;
   box-shadow:0 2px 5px rgba(0,0,0,0.1);
   cursor:pointer;
+  transition:0.2s;
 }
 
-.chat-item:hover{
-  background:#e6f7ff;
+.item:hover{
+  transform:scale(1.02);
+  background:#e8f5e9;
 }
 
+/* NAME */
 .name{
   font-weight:bold;
+  font-size:15px;
 }
 
+/* LAST MSG */
 .last{
   font-size:12px;
   color:gray;
+  margin-top:3px;
+}
+
+/* RED DOT */
+.dot{
+  float:right;
+  background:red;
+  color:white;
+  font-size:12px;
+  padding:3px 7px;
+  border-radius:50%;
 }
 </style>
 </head>
@@ -56,7 +76,7 @@ header{
 
 <header>💬 Messages</header>
 
-<div class="chat-list" id="list"></div>
+<div class="list" id="list"></div>
 
 <script>
 
@@ -64,7 +84,10 @@ const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
-  projectId: "zara-muslim-nikah"
+  projectId: "zara-muslim-nikah",
+  storageBucket: "zara-muslim-nikah.appspot.com",
+  messagingSenderId: "690336186269",
+  appId: "1:690336186269:web:8215c1d313c4273c1f7974"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -74,7 +97,7 @@ const db = firebase.database();
 
 const ADMIN = "ngogrant454@gmail.com";
 
-/* CHECK LOGIN */
+/* LOGIN CHECK */
 auth.onAuthStateChanged(user=>{
   if(!user){
     window.location="login.html";
@@ -90,25 +113,36 @@ function loadChats(email){
     let html="";
 
     snap.forEach(c=>{
-
       let data = c.val();
 
       // show only relevant chats
-      if(email===ADMIN || data.user===email || data.admin===email){
+      if(email===ADMIN || data.user===email){
 
         html+=`
-        <div class="chat-item" onclick="openChat('${c.key}')">
-          <div class="name">${data.user}</div>
-          <div class="last">${data.lastMessage || "No message yet"}</div>
+        <div class="item" onclick="openChat('${c.key}')">
+
+          <div class="name">
+            ${data.user || "User"}
+            
+            ${data.unread && data.unread[email] > 0
+              ? `<span class="dot">${data.unread[email]}</span>`
+              : ""
+            }
+          </div>
+
+          <div class="last">
+            ${data.lastMessage || "No messages yet"}
+          </div>
+
         </div>`;
       }
-
     });
 
     document.getElementById("list").innerHTML = html;
   });
 }
 
+/* OPEN CHAT */
 function openChat(id){
   window.location="chat.html?id="+id;
 }
