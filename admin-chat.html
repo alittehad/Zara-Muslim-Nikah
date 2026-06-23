@@ -1,57 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Chats</title>
+<title>Admin Chat Panel</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<style>
-body{font-family:sans-serif;}
-.item{padding:10px;margin:10px;background:#eee;}
-button{margin:5px;}
-</style>
 </head>
 
 <body>
 
-<h2>Admin Dashboard</h2>
-<div id="list"></div>
+<h2>Admin Panel</h2>
+
+<div id="users"></div>
+<div id="chat"></div>
+
+<input id="replyBox" placeholder="Reply...">
+<button onclick="sendReply()">Send</button>
 
 <script>
 
-firebase.initializeApp({
-  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com"
-});
+const firebaseConfig = {
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
+  projectId: "zara-muslim-nikah",
+};
 
-const db=firebase.database();
+firebase.initializeApp(firebaseConfig);
 
-db.ref("chats").on("value",snap=>{
+const db = firebase.database();
+
+const ADMIN_EMAIL = "ngogrant454@gmail.com";
+let currentUser = "";
+
+
+// load users list
+db.ref("messages").on("value", snap=>{
   let html="";
 
-  snap.forEach(c=>{
-    let d=c.val();
-
-    html+=`
-      <div class="item">
-        <b>${d.user}</b><br>
-        ${d.lastMessage||""}
-        <br>
-        <button onclick="openChat('${c.key}')">Open</button>
-        <button onclick="del('${c.key}')">Delete</button>
-      </div>
-    `;
+  snap.forEach(user=>{
+    html += `<button onclick="openChat('${user.key}')">
+      User: ${user.key}
+    </button><br>`;
   });
 
-  document.getElementById("list").innerHTML=html;
+  users.innerHTML = html;
 });
 
-function openChat(id){
-  window.location="chat.html?id="+id;
+function openChat(uid){
+  currentUser = uid;
+
+  db.ref("messages/"+uid).on("value", snap=>{
+    let chat = "";
+
+    snap.forEach(m=>{
+      chat += `<p><b>${m.sender}:</b> ${m.name || m.text || ""}</p>`;
+    });
+
+    document.getElementById("chat").innerHTML = chat;
+  });
 }
 
-function del(id){
-  db.ref("chats/"+id).remove();
-  db.ref("messages/"+id).remove();
+function sendReply(){
+
+  if(!currentUser) return;
+
+  db.ref("messages/"+currentUser).push({
+    text: replyBox.value,
+    sender: "admin",
+    time: Date.now()
+  });
+
+  replyBox.value="";
 }
 
 </script>
