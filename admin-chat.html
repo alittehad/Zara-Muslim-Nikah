@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Chats</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{font-family:sans-serif;}
+.item{padding:10px;margin:10px;background:#eee;}
+button{margin:5px;}
+</style>
+</head>
+
+<body>
+
+<h2>Admin Dashboard</h2>
+<div id="list"></div>
+
+<script>
+
+firebase.initializeApp({
+  databaseURL:"https://zara-muslim-nikah-default-rtdb.firebaseio.com"
+});
+
+const db=firebase.database();
+
+db.ref("chats").on("value",snap=>{
+  let html="";
+
+  snap.forEach(c=>{
+    let d=c.val();
+
+    html+=`
+      <div class="item">
+        <b>${d.user}</b><br>
+        ${d.lastMessage||""}
+        <br>
+        <button onclick="openChat('${c.key}')">Open</button>
+        <button onclick="del('${c.key}')">Delete</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("list").innerHTML=html;
+});
+
+function openChat(id){
+  window.location="chat.html?id="+id;
+}
+
+function del(id){
+  db.ref("chats/"+id).remove();
+  db.ref("messages/"+id).remove();
+}
+
+</script>
+
+</body>
+</html>
