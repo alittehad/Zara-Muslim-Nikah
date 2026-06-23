@@ -1,60 +1,19 @@
-/* 🔥 COMMON BUTTON */
-.topbar button, .btn{
-  padding:12px 18px;
-  border:none;
-  border-radius:12px;
+header{
+  background:linear-gradient(180deg,#67e8f9,#0ea5e9,#0369a1);
   color:white;
-  font-weight:bold;
-  cursor:pointer;
-  transition:0.2s;
-}
-
-/* 🔵 HOME */
-#homeBtn{
-  background:linear-gradient(145deg,#0ea5e9,#0284c7);
-  box-shadow:0 5px 0 #0369a1;
-}
-#homeBtn:active{
-  transform:translateY(4px);
-  box-shadow:0 1px 0 #0369a1;
-}
-
-/* 🟢 ADD */
-#addPostBtn{
-  background:linear-gradient(145deg,#22c55e,#15803d);
-  box-shadow:0 5px 0 #166534;
-}
-#addPostBtn:active{
-  transform:translateY(4px);
-  box-shadow:0 1px 0 #166534;
-}
-
-/* ⚫ ADMIN */
-#adminAddBtn{
-  background:linear-gradient(145deg,#374151,#111827);
-  box-shadow:0 5px 0 #000;
-}
-#adminAddBtn:active{
-  transform:translateY(4px);
-  box-shadow:0 1px 0 #000;
-}
-
-/* 🔴 LOGOUT */
-#logoutBtn{
-  background:linear-gradient(145deg,#ef4444,#b91c1c);
-  box-shadow:0 5px 0 #7f1d1d;
-}
-#logoutBtn:active{
-  transform:translateY(4px);
-  box-shadow:0 1px 0 #7f1d1d;
-}
-
-/* ❤️ MAIN BUTTON */
-.btn{
-  background:linear-gradient(145deg,#f43f5e,#be123c);
-  box-shadow:0 5px 0 #881337;
-}
-.btn:active{
-  transform:translateY(4px);
-  box-shadow:0 1px 0 #881337;
+  text-align:center;
+  padding:18px;
+  font-weight:900;
+  font-size:24px;
+  position:sticky;
+  top:0;
+  z-index:1000;
+  border-bottom:4px solid #075985;
+  box-shadow:
+    0 6px 0 #075985,
+    0 12px 20px rgba(0,0,0,.35);
+  text-shadow:
+    0 2px 0 rgba(0,0,0,.3),
+    0 4px 8px rgba(0,0,0,.25);
+  border-radius:0 0 15px 15px;
 }
