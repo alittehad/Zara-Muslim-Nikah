@@ -10,65 +10,132 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f4f6f9;}
-header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;text-align:center;padding:16px;font-weight:900;font-size:24px;position:sticky;top:0;z-index:1000;}
-.topbar{display:flex;justify-content:center;gap:10px;padding:10px;flex-wrap:wrap;}
-.btn{padding:10px 16px;border:none;border-radius:10px;color:white;font-weight:bold;cursor:pointer;}
-.add{background:#1d4ed8;}
-.admin{background:#111;}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;padding:15px;}
-.card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.1);border:2px solid #d1d5db;}
-.card img{width:100%;height:250px;object-fit:contain;background:#eee;cursor:pointer;}
-.card-body{text-align:center;padding:10px;}
-.card-body button{
-  margin:5px;
-  padding:8px 14px;
+
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#f4f6f9;
+}
+
+header{
+  background:linear-gradient(135deg,#38bdf8,#0ea5e9,#0369a1);
+  color:white;
+  text-align:center;
+  padding:16px;
+  font-weight:900;
+  font-size:24px;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.topbar{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  padding:10px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  padding:10px 16px;
   border:none;
   border-radius:10px;
-  cursor:pointer;
   color:white;
   font-weight:bold;
-  font-size:14px;
-
-  transform:translateY(0);
-  transition:all .2s ease;
-
-  box-shadow:
-    0 5px 0 rgba(0,0,0,.25),
-    0 8px 15px rgba(0,0,0,.2);
+  cursor:pointer;
 }
 
-.card-body button:hover{
-  transform:translateY(-2px);
+.add{background:#1d4ed8;}
+.admin{background:#111;}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:15px;
+  padding:15px;
 }
 
-.card-body button:active{
-  transform:translateY(3px);
-
-  box-shadow:
-    0 2px 0 rgba(0,0,0,.25),
-    0 4px 8px rgba(0,0,0,.2);
+.card{
+  background:white;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* RISHTA BUTTON */
+.card img{
+  width:100%;
+  height:250px;
+  object-fit:contain;
+  background:#eee;
+}
+
+.card-body{
+  text-align:center;
+  padding:10px;
+}
+
 .like{
-  background:linear-gradient(to bottom,#22c55e,#15803d);
-  border-bottom:3px solid #14532d;
+  background:#22c55e;
+  border:none;
+  padding:8px 12px;
+  border-radius:8px;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-/* EDIT BUTTON */
-.edit{
-  background:linear-gradient(to bottom,#3b82f6,#1d4ed8);
-  border-bottom:3px solid #1e3a8a;
+/* ✅ SIDE FLOATING CHAT BUTTON (FIXED) */
+.chat-btn{
+  position:fixed;
+  right:20px;
+  top:50%;
+  transform:translateY(-50%);
+
+  padding:14px 18px;
+  font-size:16px;
+  font-weight:bold;
+
+  border:none;
+  border-radius:50px;
+
+  background:linear-gradient(135deg,#0ea5e9,#0369a1);
+  color:white;
+  cursor:pointer;
+
+  box-shadow:
+    0 6px 0 #075985,
+    0 15px 25px rgba(0,0,0,0.25);
+
+  z-index:9999;
+  transition:0.2s;
 }
 
-/* DELETE BUTTON */
-.delete{
-  background:linear-gradient(to bottom,#ef4444,#b91c1c);
-  border-bottom:3px solid #7f1d1d;
+.chat-btn:hover{
+  transform:translateY(-50%) scale(1.1);
 }
-.modal{position:fixed;inset:0;display:none;justify-content:center;align-items:center;background:rgba(0,0,0,0.6);z-index:9999;}
-.modal-content{background:white;width:92%;max-width:500px;padding:18px;border-radius:12px;max-height:85vh;overflow-y:auto;}
+
+.chat-btn:active{
+  transform:translateY(-50%) scale(0.95);
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.6);
+}
+
+.modal-content{
+  background:white;
+  width:90%;
+  max-width:500px;
+  padding:15px;
+  border-radius:10px;
+}
+
 </style>
 </head>
 
@@ -80,6 +147,9 @@ header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;te
   <button class="btn add" onclick="goAdd()">प्रोफ़ाइल जोड़ें</button>
   <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">👑 Admin</button>
 </div>
+
+<!-- ✅ CHAT BUTTON -->
+<button class="chat-btn" onclick="openChat()">💬 Message</button>
 
 <div class="grid" id="grid"></div>
 
@@ -110,14 +180,11 @@ const db = firebase.database();
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let isAdmin = false;
 
-/* LOAD PROFILES ALWAYS */
 loadProfiles();
 
-/* AUTH ONLY FOR ADMIN UI */
 auth.onAuthStateChanged(user=>{
   if(user){
     isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
-
     if(isAdmin){
       document.getElementById("adminPanelBtn").style.display="inline-block";
     }
@@ -126,30 +193,19 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* LOAD DATA */
 function loadProfiles(){
   db.ref("profiles").on("value",snap=>{
     let html="";
-
     snap.forEach(child=>{
       let d = child.val();
 
       html+=`
       <div class="card">
-
         <img src="${d.photo}" onclick="requireLogin('modal','${child.key}')">
-
         <div class="card-body">
           <h3>${d.name}</h3>
           <p>${d.city}</p>
-
           <button class="like" onclick="requireLogin('payment')">💍 रिश्ता करें</button>
-
-          ${isAdmin ? `
-            <button class="edit" onclick="editProfile('${child.key}')">✏ Edit</button>
-            <button class="delete" onclick="deleteProfile('${child.key}')">🗑 Delete</button>
-          ` : ""}
-
         </div>
       </div>`;
     });
@@ -158,9 +214,7 @@ function loadProfiles(){
   });
 }
 
-/* 🔐 LOGIN CHECK ON CLICK */
 function requireLogin(type,id){
-
   if(!auth.currentUser){
     window.location="login.html";
     return;
@@ -175,7 +229,6 @@ function requireLogin(type,id){
   }
 }
 
-/* MODAL */
 function openModal(id){
   db.ref("profiles/"+id).once("value").then(snap=>{
     let d = snap.val();
@@ -195,7 +248,6 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* NAV */
 function goAdd(){
   if(!auth.currentUser){
     window.location="login.html";
@@ -208,12 +260,9 @@ function goAdmin(){
   window.location="admin.html";
 }
 
-function editProfile(id){
-  window.location="admin-add.html?id="+id;
-}
-
-function deleteProfile(id){
-  db.ref("profiles/"+id).remove();
+/* ✅ CHAT OPEN FIXED */
+function openChat(){
+  window.location="message.html";
 }
 
 </script>
