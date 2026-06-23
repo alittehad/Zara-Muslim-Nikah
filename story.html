@@ -1,1 +1,30 @@
+<!-- story.html -->
+<!DOCTYPE html>
+<html>
+<head>
+<title>Stories</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
 
+<body>
+
+<h2>Stories</h2>
+<input type="file" onchange="upload(this)">
+
+<script>
+function upload(e){
+  let file=e.files[0];
+  let ref=firebase.storage().ref("stories/"+file.name);
+  ref.put(file).then(()=>{
+    ref.getDownloadURL().then(url=>{
+      firebase.database().ref("stories").push({
+        url:url,
+        time:Date.now()
+      });
+    });
+  });
+}
+</script>
+
+</body>
+</html>
