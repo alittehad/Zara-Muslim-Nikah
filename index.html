@@ -38,6 +38,15 @@ header{background:linear-gradient(135deg,#38bdf8,#0ea5e9,#e0f2fe);color:white;te
   <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">👑 Admin</button>
 </div>
 
+<div class="grid" id="grid"></div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
 <script>
 
 const firebaseConfig = {
