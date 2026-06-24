@@ -49,38 +49,27 @@ header{
 .add{background:#1d4ed8;}
 .admin{background:#111;}
 
-.grid
-.card{
-  background:white;
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:15px;
+  padding:15px;
 }
 
-.card img{
-  width:100%;
-  height:180px;
-  object-fit:cover;
-  display:block;
+@media(max-width:768px){
+  .grid{
+    grid-template-columns:1fr;
+  }
 }
 
-
-
-
-
-
-
-  
 .card{
   background:white;
   border-radius:18px;
   overflow:hidden;
   border:2px solid #dbeafe;
-
   box-shadow:
     0 8px 0 #cbd5e1,
     0 15px 30px rgba(0,0,0,.15);
-
   transition:.3s;
 }
 
@@ -90,11 +79,18 @@ header{
     0 12px 0 #cbd5e1,
     0 25px 40px rgba(0,0,0,.2);
 }
-.card-body{
-  text-align:center;
-  padding:10px;
+
+.card img{
+  width:100%;
+  height:250px;
+  object-fit:cover;
+  display:block;
 }
 
+.card-body{
+  text-align:center;
+  padding:12px;
+}
 .like{
   background:linear-gradient(180deg,#22c55e,#16a34a,#15803d);
   color:#fff;
