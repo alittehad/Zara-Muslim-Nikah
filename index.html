@@ -292,15 +292,24 @@ function openModal(id){
 
     document.getElementById("modalBody").innerHTML=`
       <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%;border-radius:10px;">
-      <p>${d.city}</p>
-      <p>${d.bio}</p>
+
+      <img src="${d.photo}"
+      style="
+      width:100%;
+      height:auto;
+      max-height:500px;
+      object-fit:contain;
+      border-radius:10px;
+      background:#f1f5f9;
+      ">
+
+      <p><b>City:</b> ${d.city}</p>
+      <p>${d.bio || ""}</p>
     `;
 
     document.getElementById("modal").style.display="flex";
   });
 }
-
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
