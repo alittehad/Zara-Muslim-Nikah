@@ -89,6 +89,7 @@ header{
   cursor:pointer;
 }
 
+/* ADMIN DELETE BUTTON */
 .delete-btn{
   margin-top:10px;
   width:90%;
@@ -101,7 +102,6 @@ header{
   cursor:pointer;
 }
 
-/* modal */
 .modal{
   position:fixed;
   top:0;left:0;
@@ -163,7 +163,7 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 let isAdmin = false;
 
-/* ✅ AUTH (FIXED - NO LOOP) */
+/* 🔥 SAFE LOGIN STATE */
 auth.onAuthStateChanged(user => {
 
   currentUser = user || null;
@@ -177,7 +177,7 @@ auth.onAuthStateChanged(user => {
   loadProfiles();
 });
 
-/* ✅ LOAD PROFILES */
+/* 🔥 LOAD CARDS */
 function loadProfiles(){
 
   db.ref("profiles").on("value", snap=>{
@@ -217,16 +217,15 @@ function loadProfiles(){
   });
 }
 
-/* ✅ LOGIN FIX (NO RELOGIN LOOP) */
+/* 🔥 LOGIN FIX (NO LOOP) */
 function requireLogin(type,id){
 
   if(currentUser){
-    handleAction(type,id);
-    return;
+    return handleAction(type,id);
   }
 
   const unsub = auth.onAuthStateChanged(user=>{
-    unsub(); // stop listener immediately
+    unsub();
 
     if(user){
       currentUser = user;
@@ -283,8 +282,13 @@ function goAdmin(){
   window.location="admin.html";
 }
 
-/* DELETE */
+/* DELETE (ONLY ADMIN) */
 function deleteProfile(id){
+  if(!isAdmin){
+    alert("Unauthorized");
+    return;
+  }
+
   if(confirm("Delete this profile?")){
     db.ref("profiles/"+id).remove();
   }
