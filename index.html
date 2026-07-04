@@ -70,6 +70,7 @@ header{
   object-fit:contain;
   background:#f8fafc;
   padding:8px;
+  cursor:pointer;
 }
 
 .card-body{
@@ -161,12 +162,11 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 let isAdmin = false;
 
-/* ✅ SINGLE AUTH LISTENER (FIXED) */
+/* ✅ AUTH */
 auth.onAuthStateChanged(user => {
   currentUser = user || null;
 
-  isAdmin = user && user.email &&
-    user.email.toLowerCase() === ADMIN_EMAIL;
+  isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
   document.getElementById("adminPanelBtn").style.display =
     isAdmin ? "inline-block" : "none";
@@ -174,13 +174,14 @@ auth.onAuthStateChanged(user => {
   loadProfiles();
 });
 
-/* ✅ LOAD CARDS */
+/* ✅ LOAD PROFILES */
 function loadProfiles(){
-  db.ref("profiles").on("value", snap => {
+
+  db.ref("profiles").on("value", snap=>{
 
     let html = "";
 
-    snap.forEach(child => {
+    snap.forEach(child=>{
 
       let d = child.val();
       let id = child.key;
@@ -188,14 +189,14 @@ function loadProfiles(){
       html += `
       <div class="card">
 
-        <img src="${d.photo}" onclick="openProfile('${id}')">
+        <img src="${d.photo}" onclick="requireLogin(()=>openProfile('${id}'))">
 
         <div class="card-body">
 
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
-          <button class="like" onclick="goPayment()">
+          <button class="like" onclick="requireLogin(goPayment)">
             💍 रिश्ता करें
           </button>
 
@@ -213,32 +214,28 @@ function loadProfiles(){
   });
 }
 
-/* ✅ FAST LOGIN CHECK (NO BUG) */
+/* ✅ LOGIN WRAPPER */
 function requireLogin(callback){
-
   if(currentUser){
     callback();
     return;
   }
-
   window.location = "login.html";
 }
 
 /* OPEN PROFILE */
 function openProfile(id){
-  requireLogin(() => {
-    db.ref("profiles/"+id).once("value").then(snap=>{
-      let d = snap.val();
+  db.ref("profiles/"+id).once("value").then(snap=>{
+    let d = snap.val();
 
-      document.getElementById("modalBody").innerHTML = `
-        <h2>${d.name}</h2>
-        <img src="${d.photo}" style="width:100%;border-radius:10px;">
-        <p><b>City:</b> ${d.city}</p>
-        <p>${d.bio || ""}</p>
-      `;
+    document.getElementById("modalBody").innerHTML = `
+      <h2>${d.name}</h2>
+      <img src="${d.photo}" style="width:100%;border-radius:10px;">
+      <p><b>City:</b> ${d.city}</p>
+      <p>${d.bio || ""}</p>
+    `;
 
-      document.getElementById("modal").style.display = "flex";
-    });
+    document.getElementById("modal").style.display = "flex";
   });
 }
 
@@ -251,7 +248,7 @@ function goPayment(){
   window.location="payment.html";
 }
 
-/* MODAL CLOSE */
+/* CLOSE MODAL */
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
@@ -265,12 +262,12 @@ function goAdd(){
   window.location="profile-submit.html";
 }
 
-/* ADMIN PAGE */
+/* ADMIN */
 function goAdmin(){
   window.location="admin.html";
 }
 
-/* DELETE (SECURE) */
+/* DELETE SAFE */
 function deleteProfile(id){
 
   if(!isAdmin){
@@ -282,9 +279,7 @@ function deleteProfile(id){
     db.ref("profiles/"+id).remove();
   }
 }
-
 </script>
-
 
 </body>
 </html>
