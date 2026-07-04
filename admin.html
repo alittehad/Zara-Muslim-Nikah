@@ -133,6 +133,7 @@ button{
 
 <script>
 
+/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnxk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -145,26 +146,33 @@ const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+/* 🔥 FIXED LOGIN SYSTEM */
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+.then(() => {
 
-auth.onAuthStateChanged(user=>{
+  auth.onAuthStateChanged(user => {
 
-  if(!user){
-    window.location.href="login.html";
-    return;
-  }
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
 
-  if((user.email||"").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
-    alert("Admin Only");
-    auth.signOut();
-    window.location.href="login.html";
-    return;
-  }
+    const email = (user.email || "").toLowerCase();
 
-  loadData();
+    if (email !== ADMIN_EMAIL.toLowerCase()) {
+      alert("Admin Only Access");
+      auth.signOut().then(() => {
+        window.location.href = "login.html";
+      });
+      return;
+    }
+
+    loadData();
+  });
+
 });
 
-/* LOAD DATA */
+/* LOAD USERS */
 function loadData(){
 
   db.ref("users").on("value",snap=>{
@@ -263,7 +271,6 @@ function goHome(){
   window.location.href="index.html";
 }
 
-/* ➕ NEW BUTTON FUNCTION */
 function goAdd(){
   window.location.href="admin-add.html";
 }
