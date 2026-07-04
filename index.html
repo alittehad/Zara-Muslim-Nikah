@@ -133,7 +133,6 @@ header{
 
 <div class="grid" id="grid"></div>
 
-<!-- modal -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
@@ -163,7 +162,7 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 let isAdmin = false;
 
-/* 🔥 SAFE AUTH (NO LOOP) */
+/* ✅ AUTH FIX */
 auth.onAuthStateChanged(user => {
   currentUser = user || null;
 
@@ -176,7 +175,7 @@ auth.onAuthStateChanged(user => {
   loadProfiles();
 });
 
-/* 🔥 LOAD DATA */
+/* ✅ LOAD CARDS */
 function loadProfiles(){
 
   db.ref("profiles").on("value", snap=>{
@@ -191,14 +190,14 @@ function loadProfiles(){
       html += `
       <div class="card">
 
-        <img src="${d.photo}" onclick="requireLogin('modal','${id}')">
+        <img src="${d.photo}" onclick="openProfile('${id}')">
 
         <div class="card-body">
 
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
-          <button class="like" onclick="requireLogin('payment')">
+          <button class="like" onclick="goPayment()">
             💍 रिश्ता करें
           </button>
 
@@ -216,42 +215,14 @@ function loadProfiles(){
   });
 }
 
-/* 🔥 LOGIN SAFE FIX */
-function requireLogin(type,id){
-
-  if(currentUser){
-    handleAction(type,id);
+/* ✅ OPEN PROFILE (NO LOGIN BUG) */
+function openProfile(id){
+  if(!currentUser){
+    window.location="login.html";
     return;
   }
 
-  const unsub = auth.onAuthStateChanged(user=>{
-    unsub();
-
-    if(user){
-      currentUser = user;
-      handleAction(type,id);
-    } else {
-      window.location="login.html";
-    }
-  });
-}
-
-function handleAction(type,id){
-
-  if(type==="payment"){
-    window.location="payment.html";
-  }
-
-  if(type==="modal"){
-    openModal(id);
-  }
-}
-
-/* MODAL */
-function openModal(id){
-
   db.ref("profiles/"+id).once("value").then(snap=>{
-
     let d = snap.val();
 
     document.getElementById("modalBody").innerHTML=`
@@ -265,11 +236,21 @@ function openModal(id){
   });
 }
 
+/* PAYMENT */
+function goPayment(){
+  if(!currentUser){
+    window.location="login.html";
+    return;
+  }
+  window.location="payment.html";
+}
+
+/* MODAL CLOSE */
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* NAV */
+/* ADD PROFILE */
 function goAdd(){
   if(!currentUser){
     window.location="login.html";
@@ -278,11 +259,12 @@ function goAdd(){
   window.location="profile-submit.html";
 }
 
+/* ADMIN */
 function goAdmin(){
   window.location="admin.html";
 }
 
-/* DELETE (ADMIN ONLY SAFE) */
+/* DELETE SAFE */
 function deleteProfile(id){
 
   if(!isAdmin){
