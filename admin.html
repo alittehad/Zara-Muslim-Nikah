@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Add</title>
+<title>Admin Dashboard</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -11,103 +11,145 @@
 <style>
 body{
   font-family:sans-serif;
+  margin:0;
   background:#f4f6f9;
-  padding:20px;
 }
 
-.box{
-  max-width:420px;
-  margin:auto;
-  background:white;
-  padding:15px;
-  border-radius:12px;
-}
-
-input,textarea,select,button{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border-radius:8px;
-  border:1px solid #ddd;
-}
-
-button{
+header{
   background:#0f766e;
   color:white;
-  border:none;
-  font-weight:bold;
+  padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
+
+header button{
+  margin-left:8px;
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.addBtn{background:#16a34a;color:white;}
+.homeBtn{background:#111;color:white;}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:15px;
+  padding:15px;
+}
+
+.card{
+  background:white;
+  padding:10px;
+  border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.card img{
+  width:100%;
+  height:180px;
+  object-fit:cover;
+  border-radius:10px;
+}
+
+button.action{
+  width:100%;
+  margin-top:5px;
+  padding:8px;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.approve{background:green;color:white;}
+.reject{background:red;color:white;}
+.delete{background:#111;color:white;}
 </style>
 </head>
 
 <body>
 
-<div class="box">
+<header>
+  <div>👑 Admin Dashboard (No Login)</div>
 
-<h2>👑 Admin Add Profile</h2>
+  <div>
+    <button class="addBtn" onclick="goAdd()">➕ Add</button>
+    <button class="homeBtn" onclick="goHome()">🏠 Home</button>
+  </div>
+</header>
 
-<button onclick="goBack()" style="background:#111">⬅ Back</button>
-
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<input id="city" placeholder="City">
-<input id="phone" placeholder="Phone">
-<textarea id="bio" placeholder="Bio"></textarea>
-
-<input type="file" id="file">
-
-<button onclick="save()">Save</button>
-
-</div>
+<div class="grid" id="grid"></div>
 
 <script>
 
 firebase.initializeApp({
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnxk2nFDG_M65Wc",
+  authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
 });
 
 const db = firebase.database();
 
-/* SAVE */
-async function save(){
+/* LOAD USERS */
+function loadUsers(){
+  db.ref("users").on("value", snap => {
 
-  let file = document.getElementById("file").files[0];
+    let html = "";
 
-  let url = "";
+    snap.forEach(child => {
 
-  if(file){
-    let form = new FormData();
-    form.append("image", file);
+      let id = child.key;
+      let d = child.val();
 
-    let res = await fetch("https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",{
-      method:"POST",
-      body:form
+      html += `
+      <div class="card">
+        <img src="${d.photo || 'https://via.placeholder.com/300'}">
+        <h3>${d.name || '-'}</h3>
+        <p>${d.city || '-'}</p>
+
+        <button class="action approve" onclick="approve('${id}')">Approve</button>
+        <button class="action reject" onclick="reject('${id}')">Reject</button>
+        <button class="action delete" onclick="del('${id}')">Delete</button>
+      </div>
+      `;
     });
 
-    let data = await res.json();
-    url = data.data.url;
-  }
-
-  db.ref("users").push({
-    name:document.getElementById("name").value,
-    age:document.getElementById("age").value,
-    city:document.getElementById("city").value,
-    phone:document.getElementById("phone").value,
-    bio:document.getElementById("bio").value,
-    photo:url,
-    status:"approved",
-    time:Date.now()
+    document.getElementById("grid").innerHTML = html;
   });
-
-  alert("Saved!");
-  window.location="admin.html";
 }
 
-/* BACK */
-function goBack(){
-  window.location="admin.html";
+/* ACTIONS */
+function approve(id){
+  db.ref("users/"+id+"/status").set("approved");
 }
+
+function reject(id){
+  db.ref("users/"+id+"/status").set("pending");
+}
+
+function del(id){
+  if(confirm("Delete user?")){
+    db.ref("users/"+id).remove();
+  }
+}
+
+/* NAV */
+function goAdd(){
+  window.location = "admin-add.html";
+}
+
+function goHome(){
+  window.location = "index.html";
+}
+
+/* START */
+loadUsers();
 
 </script>
 
