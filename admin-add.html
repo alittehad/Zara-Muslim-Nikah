@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
@@ -51,30 +50,23 @@ button{
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-.approved-card{border:3px solid #16a34a;}
-.pending-card{border:3px solid #dc2626;}
-
 .card img{
   width:100%;
   height:200px;
   object-fit:cover;
   border-radius:10px;
 }
-
 </style>
 </head>
 
 <body>
 
 <header>
-  <div>Admin Panel</div>
+  <div>👑 Admin Panel (No Login)</div>
 
   <div>
-    <!-- 🔥 NEW BUTTON ADDED -->
     <button class="addBtn" onclick="goAdd()">➕ Admin Add</button>
-
     <button class="homeBtn" onclick="goHome()">🏠 Home</button>
-    <button class="logoutBtn" onclick="logout()">Logout</button>
   </div>
 </header>
 
@@ -89,28 +81,7 @@ firebase.initializeApp({
   projectId: "zara-muslim-nikah"
 });
 
-const auth = firebase.auth();
 const db = firebase.database();
-
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
-
-/* ✅ FIXED LOGIN */
-auth.onAuthStateChanged(user => {
-
-  if(!user){
-    window.location = "login.html";
-    return;
-  }
-
-  if(user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
-    alert("Admin Only");
-    auth.signOut();
-    window.location = "index.html";
-    return;
-  }
-
-  loadData();
-});
 
 /* LOAD DATA */
 function loadData(){
@@ -121,12 +92,10 @@ function loadData(){
       let d = child.val();
 
       html += `
-      <div class="card ${d.status=='approved'?'approved-card':'pending-card'}">
-
+      <div class="card">
         <img src="${d.photo || ''}">
-        <h3>${d.name}</h3>
-        <p>${d.city}</p>
-
+        <h3>${d.name || '-'}</h3>
+        <p>${d.city || '-'}</p>
       </div>`;
     });
 
@@ -134,7 +103,7 @@ function loadData(){
   });
 }
 
-/* BUTTON ACTION */
+/* NAV */
 function goAdd(){
   window.location = "admin-add.html";
 }
@@ -143,11 +112,8 @@ function goHome(){
   window.location = "index.html";
 }
 
-function logout(){
-  auth.signOut().then(()=>{
-    window.location = "index.html";
-  });
-}
+/* START */
+loadData();
 
 </script>
 
