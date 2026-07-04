@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Add Profile</title>
+<title>Admin Dashboard</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -13,460 +12,223 @@
 <style>
 body{
   font-family:sans-serif;
+  margin:0;
   background:#f4f6f9;
-  padding:20px;
 }
 
-.box{
-  max-width:420px;
-  margin:auto;
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-input,textarea,select{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border:1px solid #ddd;
-  border-radius:8px;
-  font-size:15px;
-}
-
-button{
-  width:100%;
-  padding:12px;
+header{
   background:#0f766e;
   color:white;
+  padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+header button{
+  margin-left:8px;
+  padding:8px 12px;
   border:none;
   border-radius:8px;
-  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.addBtn{background:#16a34a;color:white;}
+.homeBtn{background:#111;color:white;}
+.logoutBtn{background:#dc2626;color:white;}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:15px;
+  padding:15px;
+}
+
+.card{
+  background:white;
+  border-radius:12px;
+  padding:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  cursor:pointer;
+}
+
+.card img{
+  width:100%;
+  height:180px;
+  object-fit:cover;
+  border-radius:10px;
+}
+
+button.action{
+  width:100%;
+  margin-top:5px;
+  padding:8px;
+  border:none;
+  border-radius:8px;
   cursor:pointer;
   font-weight:bold;
 }
 
-img{
-  width:100%;
-  margin-top:10px;
-  border-radius:10px;
+.approve{background:green;color:white;}
+.reject{background:red;color:white;}
+.delete{background:#111;color:white;}
+
+.modal{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
   display:none;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content{
+  background:white;
+  padding:15px;
+  border-radius:12px;
+  width:90%;
+  max-width:400px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
+<header>
+  <div><b>👑 Admin Dashboard</b></div>
 
-<h2>👑 Admin Add Profile</h2>
+  <div>
+    <button class="addBtn" onclick="goAdd()">➕ Add</button>
+    <button class="homeBtn" onclick="goHome()">🏠 Home</button>
+    <button class="logoutBtn" onclick="logout()">Logout</button>
+  </div>
+</header>
 
+<div class="grid" id="grid"></div>
 
-  <button onclick="goHome()" style="margin-bottom:15px;background:#111;">
-  🏠 Home
-</button>
-
-<input id="name" placeholder="Full Name">
-
-<input id="age" type="number" placeholder="Age">
-
-<select id="gender">
-  <option value="">Select Gender</option>
-  <option>Male</option>
-  <option>Female</option>
-</select>
-
-<input id="city" placeholder="City">
-
-<input id="phone" placeholder="Phone Number">
-
-<input id="education" placeholder="Education">
-
-<input id="profession" placeholder="Profession">
-
-<input id="religion" placeholder="Religion">
-
-<select id="marital">
-  <option value="">Marital Status</option>
-  <option>Single</option>
-  <option>Divorced</option>
-  <option>Widow</option>
-</select>
-
-<input id="height" placeholder="Height">
-
-<textarea id="bio" placeholder="Write Bio"></textarea>
-
-<input type="file" id="photo" onchange="preview()">
-
-<img id="previewImg">
-
-<button onclick="save()">Save Profile</button>
-
+<!-- MODAL -->
+<div class="modal" id="modal" onclick="closeModal(event)">
+  <div class="modal-content" id="modalBody"></div>
 </div>
 
 <script>
-
-/* FIREBASE CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+firebase.initializeApp({
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnxk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com/",
-  projectId: "zara-muslim-nikah"
-};
+  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com"
+});
 
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.database();
 const auth = firebase.auth();
+const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 
-/* ADMIN CHECK */
-auth.onAuthStateChanged(user=>{
+/* LOGIN FIX */
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+.then(() => {
 
-  if(!user){
-    window.location="login.html";
-    return;
-  }
+  auth.onAuthStateChanged(user => {
 
-  if((user.email || "").toLowerCase() !== ADMIN_EMAIL){
-    alert("Only admin allowed");
-    window.location="index.html";
-  }
+    if(!user){
+      window.location = "index.html";
+      return;
+    }
+
+    if(user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
+      alert("Admin only");
+      auth.signOut();
+      window.location = "index.html";
+      return;
+    }
+
+    loadUsers();
+  });
+
 });
 
-/* IMAGE PREVIEW */
-function preview(){
+/* LOAD USERS */
+function loadUsers(){
+  db.ref("users").on("value", snap => {
 
-  let file = document.getElementById("photo").files[0];
+    let html = "";
 
-  if(!file) return;
+    snap.forEach(child => {
 
-  let img = document.getElementById("previewImg");
+      let id = child.key;
+      let d = child.val();
 
-  img.src = URL.createObjectURL(file);
-  img.style.display="block";
-}
+      html += `
+      <div class="card" onclick="openUser('${id}')">
+        <img src="${d.photo || 'https://via.placeholder.com/300'}">
+        <h3>${d.name}</h3>
+        <p>${d.city}</p>
 
-/* SAVE PROFILE */
-async function save(){
-
-  const name = document.getElementById("name").value.trim();
-  const age = document.getElementById("age").value.trim();
-  const gender = document.getElementById("gender").value;
-  const city = document.getElementById("city").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const education = document.getElementById("education").value.trim();
-  const profession = document.getElementById("profession").value.trim();
-  const religion = document.getElementById("religion").value.trim();
-  const marital = document.getElementById("marital").value;
-  const height = document.getElementById("height").value.trim();
-  const bio = document.getElementById("bio").value.trim();
-
-  const file = document.getElementById("photo").files[0];
-
-  if(!name || !age || !gender || !city || !phone || !file){
-    alert("Please fill required fields");
-    return;
-  }
-
-  try{
-
-    /* IMAGE UPLOAD */
-    let formData = new FormData();
-    formData.append("image", file);
-
-    let res = await fetch(
-      "https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",
-      {
-        method:"POST",
-        body:formData
-      }
-    );
-
-    let data = await res.json();
-
-    let imageUrl = data.data.url;
-
-    /* SAVE FIREBASE */
-    await db.ref("profiles").push({
-
-      name,
-      age,
-      gender,
-      city,
-      phone,
-      education,
-      profession,
-      religion,
-      marital,
-      height,
-      bio,
-
-      photo:imageUrl,
-
-      status:"approved",
-
-      premium:false,
-      featured:false,
-
-      time:Date.now()
+        <button class="action approve" onclick="event.stopPropagation(); approve('${id}')">Approve</button>
+        <button class="action reject" onclick="event.stopPropagation(); reject('${id}')">Reject</button>
+        <button class="action delete" onclick="event.stopPropagation(); del('${id}')">Delete</button>
+      </div>
+      `;
     });
 
-    alert("Profile Added Successfully ✔️");
+    document.getElementById("grid").innerHTML = html;
+  });
+}
 
-    window.location="index.html";
+/* OPEN PROFILE */
+function openUser(id){
+  db.ref("users/"+id).once("value").then(snap => {
+    let d = snap.val();
 
-  }catch(err){
+    document.getElementById("modalBody").innerHTML = `
+      <img src="${d.photo}" style="width:100%;border-radius:10px">
+      <h3>${d.name}</h3>
+      <p>${d.age} | ${d.city}</p>
+      <p>${d.phone}</p>
+      <p>${d.bio}</p>
+    `;
 
-    console.log(err);
-    alert("Error: " + err.message);
+    document.getElementById("modal").style.display = "flex";
+  });
+}
+
+function closeModal(e){
+  if(e.target.id === "modal"){
+    document.getElementById("modal").style.display = "none";
   }
+}
+
+/* ACTIONS */
+function approve(id){
+  db.ref("users/"+id+"/status").set("approved");
+}
+
+function reject(id){
+  db.ref("users/"+id+"/status").set("pending");
+}
+
+function del(id){
+  if(confirm("Delete user?")){
+    db.ref("users/"+id).remove();
+  }
+}
+
+/* NAV */
+function goAdd(){
+  window.location = "admin-add.html";
 }
 
 function goHome(){
   window.location = "index.html";
 }
 
-  
-</script>
-
-</body>
-</html><!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Add Profile</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<style>
-body{
-  font-family:sans-serif;
-  background:#f4f6f9;
-  padding:20px;
+function logout(){
+  auth.signOut().then(()=> {
+    window.location = "index.html";
+  });
 }
-
-.box{
-  max-width:420px;
-  margin:auto;
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-input,textarea,select{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border:1px solid #ddd;
-  border-radius:8px;
-  font-size:15px;
-}
-
-button{
-  width:100%;
-  padding:12px;
-  background:#0f766e;
-  color:white;
-  border:none;
-  border-radius:8px;
-  font-size:16px;
-  cursor:pointer;
-  font-weight:bold;
-}
-
-img{
-  width:100%;
-  margin-top:10px;
-  border-radius:10px;
-  display:none;
-}
-</style>
-</head>
-
-<body>
-
-<div class="box">
-
-<h2>👑 Admin Add Profile</h2>
-
-
-  <button onclick="goHome()" style="margin-bottom:15px;background:#111;">
-  🏠 Home
-</button>
-
-<input id="name" placeholder="Full Name">
-
-<input id="age" type="number" placeholder="Age">
-
-<select id="gender">
-  <option value="">Select Gender</option>
-  <option>Male</option>
-  <option>Female</option>
-</select>
-
-<input id="city" placeholder="City">
-
-<input id="phone" placeholder="Phone Number">
-
-<input id="education" placeholder="Education">
-
-<input id="profession" placeholder="Profession">
-
-<input id="religion" placeholder="Religion">
-
-<select id="marital">
-  <option value="">Marital Status</option>
-  <option>Single</option>
-  <option>Divorced</option>
-  <option>Widow</option>
-</select>
-
-<input id="height" placeholder="Height">
-
-<textarea id="bio" placeholder="Write Bio"></textarea>
-
-<input type="file" id="photo" onchange="preview()">
-
-<img id="previewImg">
-
-<button onclick="save()">Save Profile</button>
-
-</div>
-
-<script>
-
-/* FIREBASE CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
-  authDomain: "zara-muslim-nikah.firebaseapp.com",
-  databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com/",
-  projectId: "zara-muslim-nikah"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.database();
-const auth = firebase.auth();
-
-const ADMIN_EMAIL = "ngogrant454@gmail.com";
-
-/* ADMIN CHECK */
-auth.onAuthStateChanged(user=>{
-
-  if(!user){
-    window.location="login.html";
-    return;
-  }
-
-  if((user.email || "").toLowerCase() !== ADMIN_EMAIL){
-    alert("Only admin allowed");
-    window.location="index.html";
-  }
-});
-
-/* IMAGE PREVIEW */
-function preview(){
-
-  let file = document.getElementById("photo").files[0];
-
-  if(!file) return;
-
-  let img = document.getElementById("previewImg");
-
-  img.src = URL.createObjectURL(file);
-  img.style.display="block";
-}
-
-/* SAVE PROFILE */
-async function save(){
-
-  const name = document.getElementById("name").value.trim();
-  const age = document.getElementById("age").value.trim();
-  const gender = document.getElementById("gender").value;
-  const city = document.getElementById("city").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const education = document.getElementById("education").value.trim();
-  const profession = document.getElementById("profession").value.trim();
-  const religion = document.getElementById("religion").value.trim();
-  const marital = document.getElementById("marital").value;
-  const height = document.getElementById("height").value.trim();
-  const bio = document.getElementById("bio").value.trim();
-
-  const file = document.getElementById("photo").files[0];
-
-  if(!name || !age || !gender || !city || !phone || !file){
-    alert("Please fill required fields");
-    return;
-  }
-
-  try{
-
-    /* IMAGE UPLOAD */
-    let formData = new FormData();
-    formData.append("image", file);
-
-    let res = await fetch(
-      "https://api.imgbb.com/1/upload?key=368731d88d58b4fa0bdd5abdd2c47f72",
-      {
-        method:"POST",
-        body:formData
-      }
-    );
-
-    let data = await res.json();
-
-    let imageUrl = data.data.url;
-
-    /* SAVE FIREBASE */
-    await db.ref("profiles").push({
-
-      name,
-      age,
-      gender,
-      city,
-      phone,
-      education,
-      profession,
-      religion,
-      marital,
-      height,
-      bio,
-
-      photo:imageUrl,
-
-      status:"approved",
-
-      premium:false,
-      featured:false,
-
-      time:Date.now()
-    });
-
-    alert("Profile Added Successfully ✔️");
-
-    window.location="index.html";
-
-  }catch(err){
-
-    console.log(err);
-    alert("Error: " + err.message);
-  }
-}
-
-function goHome(){
-  window.location = "index.html";
-}
-
-  
 </script>
 
 </body>
