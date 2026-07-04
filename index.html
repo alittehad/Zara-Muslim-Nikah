@@ -89,6 +89,19 @@ header{
   cursor:pointer;
 }
 
+/* delete button */
+.delete-btn{
+  margin-top:10px;
+  width:90%;
+  background:#dc2626;
+  color:#fff;
+  border:none;
+  padding:10px;
+  border-radius:10px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
 /* modal */
 .modal{
   position:fixed;
@@ -131,6 +144,7 @@ header{
 </div>
 
 <script>
+
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnxk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -149,7 +163,10 @@ const db = firebase.database();
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let isAdmin = false;
 
-/* ✅ AUTH CHECK */
+/* 🔥 SESSION FIX */
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+/* AUTH CHECK */
 auth.onAuthStateChanged(user => {
 
   isAdmin = user && (user.email || "").toLowerCase() === ADMIN_EMAIL;
@@ -160,7 +177,7 @@ auth.onAuthStateChanged(user => {
   loadProfiles();
 });
 
-/* ✅ LOAD PROFILES */
+/* LOAD PROFILES */
 function loadProfiles(){
   db.ref("profiles").on("value", snap => {
 
@@ -175,6 +192,7 @@ function loadProfiles(){
         <img src="${d.photo}" onclick="requireLogin('modal','${child.key}')">
 
         <div class="card-body">
+
           <h3>${d.name}</h3>
           <p>${d.city}</p>
 
@@ -183,10 +201,8 @@ function loadProfiles(){
           </button>
 
           ${isAdmin ? `
-            <button onclick="deleteProfile('${child.key}')"
-              style="margin-top:10px;width:90%;
-              background:red;color:#fff;
-              border:none;padding:10px;border-radius:10px;">
+            <button class="delete-btn"
+              onclick="deleteProfile('${child.key}')">
               🗑 Delete
             </button>
           ` : ""}
@@ -199,12 +215,27 @@ function loadProfiles(){
   });
 }
 
-/* ✅ LOGIN CHECK */
+/* LOGIN SAFE CHECK */
 function requireLogin(type,id){
-  if(!auth.currentUser){
-    window.location="login.html";
+
+  const user = auth.currentUser;
+
+  if(!user){
+    const unsub = auth.onAuthStateChanged(u=>{
+      unsub();
+      if(!u){
+        window.location="login.html";
+      }else{
+        handleAction(type,id);
+      }
+    });
     return;
   }
+
+  handleAction(type,id);
+}
+
+function handleAction(type,id){
 
   if(type==="payment"){
     window.location="payment.html";
@@ -215,7 +246,7 @@ function requireLogin(type,id){
   }
 }
 
-/* ✅ MODAL */
+/* MODAL */
 function openModal(id){
   db.ref("profiles/"+id).once("value").then(snap=>{
     let d = snap.val();
@@ -235,7 +266,7 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* buttons */
+/* NAV */
 function goAdd(){
   if(!auth.currentUser){
     window.location="login.html";
@@ -248,12 +279,13 @@ function goAdmin(){
   window.location="admin.html";
 }
 
-/* delete */
+/* DELETE */
 function deleteProfile(id){
   if(confirm("Delete this profile?")){
     db.ref("profiles/"+id).remove();
   }
 }
+
 </script>
 
 </body>
