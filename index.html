@@ -141,7 +141,6 @@ header{
 </div>
 
 <script>
-
 const firebaseConfig = {
   apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnxk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
@@ -162,7 +161,7 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 let isAdmin = false;
 
-/* ✅ AUTH FIX */
+/* ✅ SINGLE AUTH LISTENER (FIXED) */
 auth.onAuthStateChanged(user => {
   currentUser = user || null;
 
@@ -177,12 +176,11 @@ auth.onAuthStateChanged(user => {
 
 /* ✅ LOAD CARDS */
 function loadProfiles(){
-
-  db.ref("profiles").on("value", snap=>{
+  db.ref("profiles").on("value", snap => {
 
     let html = "";
 
-    snap.forEach(child=>{
+    snap.forEach(child => {
 
       let d = child.val();
       let id = child.key;
@@ -215,24 +213,32 @@ function loadProfiles(){
   });
 }
 
-/* ✅ OPEN PROFILE (NO LOGIN BUG) */
-function openProfile(id){
-  if(!currentUser){
-    window.location="login.html";
+/* ✅ FAST LOGIN CHECK (NO BUG) */
+function requireLogin(callback){
+
+  if(currentUser){
+    callback();
     return;
   }
 
-  db.ref("profiles/"+id).once("value").then(snap=>{
-    let d = snap.val();
+  window.location = "login.html";
+}
 
-    document.getElementById("modalBody").innerHTML=`
-      <h2>${d.name}</h2>
-      <img src="${d.photo}" style="width:100%;border-radius:10px;">
-      <p><b>City:</b> ${d.city}</p>
-      <p>${d.bio || ""}</p>
-    `;
+/* OPEN PROFILE */
+function openProfile(id){
+  requireLogin(() => {
+    db.ref("profiles/"+id).once("value").then(snap=>{
+      let d = snap.val();
 
-    document.getElementById("modal").style.display="flex";
+      document.getElementById("modalBody").innerHTML = `
+        <h2>${d.name}</h2>
+        <img src="${d.photo}" style="width:100%;border-radius:10px;">
+        <p><b>City:</b> ${d.city}</p>
+        <p>${d.bio || ""}</p>
+      `;
+
+      document.getElementById("modal").style.display = "flex";
+    });
   });
 }
 
@@ -259,12 +265,12 @@ function goAdd(){
   window.location="profile-submit.html";
 }
 
-/* ADMIN */
+/* ADMIN PAGE */
 function goAdmin(){
   window.location="admin.html";
 }
 
-/* DELETE SAFE */
+/* DELETE (SECURE) */
 function deleteProfile(id){
 
   if(!isAdmin){
@@ -278,6 +284,7 @@ function deleteProfile(id){
 }
 
 </script>
+
 
 </body>
 </html>
