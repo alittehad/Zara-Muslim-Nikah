@@ -189,7 +189,7 @@ function loadProfiles(){
       html += `
       <div class="card">
 
-        <img src="${d.photo}" onclick="requireLogin(()=>openProfile('${id}'))">
+       onclick="requireLogin(function(){ openProfile('${id}') })"
 
         <div class="card-body">
 
