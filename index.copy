@@ -291,21 +291,21 @@ function loadProfiles(){
           </button>
 
           ${auth.currentUser && auth.currentUser.email==="ngogrant454@gmail.com" ? `
-          <button
-           <button
-  onclick="event.stopPropagation(); deleteProfile('${child.key}')"
-            style="
-              margin-top:10px;
-              width:90%;
-              background:#dc2626;
-              color:#fff;
-              border:none;
-              padding:10px;
-              border-radius:10px;
-              font-weight:bold;
-              cursor:pointer;">
-            🗑 Delete
-          </button>
+         <button
+onclick="event.stopPropagation(); deleteProfile('${child.key}')"
+style="
+margin-top:10px;
+width:90%;
+background:#dc2626;
+color:#fff;
+border:none;
+padding:10px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;">
+🗑 Delete
+</button>
+          
           ` : ""}
 
         </div>
