@@ -89,7 +89,6 @@ header{
   cursor:pointer;
 }
 
-/* ADMIN DELETE BUTTON */
 .delete-btn{
   margin-top:10px;
   width:90%;
@@ -134,6 +133,7 @@ header{
 
 <div class="grid" id="grid"></div>
 
+<!-- modal -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
@@ -163,9 +163,8 @@ const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let currentUser = null;
 let isAdmin = false;
 
-/* 🔥 SAFE LOGIN STATE */
+/* 🔥 SAFE AUTH (NO LOOP) */
 auth.onAuthStateChanged(user => {
-
   currentUser = user || null;
 
   isAdmin = user && user.email &&
@@ -177,7 +176,7 @@ auth.onAuthStateChanged(user => {
   loadProfiles();
 });
 
-/* 🔥 LOAD CARDS */
+/* 🔥 LOAD DATA */
 function loadProfiles(){
 
   db.ref("profiles").on("value", snap=>{
@@ -217,11 +216,12 @@ function loadProfiles(){
   });
 }
 
-/* 🔥 LOGIN FIX (NO LOOP) */
+/* 🔥 LOGIN SAFE FIX */
 function requireLogin(type,id){
 
   if(currentUser){
-    return handleAction(type,id);
+    handleAction(type,id);
+    return;
   }
 
   const unsub = auth.onAuthStateChanged(user=>{
@@ -282,10 +282,11 @@ function goAdmin(){
   window.location="admin.html";
 }
 
-/* DELETE (ONLY ADMIN) */
+/* DELETE (ADMIN ONLY SAFE) */
 function deleteProfile(id){
+
   if(!isAdmin){
-    alert("Unauthorized");
+    alert("Only admin can delete");
     return;
   }
 
