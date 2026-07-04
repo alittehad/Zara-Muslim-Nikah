@@ -252,39 +252,90 @@ const db = firebase.database();
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let isAdmin = false;
 
-loadProfiles();
-
 auth.onAuthStateChanged(user=>{
+
   if(user){
     isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
+
     if(isAdmin){
       document.getElementById("adminPanelBtn").style.display="inline-block";
     }
-  } else {
+  }else{
     isAdmin = false;
   }
+
+  loadProfiles();
+
 });
 
 function loadProfiles(){
-  db.ref("profiles").on("value",snap=>{
-    let html="";
-    snap.forEach(child=>{
+  db.ref("profiles").on("value", snap => {
+
+    let html = "";
+
+    snap.forEach(child => {
+
       let d = child.val();
 
-      html+=`
+      html += `
       <div class="card">
+
         <img src="${d.photo}" onclick="requireLogin('modal','${child.key}')">
+
         <div class="card-body">
           <h3>${d.name}</h3>
           <p>${d.city}</p>
-          <button class="like" onclick="requireLogin('payment')">💍 रिश्ता करें</button>
+
+          <button class="like" onclick="requireLogin('payment')">
+            💍 रिश्ता करें
+          </button>
+
+          ${isAdmin ? `
+  <button
+    onclick="event.stopPropagation(); deleteProfile('${child.key}')"
+    style="
+      margin-top:10px;
+      width:90%;
+      background:#dc2626;
+      color:#fff;
+      border:none;
+      padding:10px;
+      border-radius:10px;
+      font-weight:bold;
+      cursor:pointer;">
+    🗑 Delete
+  </button>
+` : ""}
+         <button
+onclick="event.stopPropagation(); deleteProfile('${child.key}')"
+style="
+margin-top:10px;
+width:90%;
+background:#dc2626;
+color:#fff;
+border:none;
+padding:10px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;">
+🗑 Delete
+</button>
+          
+          ` : ""}
+
         </div>
-      </div>`;
+
+      </div>
+      `;
+
     });
 
     document.getElementById("grid").innerHTML = html;
+
   });
 }
+
+
 
 function requireLogin(type,id){
   if(!auth.currentUser){
@@ -303,7 +354,8 @@ function requireLogin(type,id){
 
 function openModal(id){
   db.ref("profiles/"+id).once("value").then(snap=>{
-    let d = snap.val();
+
+    let d=snap.val();
 
     document.getElementById("modalBody").innerHTML=`
       <h2>${d.name}</h2>
@@ -311,12 +363,9 @@ function openModal(id){
       <img src="${d.photo}"
       style="
       width:100%;
-      height:auto;
       max-height:500px;
       object-fit:contain;
-      border-radius:10px;
-      background:#f1f5f9;
-      ">
+      border-radius:10px;">
 
       <p><b>City:</b> ${d.city}</p>
       <p>${d.bio || ""}</p>
@@ -325,6 +374,7 @@ function openModal(id){
     document.getElementById("modal").style.display="flex";
   });
 }
+
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
@@ -334,6 +384,7 @@ function goAdd(){
     window.location="login.html";
     return;
   }
+
   window.location="profile-submit.html";
 }
 
@@ -341,14 +392,33 @@ function goAdmin(){
   window.location="admin.html";
 }
 
-/* ✅ CHAT FIXED SAFE */
 function openChat(){
   if(!auth.currentUser){
     window.location="login.html";
     return;
   }
+
   window.location="profile-submit.html";
 }
+
+function deleteProfile(id){
+
+  if(!confirm("क्या आप इस प्रोफ़ाइल को Delete करना चाहते हैं?")){
+    return;
+  }
+
+  db.ref("profiles/"+id).remove()
+  .then(()=>{
+    alert("प्रोफ़ाइल Delete हो गई");
+  })
+  .catch(err=>{
+    alert(err.message);
+  });
+
+}
+
+
+
 
 </script>
 
