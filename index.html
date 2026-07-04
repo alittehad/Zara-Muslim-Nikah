@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-
 body{
   margin:0;
   font-family:sans-serif;
@@ -26,7 +25,6 @@ header{
   font-size:24px;
   position:sticky;
   top:0;
-  z-index:1000;
 }
 
 .topbar{
@@ -34,7 +32,6 @@ header{
   justify-content:center;
   gap:10px;
   padding:10px;
-  flex-wrap:wrap;
 }
 
 .btn{
@@ -57,9 +54,7 @@ header{
 }
 
 @media(max-width:768px){
-  .grid{
-    grid-template-columns:1fr;
-  }
+  .grid{grid-template-columns:1fr;}
 }
 
 .card{
@@ -67,13 +62,6 @@ header{
   overflow:hidden;
   background:#fff;
   box-shadow:0 10px 25px rgba(0,0,0,0.15);
-  transition:0.3s;
-  color:#111;
-}
-
-.card:hover{
-  transform:translateY(-6px);
-  box-shadow:0 15px 35px rgba(0,0,0,0.2);
 }
 
 .card img{
@@ -89,115 +77,27 @@ header{
   padding:14px;
 }
 
-.card h3{
-  margin:6px 0;
-  color:#0f172a;
-}
-
-.card p{
-  color:#475569;
-}
-
 .like{
   margin-top:10px;
   width:90%;
-
-  background:linear-gradient(180deg,#22c55e,#16a34a,#15803d);
+  background:linear-gradient(180deg,#22c55e,#16a34a);
   color:white;
   border:none;
-  padding:12px 16px;
+  padding:12px;
   border-radius:12px;
-
-  font-weight:900;
-  font-size:15px;
+  font-weight:bold;
   cursor:pointer;
-
-  box-shadow:
-    0 6px 0 #166534,
-    0 12px 20px rgba(0,0,0,0.25);
-
-  transition:all 0.2s ease;
 }
 
-.like:hover{
-  transform:translateY(-3px);
-  box-shadow:
-    0 8px 0 #166534,
-    0 18px 25px rgba(0,0,0,0.3);
-}
-
-.like:active{
-  transform:translateY(3px);
-  box-shadow:
-    0 2px 0 #166534,
-    0 6px 10px rgba(0,0,0,0.2);
-}
-
-/* ========================= */
-/* 🔥 FLOATING CHAT BUTTON FIXED */
-/* ========================= */
-
-.chat-btn{
-  position:fixed;
-  right:20px;
-  bottom:25px;
-
-  width:65px;
-  height:65px;
-
-  border:none;
-  border-radius:50%;
-
-  background:linear-gradient(135deg,#0ea5e9,#0369a1);
-  color:white;
-  font-size:26px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  cursor:pointer;
-
-  box-shadow:
-    0 8px 0 #075985,
-    0 15px 25px rgba(0,0,0,0.3);
-
-  z-index:9999;
-
-  animation:pulse 2s infinite;
-  transition:0.2s ease;
-}
-
-.chat-btn:hover{
-  transform:scale(1.1);
-}
-
-.chat-btn:active{
-  transform:scale(0.95);
-  box-shadow:
-    0 3px 0 #075985,
-    0 8px 15px rgba(0,0,0,0.2);
-}
-
-@keyframes pulse{
-  0%{transform:scale(1);}
-  50%{transform:scale(1.08);}
-  100%{transform:scale(1);}
-}
-
+/* modal */
 .modal{
   position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
+  top:0;left:0;
+  width:100%;height:100%;
   display:none;
   justify-content:center;
   align-items:flex-start;
-  overflow-y:auto;
   background:rgba(0,0,0,0.6);
-  padding:20px 0;
-  z-index:99999;
 }
 
 .modal-content{
@@ -206,7 +106,7 @@ header{
   max-width:600px;
   padding:15px;
   border-radius:15px;
-  margin:20px auto;
+  margin-top:30px;
 }
 </style>
 </head>
@@ -220,11 +120,9 @@ header{
   <button class="btn admin" id="adminPanelBtn" style="display:none" onclick="goAdmin()">👑 Admin</button>
 </div>
 
-<!-- ✅ FLOATING CHAT BUTTON -->
-<button class="chat-btn" onclick="openChat()">💬</button>
-
 <div class="grid" id="grid"></div>
 
+<!-- modal -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
@@ -233,9 +131,8 @@ header{
 </div>
 
 <script>
-
 const firebaseConfig = {
-  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnXk2nFDG_M65Wc",
+  apiKey: "AIzaSyAhrYtSAdorLMYgBIPeEnxk2nFDG_M65Wc",
   authDomain: "zara-muslim-nikah.firebaseapp.com",
   databaseURL: "https://zara-muslim-nikah-default-rtdb.firebaseio.com",
   projectId: "zara-muslim-nikah",
@@ -252,29 +149,24 @@ const db = firebase.database();
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
 let isAdmin = false;
 
-auth.onAuthStateChanged(user=>{
+/* ✅ AUTH CHECK */
+auth.onAuthStateChanged(user => {
 
-  if(user){
-    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL;
+  isAdmin = user && (user.email || "").toLowerCase() === ADMIN_EMAIL;
 
-    if(isAdmin){
-      document.getElementById("adminPanelBtn").style.display="inline-block";
-    }
-  }else{
-    isAdmin = false;
-  }
+  document.getElementById("adminPanelBtn").style.display =
+    isAdmin ? "inline-block" : "none";
 
   loadProfiles();
-
 });
 
+/* ✅ LOAD PROFILES */
 function loadProfiles(){
   db.ref("profiles").on("value", snap => {
 
     let html = "";
 
     snap.forEach(child => {
-
       let d = child.val();
 
       html += `
@@ -291,52 +183,23 @@ function loadProfiles(){
           </button>
 
           ${isAdmin ? `
-  <button
-    onclick="event.stopPropagation(); deleteProfile('${child.key}')"
-    style="
-      margin-top:10px;
-      width:90%;
-      background:#dc2626;
-      color:#fff;
-      border:none;
-      padding:10px;
-      border-radius:10px;
-      font-weight:bold;
-      cursor:pointer;">
-    🗑 Delete
-  </button>
-` : ""}
-         <button
-onclick="event.stopPropagation(); deleteProfile('${child.key}')"
-style="
-margin-top:10px;
-width:90%;
-background:#dc2626;
-color:#fff;
-border:none;
-padding:10px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;">
-🗑 Delete
-</button>
-          
+            <button onclick="deleteProfile('${child.key}')"
+              style="margin-top:10px;width:90%;
+              background:red;color:#fff;
+              border:none;padding:10px;border-radius:10px;">
+              🗑 Delete
+            </button>
           ` : ""}
 
         </div>
-
-      </div>
-      `;
-
+      </div>`;
     });
 
     document.getElementById("grid").innerHTML = html;
-
   });
 }
 
-
-
+/* ✅ LOGIN CHECK */
 function requireLogin(type,id){
   if(!auth.currentUser){
     window.location="login.html";
@@ -352,21 +215,14 @@ function requireLogin(type,id){
   }
 }
 
+/* ✅ MODAL */
 function openModal(id){
   db.ref("profiles/"+id).once("value").then(snap=>{
-
-    let d=snap.val();
+    let d = snap.val();
 
     document.getElementById("modalBody").innerHTML=`
       <h2>${d.name}</h2>
-
-      <img src="${d.photo}"
-      style="
-      width:100%;
-      max-height:500px;
-      object-fit:contain;
-      border-radius:10px;">
-
+      <img src="${d.photo}" style="width:100%;border-radius:10px;">
       <p><b>City:</b> ${d.city}</p>
       <p>${d.bio || ""}</p>
     `;
@@ -379,12 +235,12 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
+/* buttons */
 function goAdd(){
   if(!auth.currentUser){
     window.location="login.html";
     return;
   }
-
   window.location="profile-submit.html";
 }
 
@@ -392,34 +248,12 @@ function goAdmin(){
   window.location="admin.html";
 }
 
-function openChat(){
-  if(!auth.currentUser){
-    window.location="login.html";
-    return;
-  }
-
-  window.location="profile-submit.html";
-}
-
+/* delete */
 function deleteProfile(id){
-
-  if(!confirm("क्या आप इस प्रोफ़ाइल को Delete करना चाहते हैं?")){
-    return;
+  if(confirm("Delete this profile?")){
+    db.ref("profiles/"+id).remove();
   }
-
-  db.ref("profiles/"+id).remove()
-  .then(()=>{
-    alert("प्रोफ़ाइल Delete हो गई");
-  })
-  .catch(err=>{
-    alert(err.message);
-  });
-
 }
-
-
-
-
 </script>
 
 </body>
