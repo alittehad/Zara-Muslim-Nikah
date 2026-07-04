@@ -89,7 +89,6 @@ header{
   cursor:pointer;
 }
 
-/* delete button */
 .delete-btn{
   margin-top:10px;
   width:90%;
@@ -135,7 +134,6 @@ header{
 
 <div class="grid" id="grid"></div>
 
-<!-- modal -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span onclick="closeModal()" style="float:right;cursor:pointer">✖</span>
@@ -161,15 +159,17 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = "ngogrant454@gmail.com";
+
+let currentUser = null;
 let isAdmin = false;
 
-/* 🔥 SESSION FIX */
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-/* AUTH CHECK */
+/* ✅ AUTH (FIXED - NO LOOP) */
 auth.onAuthStateChanged(user => {
 
-  isAdmin = user && (user.email || "").toLowerCase() === ADMIN_EMAIL;
+  currentUser = user || null;
+
+  isAdmin = user && user.email &&
+    user.email.toLowerCase() === ADMIN_EMAIL;
 
   document.getElementById("adminPanelBtn").style.display =
     isAdmin ? "inline-block" : "none";
@@ -177,19 +177,22 @@ auth.onAuthStateChanged(user => {
   loadProfiles();
 });
 
-/* LOAD PROFILES */
+/* ✅ LOAD PROFILES */
 function loadProfiles(){
-  db.ref("profiles").on("value", snap => {
+
+  db.ref("profiles").on("value", snap=>{
 
     let html = "";
 
-    snap.forEach(child => {
+    snap.forEach(child=>{
+
       let d = child.val();
+      let id = child.key;
 
       html += `
       <div class="card">
 
-        <img src="${d.photo}" onclick="requireLogin('modal','${child.key}')">
+        <img src="${d.photo}" onclick="requireLogin('modal','${id}')">
 
         <div class="card-body">
 
@@ -201,8 +204,7 @@ function loadProfiles(){
           </button>
 
           ${isAdmin ? `
-            <button class="delete-btn"
-              onclick="deleteProfile('${child.key}')">
+            <button class="delete-btn" onclick="deleteProfile('${id}')">
               🗑 Delete
             </button>
           ` : ""}
@@ -215,24 +217,24 @@ function loadProfiles(){
   });
 }
 
-/* LOGIN SAFE CHECK */
+/* ✅ LOGIN FIX (NO RELOGIN LOOP) */
 function requireLogin(type,id){
 
-  const user = auth.currentUser;
-
-  if(!user){
-    const unsub = auth.onAuthStateChanged(u=>{
-      unsub();
-      if(!u){
-        window.location="login.html";
-      }else{
-        handleAction(type,id);
-      }
-    });
+  if(currentUser){
+    handleAction(type,id);
     return;
   }
 
-  handleAction(type,id);
+  const unsub = auth.onAuthStateChanged(user=>{
+    unsub(); // stop listener immediately
+
+    if(user){
+      currentUser = user;
+      handleAction(type,id);
+    } else {
+      window.location="login.html";
+    }
+  });
 }
 
 function handleAction(type,id){
@@ -248,7 +250,9 @@ function handleAction(type,id){
 
 /* MODAL */
 function openModal(id){
+
   db.ref("profiles/"+id).once("value").then(snap=>{
+
     let d = snap.val();
 
     document.getElementById("modalBody").innerHTML=`
@@ -268,7 +272,7 @@ function closeModal(){
 
 /* NAV */
 function goAdd(){
-  if(!auth.currentUser){
+  if(!currentUser){
     window.location="login.html";
     return;
   }
