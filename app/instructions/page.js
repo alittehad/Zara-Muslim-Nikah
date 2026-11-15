@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata={
-  title:"Website Kaise Use Karein? Profile, Rishta aur Payment Guide",
+  title:"Zara Nikah Service: Rishta & Payment Guide",
   description:"Zara Nikah Service par rishta kaise dekhein, apna profile kaise banayein aur UPI ya wallet se payment kaise karein.",
   alternates:{canonical:"https://zaranikahservice.online/instructions"}
 };
