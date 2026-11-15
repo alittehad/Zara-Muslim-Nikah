@@ -3,11 +3,11 @@ import Link from "next/link";
 export const metadata = {
   title: "Muslim Rishta Service & Matrimony | Zara Nikah Service",
   description: "Muslim rishta service aur online Muslim matrimony ke liye Zara Nikah Service dekhein. Nikah, shaadi ke rishte, bride-groom biodata aur safe rishta search ki jaankari.",
-  alternates: { canonical: "https://zarashadiservice.vercel.app/muslim-rishta-service" },
+  alternates: { canonical: "https://zaranikahservice.online/muslim-rishta-service" },
   openGraph: {
     title: "Muslim Rishta Service | Zara Nikah Service",
     description: "Muslim matrimony, nikah aur shaadi ke rishte dhoondhne ke liye service information aur safe search guidance.",
-    url: "https://zarashadiservice.vercel.app/muslim-rishta-service",
+    url: "https://zaranikahservice.online/muslim-rishta-service",
     type: "article",
   },
 };
