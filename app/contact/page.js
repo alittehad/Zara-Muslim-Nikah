@@ -3,6 +3,8 @@
 import Link from "next/link";
 import {useState} from "react";
 
+export const metadata={title:"Contact Zara Nikah Service | Help & Support",description:"Zara Nikah Service se profile, biodata access, registration, payment ya privacy ke liye contact karein.",alternates:{canonical:"https://zaranikahservice.online/contact"}};
+
 export default function Contact(){
   const [name,setName]=useState("");
   const [replyEmail,setReplyEmail]=useState("");
@@ -51,7 +53,7 @@ export default function Contact(){
       <p style={{fontSize:13,color:"#655b6c",margin:0}}>Submit karne par aapke device ka email app khulega aur message support email ke liye taiyar hoga. Wahan se Send dabana zaroori hai. OTP, UPI PIN, password ya poori bank details kabhi na bhejein.</p>
       <button type="submit" className="primaryAction">✉️ Email Help Request</button>
     </form>
-    <h2>Before making a payment</h2><p>Amount, kis cheez ka access mil raha hai, approval process aur refund/cancellation terms ko samajh lein. Payment receipt apne paas rakhein. Payment issue mein transaction date aur zaroori reference dein, lekin sensitive banking details share na karein.</p>
+    <h2>What to include in a support request</h2><p>Apne message mein problem ka short description, relevant profile ID ya transaction reference ke aakhri digits, aur request ki date batayein. Isse support team ko aapki query samajhne mein madad milegi. Password, OTP, UPI PIN, card number ya poori bank details kabhi email ya chat mein share na karein. Agar aap profile removal ya privacy request bhej rahe hain, to profile ki pehchan ke liye sirf zaroori jaankari dein.</p><h2>Before making a payment</h2><p>Amount, kis cheez ka access mil raha hai, approval process aur refund/cancellation terms ko samajh lein. Payment receipt apne paas rakhein. Payment issue mein transaction date aur zaroori reference dein, lekin sensitive banking details share na karein.</p>
     <p>Reply ka waqt request volume ke mutabiq badal sakta hai.</p>
   </div><div className="siteStateActions"><Link className="primaryAction" href="/">← Home</Link><Link className="backAction" href="/privacy">Privacy Policy</Link></div></section></main>;
 }
