@@ -2,6 +2,7 @@ import "./globals.css";
 import AppAccessGate from "./components/AppAccessGate";
 import PushTokenSync from "./components/PushTokenSync";
 import Script from "next/script";
+import CanonicalUrl from "./components/CanonicalUrl";
 
 export const metadata={
  metadataBase:new URL("https://zaranikahservice.online"),
@@ -78,7 +79,7 @@ const structuredData={
 
 export default function RootLayout({children}){
  return <html lang="hi"><head>
-  <link rel="canonical" href="https://zaranikahservice.online/" />
+  <CanonicalUrl />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5611171707552414" crossOrigin="anonymous"></script>
   <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structuredData).replace(/</g,"\\u003c")}} />
  </head><body>
