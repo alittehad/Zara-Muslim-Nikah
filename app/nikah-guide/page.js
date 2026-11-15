@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata={
   title:"Nikah Guide: Safe Rishta Search",
   description:"Nikah ke liye rishta profile dekhne, privacy bachane, family expectations aur online safety par practical rehnumai.",
-  alternates:{canonical:"https://zarashadiservice.vercel.app/nikah-guide"}
+  alternates:{canonical:"https://zaranikahservice.online/nikah-guide"}
 };
 
 export default function NikahGuide(){
