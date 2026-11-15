@@ -1,0 +1,32 @@
+name: Extract uploaded ZIP for inspection
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/extract-uploaded-zip.yml"
+      - "zarashadiservice-main (1)1000.zip"
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract archive into isolated inspection folder
+        run: |
+          set -e
+          mkdir -p /tmp/nikah-zip
+          unzip -q "zarashadiservice-main (1)1000.zip" -d /tmp/nikah-zip
+          mkdir -p zip-inspection
+          cp -a /tmp/nikah-zip/. zip-inspection/
+      - name: Commit extracted files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add zip-inspection
+          if git diff --cached --quiet; then
+            echo "No extracted changes to commit"
+          else
+            git commit -m "Extract uploaded ZIP into isolated inspection folder"
+            git push
+          fi
