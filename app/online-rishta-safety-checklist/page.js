@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Online Rishta Safety Checklist India",
   description: "Online Muslim rishta search ke liye profile verification, privacy, UPI payment safety, red flags aur family meeting ki practical checklist.",
-  alternates: { canonical: "https://zarashadiservice.vercel.app/online-rishta-safety-checklist" },
+  alternates: { canonical: "https://zaranikahservice.online/online-rishta-safety-checklist" },
 };
 
 export default function OnlineRishtaSafetyChecklist() {
