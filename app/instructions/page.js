@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata={
   title:"Website Kaise Use Karein? Profile, Rishta aur Payment Guide",
   description:"Zara Nikah Service par rishta kaise dekhein, apna profile kaise banayein aur UPI ya wallet se payment kaise karein.",
-  alternates:{canonical:"https://zarashadiservice.vercel.app/instructions"}
+  alternates:{canonical:"https://zaranikahservice.online/instructions"}
 };
 
 const panel={background:"#fff",border:"1px solid #eadff3",borderRadius:18,padding:20,margin:"14px 0",boxShadow:"0 8px 24px #35105b0b"};
