@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Muslim Nikah Biodata Kaise Banayein? Complete Guide",
   description: "Muslim nikah ke liye saaf, sachcha aur respectful biodata banane ki Hindi guide: zaroori details, family information, photo privacy aur profile safety.",
-  alternates: { canonical: "https://zarashadiservice.vercel.app/muslim-nikah-biodata-guide" },
+  alternates: { canonical: "https://zaranikahservice.online/muslim-nikah-biodata-guide" },
 };
 
 export default function MuslimNikahBiodataGuide() {
