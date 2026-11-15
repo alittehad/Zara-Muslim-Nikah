@@ -1,0 +1,369 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.email is string && request.auth.token.email.lower() in ["ngogrant454@gmail.com", "islam20111975@gmail.com"]; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    // Google login is enough to browse public profile cards.
+    // Payment approval remains required for private biodata/contact access.
+    function isApprovedUser() { return signedIn(); }
+    function validUtr(v) { return v is string && v.matches("^[A-Za-z0-9]{6,40}$"); }
+
+    // Legacy profiles may not have a status field. Treat a missing status as active,
+    // while still blocking profiles explicitly marked as deleted.
+    function profileNotDeleted(profileId) {
+      let p = get(/databases/$(database)/documents/profiles/$(profileId)).data;
+      return !p.keys().hasAny(["status"]) || p.status != "deleted";
+    }
+
+    function accessLockId(uid, profileId, type) {
+      return uid + "_" + profileId + "_" + type;
+    }
+    function rechargeLockId(uid, amount) {
+      return uid + "_recharge_" + amount;
+    }
+
+    // Online status heartbeat: users can update only their own presence; admins can read all.
+    match /userPresence/{userId} {
+      allow read: if isAdmin() || owner(userId);
+      allow create, update: if owner(userId)
+        && request.resource.data.keys().hasOnly(["uid","isOnline","lastSeen"])
+        && request.resource.data.uid == userId
+        && request.resource.data.isOnline is bool;
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if owner(userId) || isAdmin();
+      // Google sign-in creates a minimal pending account automatically. Users may
+      // fill their profile later, but cannot self-approve.
+      allow create: if owner(userId)
+        && request.resource.data.keys().hasOnly(["uid","email","name","address","phone","age","income","photoURL","status","createdAt","updatedAt"])
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.status == "pending"
+        && (!request.resource.data.keys().hasAny(["name"]) || request.resource.data.name is string)
+        && (!request.resource.data.keys().hasAny(["address"]) || request.resource.data.address is string)
+        && (!request.resource.data.keys().hasAny(["phone"]) || (request.resource.data.phone is string && request.resource.data.phone.matches("^[6-9][0-9]{9}$")))
+        && (!request.resource.data.keys().hasAny(["age"]) || (request.resource.data.age is number && request.resource.data.age >= 18 && request.resource.data.age <= 100))
+        && (!request.resource.data.keys().hasAny(["income"]) || request.resource.data.income is string)
+        && (!request.resource.data.keys().hasAny(["photoURL"]) || request.resource.data.photoURL is string);
+      allow update: if isAdmin() || (owner(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.name is string
+        && request.resource.data.address is string
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches("^[6-9][0-9]{9}$")
+        && request.resource.data.age is number
+        && request.resource.data.age >= 18
+        && request.resource.data.age <= 100
+        && request.resource.data.income is string
+        && request.resource.data.photoURL is string
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name","address","phone","age","income","photoURL","updatedAt"]));
+      allow delete: if isAdmin();
+    }
+
+    // Profile submissions contain private applicant data and are never public.
+    // Applicants may create only their own pending request; only admins can review it.
+    match /profileSubmissions/{submissionId} {
+      allow read: if isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          "uid","email","gender","visibility","name","age","height","city","state",
+          "language","religion","community","education","occupation","maritalStatus",
+          "about","phone","photo","utr","amount","status","paymentStatus","createdAt","expiresAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "uid","email","gender","visibility","name","age","city","photo","utr",
+          "amount","status","paymentStatus","createdAt","expiresAt"
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.gender in ["male","female"]
+        && request.resource.data.visibility in ["public","admin"]
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.age is number
+        && request.resource.data.age >= 18
+        && request.resource.data.age <= 100
+        && request.resource.data.city is string
+        && request.resource.data.city.size() <= 120
+        && request.resource.data.photo is string
+        && request.resource.data.photo.size() <= 180000
+        && validUtr(request.resource.data.utr)
+        && request.resource.data.amount == 299
+        && request.resource.data.status == "pending"
+        && request.resource.data.paymentStatus == "pending"
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.expiresAt == null
+        && (!request.resource.data.keys().hasAny(["phone"]) || request.resource.data.phone is string);
+      allow update, delete: if isAdmin();
+    }
+
+    // Public cards use this collection only for profile ID, gender, photos and status.
+    // Never store private biodata or phone numbers in /profiles.
+    match /profiles/{profileId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /profileBiodataPrivate/{profileId} {
+      allow read: if isAdmin() || (isApprovedUser()
+        && profileNotDeleted(profileId)
+        && exists(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId))
+        && get(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId)).data.status == "approved");
+      allow write: if isAdmin();
+    }
+
+    match /profileContact/{profileId} {
+      allow read: if isAdmin() || (isApprovedUser()
+        && profileNotDeleted(profileId)
+        && exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId))
+        && get(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId)).data.status == "approved");
+      allow write: if isAdmin();
+    }
+
+    match /profilePrivate/{profileId} { allow read, write: if isAdmin(); }
+
+    // Only these two settings documents are public because the customer-facing
+    // pages need them. Never put secrets in /settings.
+    match /settings/{settingId} {
+      allow read: if settingId == "payment" || settingId == "social" || settingId == "appearance" || settingId == "legalPages" || settingId == "homeSlider" || settingId == "branding" || settingId == "homeTicker";
+      allow write: if isAdmin();
+    }
+
+    match /homeSliderImages/{profileId} {
+      allow read: if isApprovedUser();
+      allow write: if isAdmin();
+    }
+
+    // Public announcements; only admins may publish or remove posts.
+    match /homePosts/{postId} {
+      allow read: if true;
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(["text","image","createdBy","createdAt","status"])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 5000
+        && (request.resource.data.text.size() > 0
+          || (request.resource.data.image is string && request.resource.data.image.size() > 0))
+        && (!request.resource.data.keys().hasAny(["image"])
+          || (request.resource.data.image is string && request.resource.data.image.size() <= 500000))
+        && request.resource.data.createdBy == request.auth.token.email
+        && request.resource.data.status == "active";
+      allow update, delete: if isAdmin();
+    }
+
+    match /registrations/{registrationId} { allow read, write: if false; }
+    match /utrClaims/{utrId} { allow read, write: if false; }
+
+    match /paymentUtrClaims/{utrId} {
+      allow read: if isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && validUtr(request.resource.data.utr)
+        && request.resource.data.utr.lower() == utrId
+        && request.resource.data.requestId is string
+        && request.resource.data.kind is string
+        && (request.resource.data.kind == "recharge" || request.resource.data.kind == "access")
+        && (
+          (request.resource.data.kind == "recharge"
+            && request.resource.data.amount is number
+            && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000))
+          ||
+          (request.resource.data.kind == "access"
+            && request.resource.data.profileId is string
+            && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
+            && request.resource.data.amount is number
+            && ((request.resource.data.type == "biodata" && (request.resource.data.amount == 99 || request.resource.data.amount == 100))
+              || (request.resource.data.type == "mobile" && (request.resource.data.amount == 299 || request.resource.data.amount == 500)))
+          )
+        );
+      // UTR claims are permanent duplicate-payment protection. Users must not
+      // delete their own claims after rejection/approval; only admins can clean them up.
+      allow delete: if isAdmin();
+    }
+
+    match /pendingPaymentLocks/{lockId} {
+      // Clients check a deterministic lock before creating it. Permit a get of a
+      // missing document, but never let users read another user's existing lock.
+      allow get: if isAdmin() || (signedIn() && (resource == null || resource.data.uid == request.auth.uid));
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+
+      // One deterministic lock per user + target, so another pending request cannot be created
+      // for the same recharge amount or the same profile/type.
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.requestId is string
+        && request.resource.data.status == "pending"
+        && (
+          (
+            request.resource.data.kind == "recharge"
+            && request.resource.data.amount is number
+            && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000)
+            && lockId == rechargeLockId(request.auth.uid, request.resource.data.amount)
+          )
+          ||
+          (
+            request.resource.data.kind == "access"
+            && request.resource.data.profileId is string
+            && request.resource.data.type is string
+            && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
+            && lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)
+          )
+        );
+      // Owner may clear a lock only after its matching request is absent or no longer pending.
+      // Check the correct request collection for each lock kind (access vs recharge).
+      allow delete: if isAdmin() || (signedIn()
+        && resource.data.uid == request.auth.uid
+        && resource.data.requestId is string
+        && (
+          (resource.data.kind == "access"
+            && (
+              !exists(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId))
+              || get(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId)).data.status != "pending"
+            ))
+          ||
+          (resource.data.kind == "recharge"
+            && (
+              !exists(/databases/$(database)/documents/walletRechargeRequests/$(resource.data.requestId))
+              || get(/databases/$(database)/documents/walletRechargeRequests/$(resource.data.requestId)).data.status != "pending"
+            ))
+        ));
+      allow update: if isAdmin();
+    }
+
+    match /walletRechargeRequests/{requestId} {
+      // A user may check a request ID stored in their own lock even if that
+      // request was never created; existing records remain owner/admin only.
+      allow get: if isAdmin() || (signedIn() && (resource == null || resource.data.uid == request.auth.uid));
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.amount is number
+        && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000)
+        && request.resource.data.status == "pending"
+        && request.resource.data.email is string
+        && request.resource.data.name is string
+        && request.resource.data.phone is string
+        && validUtr(request.resource.data.utr)
+        && (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
+        && request.resource.data.utrClaimId is string
+        && request.resource.data.lockId == rechargeLockId(request.auth.uid, request.resource.data.amount)
+        ;
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /walletTransactions/{transactionId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /biodataUnlocks/{unlockId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /mobileAccess/{accessId} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == resource.data.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /paidAccessRequests/{requestId} {
+      // A user may check a request ID stored in their own lock even if that
+      // request was never created; existing records remain owner/admin only.
+      allow get: if isAdmin() || (signedIn() && (resource == null || resource.data.uid == request.auth.uid));
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.profileId is string
+        && request.resource.data.type is string
+        && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
+        && request.resource.data.amount is number
+        && ((request.resource.data.type == "biodata" && (request.resource.data.amount == 99 || request.resource.data.amount == 100))
+          || (request.resource.data.type == "mobile" && (request.resource.data.amount == 299 || request.resource.data.amount == 500)))
+        && request.resource.data.status == "pending"
+        && (request.resource.data.paymentMethod == "wallet"
+          || (request.resource.data.lockId is string
+              && request.resource.data.lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)))
+        && (request.resource.data.paymentMethod == "wallet" || request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
+        && request.resource.data.utr is string
+        && (
+          (request.resource.data.paymentMethod == "wallet"
+            && request.resource.data.utr == ""
+            && (!request.resource.data.keys().hasAny(["utrClaimId"]) || request.resource.data.utrClaimId == ""))
+          ||
+          (request.resource.data.paymentMethod != "wallet"
+            && validUtr(request.resource.data.utr)
+            && request.resource.data.utrClaimId is string
+            && request.resource.data.utrClaimId == request.resource.data.utr.lower()
+            && request.resource.data.lockId is string)
+        );
+
+      allow update, delete: if isAdmin();
+    }
+
+
+    // Public FAQ: anyone can load and view questions/answers, including
+    // visitors who have not signed in. Only the two configured admins can edit FAQs.
+    match /faqItems/{faqId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Private customer support conversations. Only the customer who owns a thread
+    // and the admins can read its messages.
+
+    match /supportChats/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.uid == uid;
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name","email","lastMessage","lastSender","updatedAt","unreadForAdmin","unreadForUser"]));
+      allow delete: if isAdmin();
+      match /messages/{messageId} {
+        allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+        allow create: if signedIn() && (isAdmin() || request.auth.uid == uid)
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.senderRole == (isAdmin() ? "admin" : "customer")
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 3000;
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // Push tokens are private to their owner; admins can read tokens for delivery.
+    match /pushTokens/{tokenId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 20
+        && request.resource.data.token.size() <= 4096;
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    // Notifications are private to their recipient; only admins can create them.
+    match /notifications/{notificationId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isAdmin()
+        && request.resource.data.uid is string
+        && request.resource.data.title is string
+        && request.resource.data.message is string
+        && request.resource.data.read == false;
+      allow update: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read","readAt"])
+        && request.resource.data.read == true);
+      allow delete: if isAdmin();
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}

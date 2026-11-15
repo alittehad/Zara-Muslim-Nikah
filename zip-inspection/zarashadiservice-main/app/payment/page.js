@@ -1,0 +1,122 @@
+"use client";
+
+import {Suspense,useEffect,useState} from "react";
+import {useSearchParams,useRouter} from "next/navigation";
+import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
+import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
+import {auth,db} from "../../lib/firebase";
+
+function Pay(){
+ const q=useSearchParams(),router=useRouter();
+ const profile=q.get("profile")||"";
+ const type=q.get("type")==="mobile"?"mobile":"biodata";
+ const amount=type==="mobile"?299:99;
+ const [user,setUser]=useState(null),[p,setP]=useState(null),[wallet,setWallet]=useState(0),[requests,setRequests]=useState([]),[branding,setBranding]=useState({logo:"",appIcon:""});
+ const [msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
+
+ useEffect(()=>onAuthStateChanged(auth,setUser),[]);
+ useEffect(()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon)setBranding({logo:cached.logo||"",appIcon:cached.appIcon||""})}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||""};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){}}}).catch(()=>{})},[]);
+ useEffect(()=>{
+  if(!user)return;
+  return onSnapshot(doc(db,"users",user.uid),s=>setWallet(s.exists()?Number(s.data().walletBalance||0):0));
+ },[user]);
+ useEffect(()=>{
+  if(!profile)return;
+  getDoc(doc(db,"profiles",profile)).then(s=>setP(s.exists()&&s.data().status!=="deleted"?{id:s.id,...s.data()}:null)).catch(()=>setP(null));
+ },[profile]);
+ useEffect(()=>{
+  if(!user)return;
+  return onSnapshot(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid)),s=>{
+   setRequests(s.docs.map(d=>({id:d.id,...d.data()}))
+    .filter(x=>x.uid===user.uid&&x.profileId===profile&&x.type===type)
+    .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)));
+  },e=>setMsg("Payment status load nahi ho saka: "+e.message));
+ },[user,profile,type]);
+
+ async function login(){
+  try{await signInWithPopup(auth,new GoogleAuthProvider())}
+  catch(e){setMsg("❌ Google Login failed: "+(e?.message||"Please try again."))}
+ }
+
+ async function payFromWallet(){
+  setMsg("");
+  if(!user)return setMsg("Pehle Google se login karein.");
+  if(!p)return setMsg("Profile available nahi hai.");
+  if(requests.some(x=>x.status==="approved"))return setMsg("Is profile ka access pehle hi approved hai.");
+  if(requests.some(x=>x.status==="pending"))return setMsg("⏳ Is profile ka payment request already Pending hai. Admin verification ka wait karein.");
+  if(wallet<amount)return setMsg("Wallet Balance ₹"+wallet+" hai. ₹"+amount+" available nahi hai. Pehle Wallet Recharge karein.");
+  setSaving(true);
+  try{
+   const lockId=user.uid+"_"+profile+"_"+type;
+   const lockRef=doc(db,"pendingPaymentLocks",lockId);
+   const lockSnap=await getDoc(lockRef);
+   if(lockSnap.exists()){
+    const oldLock=lockSnap.data()||{};
+    if(oldLock.status==="pending"&&oldLock.requestId){
+     const oldReqSnap=await getDoc(doc(db,"paidAccessRequests",oldLock.requestId));
+     if(oldReqSnap.exists()&&oldReqSnap.data()?.status==="pending")
+      return setMsg("⏳ Is profile ka payment request pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
+     await deleteDoc(lockRef);
+    }else{
+     return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
+    }
+   }
+   const reqRef=doc(collection(db,"paidAccessRequests"));
+   try{
+    await setDoc(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
+    try{await setDoc(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"wallet",utr:"",lockId:lockRef.id,createdAt:serverTimestamp()});}
+    catch(e){try{await deleteDoc(lockRef)}catch{};throw Object.assign(e,{stage:"wallet payment request"})}
+   }catch(e){throw Object.assign(e,{stage:e?.stage||"wallet payment lock"})}
+   setMsg("💰 Wallet payment request Admin ko bhej di gayi hai. Approval ke baad ₹"+amount+" Wallet se deduct hoga aur exact Profile "+profile+" unlock hoga.");
+  }catch(e){
+   const code=e?.code||"";
+   if(code==="already-exists")setMsg("❌ Payment lock already use ho chuka hai. Page refresh karke status dekhein.");
+   else if(code==="permission-denied")setMsg("❌ Firebase Permission Denied — "+(e?.stage||"payment request")+" ko Firebase Rules ne reject kiya. Details: "+(e?.message||"Permission denied"));
+   else if(code==="failed-precondition")setMsg("❌ Firebase precondition/configuration error. Page refresh karke dobara try karein.");
+   else if(code==="unavailable")setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
+   else setMsg("❌ Wallet request save nahi hui: "+(e?.message||"Unknown error"));
+  }finally{setSaving(false)}
+ }
+
+ const photo=p?.photos?.[0]||p?.photo||"";
+ const pending=requests.find(x=>x.status==="pending");
+ const approved=requests.find(x=>x.status==="approved");
+
+ useEffect(()=>{
+  if(!user||!approved||!profile)return;
+  const timer=window.setTimeout(()=>router.replace("/profile/"+encodeURIComponent(profile)),700);
+  return()=>window.clearTimeout(timer);
+ },[user,approved,profile,router]);
+ return <main className="paymentPage">
+  <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo"/>:"💍"}</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
+  <section className="payment paymentPremium cardPage">
+   <div className="paymentIcon">₹</div><span className="eyebrow">{type==="mobile"?"MOBILE ACCESS":"BIODATA UNLOCK"}</span>
+   <h1>₹{amount} {type==="mobile"?"Mobile Number":"Biodata"} Access</h1>
+   {photo&&<img src={photo} alt="" className="paymentProfilePhoto"/>}
+   <p className="paymentLead">Profile <b>{profile||"—"}</b> ke liye exact access request hai.</p>
+   {!profile&&<div className="errorBox">Profile ID missing hai.</div>}
+   {!user&&<><div className="notice">Access lene ke liye pehle Google se Login karein.</div><button type="button" className="primaryAction" onClick={login}>Google se Login →</button></>}
+   {user&&profile&&<>
+    {approved&&<div className="notice">✅ Is profile ka access approved hai. Biodata page khol rahe hain...</div>}
+    {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Admin payment verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>}
+    {!pending&&!approved&&<>
+     <div className="feeRow"><span><small>Access Fee</small><b>₹{amount}</b></span><strong>3 Payment Options</strong></div>
+     <div className="paymentOptions">
+      <button type="button" className="primaryAction paymentOption" onClick={()=>router.push("/qr-recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>📱 UPI ID / QR से ₹{amount} करें →</button>
+     </div>
+     <div className="walletPanel"><div className="walletTop"><span>💰 Wallet Balance</span><b>₹{wallet}</b></div><small>Wallet se ₹{amount} pay karke access request bhejein.</small></div>
+     <button type="button" className="primaryAction walletButton" onClick={payFromWallet} disabled={saving||!p||wallet<amount}>
+      {saving?"Sending...":"💰 Wallet से ₹"+amount+" करें →"}
+     </button>
+     {wallet<amount&&<div className="notice">Wallet balance kam hai. Pehle Wallet Recharge karke phir access request bhejein.</div>}
+    </>}
+   </>}
+   {requests.slice(0,5).map(x=><div className="notice" key={x.id}>₹{x.amount} — <b>{x.status}</b>{x.paymentMethod&&" — "+x.paymentMethod.toUpperCase()}{x.utr&&" — UTR "+x.utr}</div>)}
+   {msg&&<div className="messageBox" role="status">{msg}</div>}
+   <button type="button" className="backAction" onClick={()=>router.push("/profile/"+encodeURIComponent(profile))}>← Biodata पर जाएँ</button>
+  </section>
+ </main>;
+}
+export default function Payment(){
+ return <Suspense fallback={<main><section className="cardPage">Loading...</section></main>}><Pay/></Suspense>
+}

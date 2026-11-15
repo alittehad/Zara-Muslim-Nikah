@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Storage is not used by the current app. All Storage access stays disabled
+    // so an accidental client-side upload cannot create unexpected usage.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
