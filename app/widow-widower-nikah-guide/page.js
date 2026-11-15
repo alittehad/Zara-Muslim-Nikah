@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Widow & Widower Remarriage Guide",
   description: "Widow aur widower ke liye dobara nikah ki tayari, family discussion, children, privacy aur safe rishta verification par practical guide.",
-  alternates: { canonical: "https://zarashadiservice.vercel.app/widow-widower-nikah-guide" },
+  alternates: { canonical: "https://zaranikahservice.online/widow-widower-nikah-guide" },
 };
 
 export default function WidowWidowerNikahGuide() {
