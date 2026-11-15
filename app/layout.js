@@ -6,7 +6,8 @@ import Script from "next/script";
 export const metadata={
  metadataBase:new URL("https://zaranikahservice.online"),
  title:{default:"Muslim Rishta & Nikah Service in India | Zara Nikah",template:"%s | Zara Nikah Service"},
- description:"Zara Nikah Service par Muslim nikah aur shaadi ke rishte dekhein. First marriage aur second marriage ke liye rishta profiles, biodata guidance aur online rishta safety tips.",
+ description:"Muslim nikah aur pehli ya doosri shaadi ke liye Zara Nikah par rishta profiles aur biodata guidance dekhein.",
+ alternates:{canonical:"https://zaranikahservice.online/"},
  applicationName:"Zara Nikah Service",
  verification:{google:"FaElE6Kh5Ixq0wRBtgIOLdHfW08ZfQQVBDE_3QLx9Ns"},
  category:"Lifestyle",
@@ -54,6 +55,16 @@ const structuredData={
     "https://www.facebook.com/share/14v4R6JaVNs/",
     "https://www.instagram.com/zaranikahservice?stkn=Ymt0MG0yd3pmdmpq"
    ]
+  },
+  {
+   "@type":"WebPage",
+   "@id":"https://zaranikahservice.online/#webpage",
+   "url":"https://zaranikahservice.online/",
+   "name":"Muslim Rishta & Nikah Service in India | Zara Nikah",
+   "description":"Muslim nikah aur pehli ya doosri shaadi ke liye Zara Nikah par rishta profiles aur biodata guidance dekhein.",
+   "inLanguage":"hi-IN",
+   "isPartOf":{"@id":"https://zaranikahservice.online/#website"},
+   "about":{"@id":"https://zaranikahservice.online/#organization"}
   },
   {
    "@type":"WebSite",
