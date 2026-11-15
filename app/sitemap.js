@@ -16,7 +16,7 @@ export default function sitemap(){
     ["/muslim-nikah-biodata-guide",0.8,"monthly"]
   ];
   return pages.map(([path,priority,changeFrequency])=>({
-    url:base+path,
+    url:base+(path || "/"),
     changeFrequency,
     priority
   }));
