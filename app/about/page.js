@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata={title:"About Zara Nikah Service",description:"Zara Nikah Service ka maqsad, profile access process, privacy aur safe Muslim rishta search ke baare mein.",alternates:{canonical:"https://zarashadiservice.vercel.app/about"}};
+export const metadata={title:"About Zara Nikah Service",description:"Zara Nikah Service ka maqsad, profile access process, privacy aur safe Muslim rishta search ke baare mein.",alternates:{canonical:"https://zaranikahservice.online/about"}};
 
 export default function About(){
   return <main><section className="cardPage siteState"><div className="siteStateIcon">💍</div><h1>About Zara Nikah Service</h1><div className="pageContent">
