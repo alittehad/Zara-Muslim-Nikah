@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {useState} from "react";
 
-export const metadata={title:"Contact Zara Nikah Service | Help & Support",description:"Zara Nikah Service se profile, biodata access, registration, payment ya privacy ke liye contact karein.",alternates:{canonical:"https://zaranikahservice.online/contact"}};
 
 export default function Contact(){
   const [name,setName]=useState("");
