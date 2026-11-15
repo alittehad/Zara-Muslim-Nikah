@@ -1,0 +1,23 @@
+export default function sitemap(){
+  const base="https://zaranikahservice.online";
+  const pages=[
+    ["",1.0,"daily"],
+    ["/about",0.6,"monthly"],
+    ["/contact",0.5,"monthly"],
+    ["/privacy",0.4,"yearly"],
+    ["/terms",0.4,"yearly"],
+    ["/refund-policy",0.4,"yearly"],
+    ["/nikah-guide",0.8,"monthly"],
+    ["/muslim-rishta-service",0.9,"monthly"],
+    ["/online-rishta-safety-checklist",0.8,"monthly"],
+    ["/widow-widower-nikah-guide",0.8,"monthly"],
+    ["/islamic-calendar",0.6,"monthly"],
+    ["/instructions",0.7,"monthly"],
+    ["/muslim-nikah-biodata-guide",0.8,"monthly"]
+  ];
+  return pages.map(([path,priority,changeFrequency])=>({
+    url:base+path,
+    changeFrequency,
+    priority
+  }));
+}
