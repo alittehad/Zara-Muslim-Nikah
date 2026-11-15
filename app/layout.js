@@ -7,7 +7,6 @@ export const metadata={
  metadataBase:new URL("https://zaranikahservice.online"),
  title:{default:"Muslim Rishta & Nikah Service in India | Zara Nikah",template:"%s | Zara Nikah Service"},
  description:"Muslim nikah aur pehli ya doosri shaadi ke liye Zara Nikah par rishta profiles aur biodata guidance dekhein.",
- alternates:{canonical:"https://zaranikahservice.online/"},
  applicationName:"Zara Nikah Service",
  verification:{google:"FaElE6Kh5Ixq0wRBtgIOLdHfW08ZfQQVBDE_3QLx9Ns"},
  category:"Lifestyle",
@@ -79,6 +78,7 @@ const structuredData={
 
 export default function RootLayout({children}){
  return <html lang="hi"><head>
+  <link rel="canonical" href="https://zaranikahservice.online/" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5611171707552414" crossOrigin="anonymous"></script>
   <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structuredData).replace(/</g,"\\u003c")}} />
  </head><body>
