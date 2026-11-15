@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata={
   title:"Privacy Policy | Zara Nikah Service",
   description:"Zara Nikah Service ki Privacy Policy: account, biodata, payment references, cookies, Google AdSense advertising aur privacy requests ki jaankari.",
-  alternates:{canonical:"https://zarashadiservice.vercel.app/privacy"}
+  alternates:{canonical:"https://zaranikahservice.online/privacy"}
 };
 
 export default function Privacy(){
