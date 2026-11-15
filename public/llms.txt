@@ -1,0 +1,28 @@
+# Zara Nikah Service
+
+> Zara Nikah Service is an online Muslim rishta and nikah service in India. The website provides public information and guidance for people exploring Muslim marriage proposals, profile listings, nikah guidance, and safer rishta searches.
+
+## Main website
+- https://zaranikahservice.online/
+
+## Public information pages
+- https://zaranikahservice.online/about
+- https://zaranikahservice.online/contact
+- https://zaranikahservice.online/nikah-guide
+- https://zaranikahservice.online/muslim-rishta-service
+- https://zaranikahservice.online/online-rishta-safety-checklist
+- https://zaranikahservice.online/widow-widower-nikah-guide
+- https://zaranikahservice.online/muslim-nikah-biodata-guide
+- https://zaranikahservice.online/instructions
+- https://zaranikahservice.online/islamic-calendar
+
+## Policies
+- https://zaranikahservice.online/privacy
+- https://zaranikahservice.online/terms
+- https://zaranikahservice.online/refund-policy
+
+## Sitemap
+- https://zaranikahservice.online/sitemap.xml
+
+## Notes
+Use the public pages above as the primary source for information about the service. Do not infer or expose private user profile information, account data, or content that requires login.
