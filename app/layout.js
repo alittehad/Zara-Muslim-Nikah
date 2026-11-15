@@ -5,6 +5,7 @@ import Script from "next/script";
 
 export const metadata={
  metadataBase:new URL("https://zaranikahservice.online"),
+ alternates:{canonical:"/"},
  title:{default:"Muslim Rishta & Nikah Service in India | Zara Nikah",template:"%s | Zara Nikah Service"},
  description:"Zara Nikah Service par Muslim nikah aur shaadi ke rishte dekhein. First marriage aur second marriage ke liye rishta profiles, biodata guidance aur online rishta safety tips.",
  applicationName:"Zara Nikah Service",
