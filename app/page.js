@@ -173,6 +173,7 @@ export default function Home(){
         <div className="homeTopControls">
 <button className="cornerIconButton cornerMenuButton" type="button" aria-label="Menu" aria-expanded={headerMenuOpen} onClick={()=>setHeaderMenuOpen(v=>!v)}>{headerMenuOpen?"✕":"☰"}</button>
 <div className="topCenterBrand" aria-label="Zara Nikah">Zara Nikah</div>
+<button className="cornerIconButton" type="button" onClick={()=>{if(user){router.push("/account")}else{router.push("/login?returnTo=%2F")}}}>🔐 Login</button>
 <button className="cornerIconButton cornerNotificationButton" type="button" aria-label="Notifications" onClick={()=>router.push("/notifications")}>🔔{unreadNotifications>0&&<span className="notificationCountBadge">{unreadNotifications>99?"99+":unreadNotifications}</span>}</button>
 {headerMenuOpen&&<nav className="headerMenuPanel cornerMenuPanel" aria-label="Website menu">
 <div className="headerMenuGroup"><span className="headerMenuLabel">रिश्ते देखें</span>
