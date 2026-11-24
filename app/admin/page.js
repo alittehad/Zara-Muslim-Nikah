@@ -290,7 +290,8 @@ export default function Admin(){
 
   async function login(){
     setError("");const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
-    try{await signInWithPopup(auth,p)}catch(e){if(["auth/popup-blocked","auth/popup-closed-by-user"].includes(e.code)){try{await signInWithRedirect(auth,p)}catch(x){setError(x.message)}}else setError(e.message)}
+    try{const result=await signInWithPopup(auth,p);if(!ADMINS.includes(result.user?.email?.toLowerCase())){await signOut(auth);setError("यह Google अकाउंट Admin में शामिल नहीं है। कृपया Admin का Google अकाउंट चुनें।")}}
+    catch(e){if(["auth/popup-blocked","auth/popup-closed-by-user"].includes(e.code)){try{await signInWithRedirect(auth,p)}catch(x){setError(x.message)}}else setError(e.message)}
   }
   const logout=()=>signOut(auth);
 
