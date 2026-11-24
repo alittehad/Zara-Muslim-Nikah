@@ -53,6 +53,7 @@ export default function Account(){
   const [wallet,setWallet]=useState(0);
   const [tx,setTx]=useState([]);
   const [requests,setRequests]=useState([]);
+  const [mySubmissions,setMySubmissions]=useState([]);
   const [file,setFile]=useState(null);
   const [preview,setPreview]=useState("");
   const [msg,setMsg]=useState("");
@@ -93,6 +94,12 @@ export default function Account(){
   useEffect(()=>{
     if(!user)return;
 
+    const unsubProfiles=onSnapshot(
+      query(collection(db,"profileSubmissions"),where("uid","==",user.uid)),
+      s=>setMySubmissions(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),
+      e=>showMsg("My profiles load error: "+(e?.message||"permission error"),"error")
+    );
+
     const unsubTx=onSnapshot(
       query(collection(db,"walletTransactions"),where("uid","==",user.uid)),
       s=>setTx(
@@ -119,7 +126,7 @@ export default function Account(){
       e=>showMsg("Wallet load error: "+(e?.message||"permission error"),"error")
     );
 
-    return()=>{unsubTx();unsubReq();unsubUser()};
+    return()=>{unsubProfiles();unsubTx();unsubReq();unsubUser()};
   },[user]);
 
   useEffect(()=>{
@@ -307,6 +314,23 @@ export default function Account(){
           {saving?"⏳ Saving...":"💾 Profile Save करें →"}
         </button>
       </form>)}
+
+      <div className="adminList" style={{marginTop:18}}>
+        <div className="listHead"><div><h3>💍 मेरे Marriage Profiles</h3><small className="listSub">आपके द्वारा बनाए गए रिश्ते और उनका status</small></div><span>{mySubmissions.length}</span></div>
+        <button type="button" className="primaryAction" onClick={()=>{window.location.href="/add-profile"}}>＋ नया Marriage Profile बनाएँ</button>
+        {mySubmissions.length?mySubmissions.map(x=><div className="adminRow" key={x.id} style={{marginTop:10}}>
+          <span>
+            <b>{x.name||"My Profile"} • {x.gender==="male"?"Male":"Female"}</b>
+            <small>Age: {x.age||"-"} • {x.city||"-"}{x.state?", "+x.state:""}</small>
+            <small>Status: {statusLabel(x.status)} • Visibility: {x.visibility==="admin"?"Only Admin":"Public"}</small>
+            {x.profileId&&<small>Live Profile ID: {x.profileId}</small>}
+            {x.status==="pending"&&<small>Payment / Admin approval ka intezar hai.</small>}
+            {x.status==="rejected"&&<small>Admin ne request reject ki hai. Help ke liye contact karein.</small>}
+            {x.status==="approved"&&x.visibility==="public"&&x.profileId&&<a href={"/profile/"+x.profileId} style={{display:"inline-block",marginTop:6,color:"#6b21a8",fontWeight:700}}>अपना Live Profile देखें →</a>}
+            {x.status==="approved"&&x.visibility==="admin"&&<small>यह profile सिर्फ Admin को दिखाई देती है।</small>}
+          </span>
+        </div>):<div className="empty">अभी आपने कोई Marriage Profile नहीं बनाया है। ऊपर दिए बटन से अपना रिश्ता जोड़ें।</div>}
+      </div>
 
       <div className="adminBox accountWalletBox">
         <div className="boxTitle">
