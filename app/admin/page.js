@@ -59,7 +59,7 @@ export default function Admin(){
   const [saving,setSaving]=useState(false),[requestFilter,setRequestFilter]=useState("all"),[requestSearch,setRequestSearch]=useState(""),[processingAccessId,setProcessingAccessId]=useState("");
   const [pages,setPages]=useState({about:"Zara Nikah Service ek online Nikah aur rishta profile service hai. Hamara maqsad serious rishta search karne wale users ko registered profiles ek simple aur organised platform par available karana hai.\n\nWebsite par profiles ko manage kiya jata hai aur users ko available service ke rules ke mutabik profile information ka access diya jata hai.\n\nZara Nikah Service ka focus simple process, privacy aur Nikah ke liye serious rishta search par hai.\n\nKisi bhi service, profile ya registration se related sawal ke liye Contact page par diye gaye madhyam se message karein.",contact:"Zara Nikah Service se contact karne ke liye website par diye gaye WhatsApp/social contact option ka use karein.\n\nMessage mein apna naam aur apni query ya zaroori details likhein, taaki aapki request ko samajhna aur jawab dena aasaan ho.\n\nProfile, registration, payment, biodata access ya mobile-number access se related sawal bhi message ke zariye bheje ja sakte hain.\n\nPlease bina zaroorat personal ya sensitive information share na karein.",privacy:"Zara Nikah Service users ki information ko service provide karne aur account/profile management ke liye use karta hai.\n\nGoogle login se milne wali basic account information aur user dwara submit ki gayi profile information ko service ke purpose ke liye process kiya ja sakta hai.\n\nPrivate biodata, contact/mobile number aur payment-related information ko public profile par bina authorised access ke display nahi kiya jata.\n\nPayment ke waqt diya gaya UTR/Transaction ID payment verification aur request processing ke liye use kiya ja sakta hai.\n\nUsers ko apni personal information sirf utni hi submit karni chahiye jitni service ke liye zaroori ho. Kisi privacy concern ke liye Contact page ke madhyam se message karein.",terms:"Zara Nikah Service par users registered rishta profiles dekhne aur website par available services ka use kar sakte hain.\n\nRegistration, profile information, payment aur access request ke waqt sahi information dena user ki responsibility hai.\n\nBiodata ya mobile-number access paid service ke roop mein available ho sakta hai. Payment request verification aur approval ke baad access diya jata hai.\n\nWebsite par kisi profile ki personal information ka misuse, unauthorised copying, sharing ya harassment ke liye use nahi kiya jana chahiye.\n\nZara Nikah Service par dikhayi gayi profile information ko users ko respect aur privacy ke saath use karna chahiye.\n\nService ke rules, fees aur available features ko zaroorat ke mutabik update kiya ja sakta hai. Website ka use karte rehne ka matlab updated terms ko follow karna hai."});
 
-  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
+  useEffect(()=>onAuthStateChanged(auth,u=>{setUser(u);if(u&&!ADMINS.includes(u.email?.toLowerCase()))router.replace("/account")}),[router]);
   useEffect(()=>{
     if(!ADMINS.includes(user?.email?.toLowerCase())||!selectedChatId){setChatMessages([]);return;}
     return onSnapshot(collection(db,"supportChats",selectedChatId,"messages"),s=>{
@@ -290,8 +290,15 @@ export default function Admin(){
 
   async function login(){
     setError("");const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
-    try{const result=await signInWithPopup(auth,p);if(!ADMINS.includes(result.user?.email?.toLowerCase())){await signOut(auth);setError("यह Google अकाउंट Admin में शामिल नहीं है। कृपया Admin का Google अकाउंट चुनें।")}}
-    catch(e){if(["auth/popup-blocked","auth/popup-closed-by-user"].includes(e.code)){try{await signInWithRedirect(auth,p)}catch(x){setError(x.message)}}else setError(e.message)}
+    try{
+      const result=await signInWithPopup(auth,p);
+      if(!ADMINS.includes(result.user?.email?.toLowerCase()))router.replace("/account");
+      else setUser(result.user);
+    }catch(e){
+      if(["auth/popup-blocked","auth/popup-closed-by-user"].includes(e.code)){
+        try{await signInWithRedirect(auth,p)}catch(x){setError(x.message)}
+      }else setError(e.message)
+    }
   }
   const logout=()=>signOut(auth);
 
@@ -753,7 +760,7 @@ export default function Admin(){
 
   if(user===undefined)return <main><section className="admin cardPage"><h1>Loading...</h1></section></main>;
   if(!user)return <main><section className="admin cardPage"><div className="adminIcon">🔐</div><h1>Admin Login</h1><button className="primaryAction" onClick={login}>Google Login →</button>{error&&<div className="errorBox">{error}</div>}</section></main>;
-  if(!ADMINS.includes(user.email?.toLowerCase()))return <main><section className="admin cardPage"><div className="adminIcon">🚫</div><h1>Access Denied</h1><button className="backAction" onClick={logout}>Logout</button></section></main>;
+  if(!ADMINS.includes(user.email?.toLowerCase()))return <main><section className="admin cardPage"><div className="adminIcon">👤</div><h1>My Account</h1><p>Aapka user account khul raha hai...</p></section></main>;
 
   const pendingBiodataCount=requests.filter(x=>x.type==="biodata"&&x.status==="pending"&&Number(x.amount)===100).length;
   const pendingMobileCount=requests.filter(x=>x.type==="mobile"&&x.status==="pending"&&Number(x.amount)===500).length;
