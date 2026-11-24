@@ -173,6 +173,7 @@ export default function Home(){
         <div className="homeTopControls">
 <button className="cornerIconButton cornerMenuButton" type="button" aria-label="Menu" aria-expanded={headerMenuOpen} onClick={()=>setHeaderMenuOpen(v=>!v)}>{headerMenuOpen?"✕":"☰"}</button>
 <div className="topCenterBrand" aria-label="Zara Nikah">Zara Nikah</div>
+<button className="cornerIconButton" type="button" onClick={()=>{if(user){router.push("/account")}else{router.push("/login?returnTo=%2F")}}}>🔐 Login</button>
 <button className="cornerIconButton cornerNotificationButton" type="button" aria-label="Notifications" onClick={()=>router.push("/notifications")}>🔔{unreadNotifications>0&&<span className="notificationCountBadge">{unreadNotifications>99?"99+":unreadNotifications}</span>}</button>
 {headerMenuOpen&&<nav className="headerMenuPanel cornerMenuPanel" aria-label="Website menu">
 <div className="headerMenuGroup"><span className="headerMenuLabel">रिश्ते देखें</span>
@@ -200,7 +201,6 @@ export default function Home(){
               <button type="button" className="homeHeroMale" onClick={()=>{setR("male");scrollToProfiles();}}>👨 Male Rishte Dekhein</button>
               <button type="button" className="homeHeroFemale" onClick={()=>{setR("female");scrollToProfiles();}}>👩 Female Rishte Dekhein</button>
               <button type="button" className="homeHeroAdd" onClick={()=>router.push("/add-profile")}>＋ Apna Profile Jodein</button>
-              {!user&&<button type="button" onClick={()=>router.push("/login?returnTo=%2F")} style={{padding:"12px 18px",borderRadius:12,border:"1px solid #6b21a8",background:"#fff",color:"#6b21a8",fontWeight:700}}>🔐 Login</button> }
             </div>
             <div className="homeHeroTrust">
               <span>🔒 Private details ka ehtiyaat</span>
